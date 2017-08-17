@@ -1,0 +1,56 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+import os
+import os.path
+import sys
+import tarfile
+import argparse
+import re
+import glob
+import simplejson
+
+parser = argparse.ArgumentParser("""\
+Create a simple shard index in JSON format.
+""")
+parser.add_argument("prefix",
+                    help="prefix for shards")
+parser.add_argument("-d", "--description", default=None,
+                    help="prefix for shards")
+parser.add_argument("-o", "--output", default=None,
+                    help="output file, '-' for stdout")
+parser.add_argument("-x", "--extension", default="tgz",
+                    help="extension for sharding")
+args = parser.parse_args()
+
+descriptor = dict(shardtype="application/x-tgz")
+pattern = args.prefix+"-[0-9]*[0-9]."+args.extension
+fnames = sorted([os.path.split(x)[1] for x in glob.glob(pattern)])
+descriptor["shards"] = [[x] for x in fnames]
+metadata = {}
+metadata["shardtime"] = os.popen("date; pwd; hostname; whoami; uname -a").read()
+if args.description is not None:
+    metadata["description"] = args.description
+descriptor["metadata"] = metadata
+
+if args.output is None:
+    args.output = args.prefix+".shards"
+elif args.output == "-":
+    args.output = "/dev/stdout"
+print "writing", args.output
+with open(args.output, "w") as stream:
+    simplejson.dump(descriptor, stream, sort_keys=True, indent=4*" ")

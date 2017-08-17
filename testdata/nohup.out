@@ -1,0 +1,199 @@
+127.0.0.1 - - [15/Aug/2017 21:43:15] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:44:27] code 404, message File not found
+127.0.0.1 - - [15/Aug/2017 21:44:27] "GET /isample.shards HTTP/1.1" 404 -
+127.0.0.1 - - [15/Aug/2017 21:44:35] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:44:43] "GET /sample.shards HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 174, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 235, in <module>
+    test()
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 231, in test
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 606, in test
+    httpd = ServerClass(server_address, HandlerClass)
+  File "/usr/lib/python2.7/SocketServer.py", line 417, in __init__
+    self.server_bind()
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 108, in server_bind
+    SocketServer.TCPServer.server_bind(self)
+  File "/usr/lib/python2.7/SocketServer.py", line 431, in server_bind
+    self.socket.bind(self.server_address)
+  File "/usr/lib/python2.7/socket.py", line 228, in meth
+    return getattr(self._sock,name)(*args)
+socket.error: [Errno 98] Address already in use
+127.0.0.1 - - [15/Aug/2017 21:46:06] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:46:07] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:46:07] code 404, message File not found
+127.0.0.1 - - [15/Aug/2017 21:46:07] "GET /imagenet/imagenet_train.shards HTTP/1.1" 404 -
+127.0.0.1 - - [15/Aug/2017 21:46:20] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:52:03] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:52:35] "GET /sample.shards HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 174, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 235, in <module>
+    test()
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 231, in test
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 606, in test
+    httpd = ServerClass(server_address, HandlerClass)
+  File "/usr/lib/python2.7/SocketServer.py", line 417, in __init__
+    self.server_bind()
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 108, in server_bind
+    SocketServer.TCPServer.server_bind(self)
+  File "/usr/lib/python2.7/SocketServer.py", line 431, in server_bind
+    self.socket.bind(self.server_address)
+  File "/usr/lib/python2.7/socket.py", line 228, in meth
+    return getattr(self._sock,name)(*args)
+socket.error: [Errno 98] Address already in use
+127.0.0.1 - - [15/Aug/2017 21:55:37] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:55:38] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:55:38] "GET /sample.shards HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 174, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 235, in <module>
+    test()
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 231, in test
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 606, in test
+    httpd = ServerClass(server_address, HandlerClass)
+  File "/usr/lib/python2.7/SocketServer.py", line 417, in __init__
+    self.server_bind()
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 108, in server_bind
+    SocketServer.TCPServer.server_bind(self)
+  File "/usr/lib/python2.7/SocketServer.py", line 431, in server_bind
+    self.socket.bind(self.server_address)
+  File "/usr/lib/python2.7/socket.py", line 228, in meth
+    return getattr(self._sock,name)(*args)
+socket.error: [Errno 98] Address already in use
+127.0.0.1 - - [15/Aug/2017 21:57:12] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:13] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:13] "GET /sample.shards HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 174, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 235, in <module>
+    test()
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 231, in test
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 606, in test
+    httpd = ServerClass(server_address, HandlerClass)
+  File "/usr/lib/python2.7/SocketServer.py", line 417, in __init__
+    self.server_bind()
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 108, in server_bind
+    SocketServer.TCPServer.server_bind(self)
+  File "/usr/lib/python2.7/SocketServer.py", line 431, in server_bind
+    self.socket.bind(self.server_address)
+  File "/usr/lib/python2.7/socket.py", line 228, in meth
+    return getattr(self._sock,name)(*args)
+socket.error: [Errno 98] Address already in use
+127.0.0.1 - - [15/Aug/2017 21:57:33] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:33] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:33] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:33] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:33] code 404, message File not found
+127.0.0.1 - - [15/Aug/2017 21:57:33] "GET /imagenet/imagenet_train.shards HTTP/1.1" 404 -
+127.0.0.1 - - [15/Aug/2017 21:57:44] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [15/Aug/2017 21:57:44] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:49:25] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:49:25] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:49:25] "GET /sample.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:49:25] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:49:25] code 404, message File not found
+127.0.0.1 - - [16/Aug/2017 17:49:25] "GET /imagenet.shards HTTP/1.1" 404 -
+127.0.0.1 - - [16/Aug/2017 17:50:22] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:25] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:25] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:35] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:35] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:46] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:46] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:51] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 17:50:51] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 174, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 235, in <module>
+    test()
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 231, in test
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 606, in test
+    httpd = ServerClass(server_address, HandlerClass)
+  File "/usr/lib/python2.7/SocketServer.py", line 417, in __init__
+    self.server_bind()
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 108, in server_bind
+    SocketServer.TCPServer.server_bind(self)
+  File "/usr/lib/python2.7/SocketServer.py", line 431, in server_bind
+    self.socket.bind(self.server_address)
+  File "/usr/lib/python2.7/socket.py", line 228, in meth
+    return getattr(self._sock,name)(*args)
+socket.error: [Errno 98] Address already in use
+127.0.0.1 - - [16/Aug/2017 18:03:21] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 18:03:21] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 18:03:21] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 18:03:21] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 18:03:21] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [16/Aug/2017 18:03:21] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:27:05] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:27:36] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:27:45] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:27:45] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:27:49] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:27:49] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/runpy.py", line 174, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/usr/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 235, in <module>
+    test()
+  File "/usr/lib/python2.7/SimpleHTTPServer.py", line 231, in test
+    BaseHTTPServer.test(HandlerClass, ServerClass)
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 606, in test
+    httpd = ServerClass(server_address, HandlerClass)
+  File "/usr/lib/python2.7/SocketServer.py", line 417, in __init__
+    self.server_bind()
+  File "/usr/lib/python2.7/BaseHTTPServer.py", line 108, in server_bind
+    SocketServer.TCPServer.server_bind(self)
+  File "/usr/lib/python2.7/SocketServer.py", line 431, in server_bind
+    self.socket.bind(self.server_address)
+  File "/usr/lib/python2.7/socket.py", line 228, in meth
+    return getattr(self._sock,name)(*args)
+socket.error: [Errno 98] Address already in use
+127.0.0.1 - - [17/Aug/2017 21:31:31] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:31:35] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:31:35] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:31:37] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 21:31:37] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 22:05:10] "GET /sample.tgz HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 22:05:11] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 22:05:11] "GET /imagenet-000000.tgz HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/SocketServer.py", line 290, in _handle_request_noblock
+    self.process_request(request, client_address)
+  File "/usr/lib/python2.7/SocketServer.py", line 318, in process_request
+    self.finish_request(request, client_address)
+  File "/usr/lib/python2.7/SocketServer.py", line 331, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python2.7/SocketServer.py", line 654, in __init__
+    self.finish()
+  File "/usr/lib/python2.7/SocketServer.py", line 713, in finish
+    self.wfile.close()
+  File "/usr/lib/python2.7/socket.py", line 283, in close
+    self.flush()
+  File "/usr/lib/python2.7/socket.py", line 307, in flush
+    self._sock.sendall(view[write_offset:write_offset+buffer_size])
+error: [Errno 32] Broken pipe
+127.0.0.1 - - [17/Aug/2017 22:05:11] "GET /imagenet.shards HTTP/1.1" 200 -
+127.0.0.1 - - [17/Aug/2017 22:05:11] "GET /imagenet-000000.tgz HTTP/1.1" 200 -

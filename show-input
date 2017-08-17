@@ -1,0 +1,83 @@
+#!/usr/bin/python
+
+import matplotlib
+# matplotlib.use("GTK")
+
+from pylab import *
+rc("image", cmap="hot")
+import pylab
+import os
+import imp
+import glob
+import numpy as np
+import torch
+import argparse
+import dlinputs as dli
+import time
+
+parser = argparse.ArgumentParser("Display info about an input module.")
+parser.add_argument("input")
+parser.add_argument("-t", "--table", default="training")
+parser.add_argument("-s", "--skip", default=0, type=int)
+parser.add_argument("-b", "--bench", default=0, type=int)
+parser.add_argument("-d", "--display", default=None)
+parser.add_argument("-D", "--order", default="BHWD")
+parser.add_argument("-G", "--grid", default="3,3")
+args = parser.parse_args()
+args.grid = eval("({})".format(args.grid))
+
+inputs = dli.loadable.load_input(args.input)
+
+datasets = [attr[:-5] for attr in sorted(dir(inputs)) if attr.endswith("_data")]
+print "datasets:", ", ".join(datasets)
+print "showing:", args.table
+print
+
+method = "{}_data".format(args.table)
+
+assert hasattr(inputs, method), \
+    "{} does not define {}_data method".format(args.input, args.table)
+
+source = getattr(inputs, method)()
+
+for i in xrange(args.skip):
+    source.next()
+
+batch = source.next()
+keys = sorted(batch.keys())
+
+for k in keys:
+    v = batch[k]
+    if isinstance(v, (int, float, str)):
+        print "%15s %s" % (k, str(v)[:60])
+    elif isinstance(v, list):
+        print "%15s %3d %s" % (k, len(v), str(v)[:60])
+    elif isinstance(v, np.ndarray):
+        print "%15s %s [%s,%s] %s(%s)" % (k,
+                                v.shape, np.amin(v), np.amax(v),
+                                np.mean(v), np.var(v)**.5)
+    elif isinstance(v, torch.Tensor):
+        v = v.cpu().numpy()
+        print "%15s %s [%s,%s] %s(%s)" % (k,
+                                v.shape, np.amin(v), np.amax(v),
+                                np.mean(v), np.var(v)**.5)
+    else:
+        print "%15s %s" % (k, type(v))
+
+if args.bench > 0:
+    print
+    start = time.time()
+    for i in xrange(args.bench):
+        source.next()
+    total = time.time() - start
+    print "sec/batch", total/args.bench
+
+if args.display is not None:
+    data = batch[args.display]
+    if args.order=="BWH":
+        data = data.transpose(0, 2, 1)
+    n = min(len(data), args.grid[0] * args.grid[1])
+    for i in xrange(n):
+        subplot(args.grid[0], args.grid[1], i+1)
+        imshow(data[i])
+    show()
