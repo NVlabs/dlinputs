@@ -33,6 +33,60 @@ from decorators import itfilter, itmapper, itsink, itsource, prints, ComposableI
 ### Helper functions.
 ###
 
+def find_directory(path, target="", tests=[], verbose=False, error=True):
+    """Finds the first instance of target on a path.
+
+    If `tests` is supplied, requires those targets to be present as well.
+    This only works if the target is a directory.
+    """
+    if isinstance(path, str):
+        path = path.split(":")
+    if isinstance(tests, str):
+        tests = [tests]
+    for root in path:
+        if not os.path.isdir(root):
+            continue
+        candidate = os.path.join(root, target)
+        if verbose: print "trying", candidate
+        if not os.path.isdir(candidate):
+            continue
+        failed = False
+        for extra in tests:
+            testpath = os.path.join(candidate, extra)
+            if verbose: print "testing", testpath
+            if not os.path.exists(testpath):
+                if verbose: print "FAILED"
+                failed = True
+                break
+        if failed: continue
+        return candidate
+    if error:
+        raise ValueError("cannot find {} on path {}".format(target, path))
+
+
+def find_file(path, target, tests=[], verbose=False, error=True):
+    """Finds the first instance of file on a path.
+    """
+    if isinstance(path, str):
+        path = path.split(":")
+    for root in path:
+        if not os.path.isdir(root):
+            continue
+        candidate = os.path.join(root, target)
+        if verbose: print "trying", candidate
+        if not os.path.isfile(candidate):
+            continue
+        failed = False
+        for extra in tests:
+            if not extra(candidate):
+                if verbose: print "FAILED"
+                failed = True
+                break
+        if failed: continue
+        return candidate
+    if error:
+        raise ValueError("cannot find {} on path {}".format(target, path))
+
 def readfile(fname):
     """Helper function to read a file (binary)."""
     with open(fname, "rb") as stream:
@@ -99,15 +153,36 @@ def make_rgba(image, alpha=255):
     elif image.shape[2] == 4:
         return image
 
+def invert_mapping(kvp):
+    return {v: k for k, v in kvp.items()}
 
-def pilreads(data, color="gray", asfloat=True):
-    """Read an image from a string using PIL.
+def get_string_mapping(kvp):
+    """Returns a dictionary mapping strings to strings.
+
+    This can take either a string of the form "name=value:name2=value2"
+    or a dictionary containing all string keys and values.
+    """
+    if kvp is None:
+        return {}
+    if isinstance(kvp, (str, unicode)):
+        return {k: v for k, v in [kv.split("=", 1) for kv in kvp.split(":")]}
+    elif isinstance(kvp, dict):
+        for k, v in kvp.items():
+            assert isinstance(k, str)
+            assert isinstance(v, str)
+        return kvp
+    else:
+        raise ValueError("{}: wrong type".format(type(kvp)))
+
+
+def pilread(stream, color="gray", asfloat=True):
+    """Read an image from a stream using PIL.
 
     Returns a uint8 image if asfloat=False,
     otherwise a float image with values in [0,1].
     Color can be "gray", "rgb" or "rgba".
     """
-    image = PIL.Image.open(StringIO.StringIO(data))
+    image = PIL.Image.open(stream)
     result = np.array(image, 'uint8')
     if color is None:
         pass
@@ -122,6 +197,15 @@ def pilreads(data, color="gray", asfloat=True):
     if asfloat:
         result = result.astype("f") / 255.0
     return result
+
+def pilreads(data, color="gray", asfloat=True):
+    """Read an image from a string or buffer using PIL.
+
+    Returns a uint8 image if asfloat=False,
+    otherwise a float image with values in [0,1].
+    Color can be "gray", "rgb" or "rgba".
+    """
+    return pilread(StringIO.StringIO(data), color=color, asfloat=asfloat)
 
 
 pilgray = ft.partial(pilreads, color="gray")
@@ -223,7 +307,9 @@ def samples_to_batch(samples, tensors=True):
 
 
 def intlist_to_hotonelist(cs,nc):
-    """Given a list of target classes `cs` and a total
+    """Helper function for LSTM-based OCR: encode ground truth as array.
+
+    Given a list of target classes `cs` and a total
     maximum number of classes, compute an array that has
     a `1` in each column and time step corresponding to the
     target class."""
@@ -235,7 +321,9 @@ def intlist_to_hotonelist(cs,nc):
     return result
 
 def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
-    """Translate back. Thresholds on class 0, then assigns the maximum class to
+    """Helper function for LSTM-based OCR: decode LSTM outputs.
+
+    Translate back. Thresholds on class 0, then assigns the maximum class to
     each region. ``pos`` determines the depth of character information returned:
         * `pos=0`: Return list of recognized characters
         * `pos=1`: Return list of position-character tuples
@@ -250,6 +338,7 @@ def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
 
 
 def spliturl(url):
+    """Split a URL into its extension and base."""
     match = re.search(r"^(.+)\.([^:/]+)$", url)
     if match:
         return match.group(1), match.group(2)
@@ -257,26 +346,30 @@ def spliturl(url):
         return url, ""
 
 
-db_rewriter = None
+url_rewriter = None
 
 
-def load_db_rewriter(path=None):
-    global db_rewriter
-    if db_rewriter is not None:
+def load_url_rewriter(path=None):
+    """Loads a Python module that rewrites URLs names.
+
+    This loads the rewriter from DLP_REWRITER or from $HOME/.dlp_rewriter
+    """
+    global url_rewriter
+    if url_rewriter is not None:
         return
     if path is None:
         path = os.getenv("DLP_REWRITER", path)
     if path is None:
         path = os.path.join(os.environ.get("HOME", "/"), ".dlp_rewriter")
     if not os.path.exists(path):
-        def db_rewriter(x): return x
+        def url_rewriter(x): return x
         return
-    mod = imp.load_source("db_rewriter", path)
+    mod = imp.load_source("url_rewriter", path)
     assert "rewriter" in dir(
         mod), "no `rewriter` function found in " + pathname
     assert isinstance(
         mod.rewriter, types.FunctionType), "rewriter is not a function"
-    db_rewriter = mod.rewriter
+    url_rewriter = mod.rewriterlsju
 
 
 def findurl(url):
@@ -287,11 +380,11 @@ def findurl(url):
     base. Returns the new URL.
     """
 
-    load_db_rewriter()
+    load_url_rewriter()
     orig = url
-    url = db_rewriter(url)
+    url = url_rewriter(url)
     assert isinstance(
-        url, str), "db_rewriter({}) returned {}".format(orig, url)
+        url, str), "url_rewriter({}) returned {}".format(orig, url)
     base = os.environ.get("DLP_URLBASE", None)
     if base is not None:
         url = urlparse.urljoin(base, url)
@@ -303,9 +396,23 @@ def openurl(url):
     return urllib2.urlopen(url)
 
 
-def read_shards(url, shardtype="application/x-tgz"):
+def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     """Read a shards description file from a URL."""
-    shards = simplejson.loads(openurl(url).read())
+    urlpath = urlpath or [""]
+    if isinstance(urlpath, str):
+        urlpath = urlpath.strip().split()
+    shards = None
+    for base in urlpath:
+        trial = urlparse.urljoin(base, url)
+        if verbose: print "trying: {}".format(trial)
+        try:
+            shards = simplejson.loads(openurl(trial).read())
+            url = trial
+        except urllib2.URLError:
+            if verbose: print "FAILED"
+            continue
+    if shards is None:
+        raise Exception("cannot find {} on {}".format(url, urlpath))
     if shardtype is not None and "shardtype" in shards:
         assert shards["shardtype"] == "application/x-tgz", shards["shardtype"]
     shards = shards["shards"]
@@ -336,7 +443,7 @@ def itrepeat(source, nrepeats=int(1e9)):
 
 
 @itsource
-def itfilelist(top, extensions):
+def itdirnames(top, extensions=None):
     """Iterate over files using os.walk.
 
     This starts at `top` and looks for files with any
@@ -345,22 +452,79 @@ def itfilelist(top, extensions):
     assert os.path.isdir(top), top
     if isinstance(extensions, str):
         extensions = extensions.split(",")
-    extensions = set(extensions)
+    if extensions is not None:
+        extensions = set(extensions)
     for root, dirs, files in os.walk(top):
         dirs.sort()
         files.sort()
         for file in files:
             prefix, suffix = splitallext(file)
-            if suffix in extensions:
+            if extensions is None or suffix in extensions:
                 yield os.path.join(root, file)
 
 
+@itsource
+def itbasenames(basenamefile, extensions, split=True):
+    if isinstance(extensions, str):
+        extensions = extensions.split(",")
+    root = os.path.abspath(basenamefile)
+    root = os.path.dirname(root)
+    with open(basenamefile, "r") as stream:
+        for fname in stream.xreadlines():
+            fname = fname.strip()
+            if split:
+                fname, _ = os.path.splitext(fname)
+            result = {}
+            path = os.path.join(root, fname)
+            result["__path__"] = path
+            for extension in extensions:
+                result[extension] = readfile(path + "." + extension)
+            yield result
+
+@itsource
+def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8"):
+    if isinstance(colnames, str):
+        colnames = colnames.split(",")
+    root = os.path.abspath(table)
+    root = os.path.dirname(root)
+    with codecs.open(table, "r", encoding) as stream:
+        for line in stream.xreadlines():
+            line = line.strip()
+            if line[0] == "#": contine
+            fnames = line.split(separator)
+            if len(fnames) != len(colnames):
+                print "bad input: {}".format(line)
+                if nerrors > maxerrors:
+                    raise ValueError("bad input")
+                nerrors += 1
+                continue
+            result = {}
+            for name, value in zip(colnames, fnames):
+                if name[0]=="_":
+                    result[name] = value
+                else:
+                    path = os.path.join(root, value)
+                    if not os.path.exists(path):
+                        print "{}: not found".format(path)
+                        if nerrors > maxerrors:
+                            raise ValueError("not found")
+                        nerrors += 1
+                        continue
+                    result[name] = readfile(path)
+                    result["__path__"+name] = path
+            yield result
+
 @itfilter
-def itfilereader(files):
+def itfilereader(files, names={}):
     """Given an iterator over file names, return batches.
 
-    Batches are composed of `extension="filename"`.
+    If no keywords are given, returns the contents of all
+    files. If keywords are given, reads only the contents
+    of the files that are given and puts them into the
+    output sample under the key.
     """
+    names = get_string_mapping(names)
+    if names is not None: names = invert_mapping(names)
     current_prefix = None
     current_sample = None
     for file in files:
@@ -370,12 +534,37 @@ def itfilereader(files):
                 yield current_sample
             current_prefix = prefix
             current_sample = dict(key=prefix)
-        if suffix not in keys:
+        if names!={} and suffix not in names:
             continue
-        current_sample[suffix] = readfile(file)
+        name = names.get(suffix, suffix)
+        current_sample[name] = readfile(file)
         current_sample["__key__"] = prefix
+    if current_sample is None:
+        raise ValueError("got no samples")
     if len(current_sample.keys()) > 0:
         yield current_sample
+
+@itsource
+def itdirtree(root, **names):
+    """Iterates through directory tree yielding samples.
+
+    Keyword arguments are of the form fieldname=extension.
+    All fieldnames must be present in the finished sample or the
+    sample is skipped.
+    """
+    if isinstance(names, str):
+        names = get_string_mapping(names)
+    if names is None: extensions = None
+    else: extensions = names.values()
+    if names is None: names = {}
+    data = itdirnames(root, extensions) | itfilereader(names)
+    required = set(names.keys())
+    for sample in data:
+        if set(sample.keys()).intersection(required) != required:
+            print "bad sample", set(sample.keys()), required
+            continue
+        yield sample
+
 
 
 @itsource
@@ -411,10 +600,11 @@ def ittarreader(archive):
 
 
 @itsource
-def itshardnames(url, shardtype="application/x-tgz", randomize=True, epochs=1):
+def itshardnames(url, shardtype="application/x-tgz",
+                 randomize=True, epochs=1, urlpath=None):
     """An iterator over shard names."""
     epochs = int(epochs)
-    shards = read_shards(url, shardtype=shardtype)
+    shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
     for i in xrange(epochs):
         l = list(shards)
         if randomize:
@@ -424,10 +614,11 @@ def itshardnames(url, shardtype="application/x-tgz", randomize=True, epochs=1):
 
 
 @itsource
-def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1):
+def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
+                urlpath=None):
     """Read a sharded data set, using a JSON-format shards file to find the shards."""
     epochs = int(epochs)
-    shards = read_shards(url, shardtype=shardtype)
+    shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
     for i in xrange(epochs):
         l = list(shards)
         if randomize:
@@ -700,7 +891,7 @@ class AsciiCodec(object):
         return "".join([self._decode_char(x) for x in l])
 
 ascii_codec = AsciiCodec()
-        
+
 def maketarget(s, codec=ascii_codec):
     """Turn a string into an LD target."""
     assert isinstance(s, (str, unicode)), (type(s), s)
@@ -736,7 +927,7 @@ def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
         if batched == {}: continue
         batched["_bucket"] = r
         yield batched
-        
+
 @itfilter
 def itlinebatcher(data, input="input", target="target", codec=ascii_codec):
     """Performs text line batching for OCR."""
