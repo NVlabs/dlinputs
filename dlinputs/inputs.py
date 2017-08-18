@@ -104,6 +104,24 @@ def splitallext(path):
     return match.group(1), match.group(2)
 
 
+
+def find_basenames(top, extensions):
+    """Finds all basenames that have all the given extensions inside a tree."""
+    assert os.path.isdir(top), top
+    if isinstance(extensions, str):
+        extensions = extensions.split(",")
+    if extensions is not None:
+        extensions = set(extensions)
+    for root, dirs, files in os.walk(top):
+        dirs.sort()
+        files.sort()
+        prefixes = {splitallext(fname)[0] for fname in files}
+        for prefix in prefixes:
+            missing = [e for e in extensions if prefix+"."+e not in files]
+            if len(missing) > 0: continue
+            yield os.path.join(root, prefix)
+
+
 def make_gray(image):
     """Converts any image to a grayscale image by averaging.
 
@@ -441,37 +459,51 @@ def itrepeat(source, nrepeats=int(1e9)):
         for sample in data:
             yield sample
 
+def check_ds_size(ds, size):
+    if isinstance(size, int): size = (size, size)
+    if not isinstance(ds, int): ds = len(ds)
+    if ds < size[0]:
+        raise ValueError("dataset size is {}, should be in range {}; use size= in dataset iterator"
+                         .format(ds, size))
+    if ds > size[1]:
+        raise ValueError("dataset size is {}, should be in range {}; use size= in dataset iterator"
+                         .format(ds, size))
 
 @itsource
-def itdirnames(top, extensions=None):
-    """Iterate over files using os.walk.
-
-    This starts at `top` and looks for files with any
-    extension in `extensions` (a list or comma separated string).
-    """
-    assert os.path.isdir(top), top
+def itdirtree(top, extensions, epochs=1,
+                shuffle=True, verbose=True, size=(100,1e9)):
+    """Iterate of training samples in a directory tree."""
     if isinstance(extensions, str):
         extensions = extensions.split(",")
-    if extensions is not None:
-        extensions = set(extensions)
-    for root, dirs, files in os.walk(top):
-        dirs.sort()
-        files.sort()
-        for file in files:
-            prefix, suffix = splitallext(file)
-            if extensions is None or suffix in extensions:
-                yield os.path.join(root, file)
+    assert os.path.isdir(top)
+    lines = list(find_basenames(top, extensions))
+    if verbose: print "got {} samples".format(len(lines))
+    check_ds_size(lines, size)
+    for epoch in xrange(epochs):
+        if shuffle: pyr.shuffle(lines)
+        for fname in lines:
+            result = {}
+            result["__path__"] = fname
+            for extension in extensions:
+                result[extension] = readfile(fname + "." + extension)
+            yield result
 
 
 @itsource
-def itbasenames(basenamefile, extensions, split=True):
+def itbasenames(basenamefile, extensions, split=True, epochs=1,
+                shuffle=True, verbose=True, size=(100,1e9)):
+    """Iterate over training samples given as basenames and extensions."""
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     root = os.path.abspath(basenamefile)
     root = os.path.dirname(root)
     with open(basenamefile, "r") as stream:
-        for fname in stream.xreadlines():
-            fname = fname.strip()
+        lines = [line.strip() for line in stream.xreadlines()]
+    if verbose: print "got {} samples".format(len(lines))
+    check_ds_size(lines, size)
+    for epoch in xrange(epochs):
+        if shuffle: pyr.shuffle(lines)
+        for fname in lines:
             if split:
                 fname, _ = os.path.splitext(fname)
             result = {}
@@ -482,13 +514,21 @@ def itbasenames(basenamefile, extensions, split=True):
             yield result
 
 @itsource
-def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8"):
+def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
+              epochs=1, shuffle=True, verbose=True, size=(100,1e9)):
+    """Iterate over training samples given by a tabular input."""
+    if isinstance(size, int): size = (size, size)
     if isinstance(colnames, str):
         colnames = colnames.split(",")
     root = os.path.abspath(table)
     root = os.path.dirname(root)
     with codecs.open(table, "r", encoding) as stream:
-        for line in stream.xreadlines():
+        lines = stream.readlines()
+    if verbose: print "got {} samples".format(len(lines))
+    check_ds_size(lines, size)
+    for epoch in xrange(epochs):
+        if shuffle: pyr.shuffle(lines)
+        for line in lines:
             line = line.strip()
             if line[0] == "#": contine
             fnames = line.split(separator)
@@ -513,58 +553,6 @@ def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8"):
                     result[name] = readfile(path)
                     result["__path__"+name] = path
             yield result
-
-@itfilter
-def itfilereader(files, names={}):
-    """Given an iterator over file names, return batches.
-
-    If no keywords are given, returns the contents of all
-    files. If keywords are given, reads only the contents
-    of the files that are given and puts them into the
-    output sample under the key.
-    """
-    names = get_string_mapping(names)
-    if names is not None: names = invert_mapping(names)
-    current_prefix = None
-    current_sample = None
-    for file in files:
-        prefix, suffix = splitallext(file)
-        if prefix != current_prefix:
-            if current_sample is not None:
-                yield current_sample
-            current_prefix = prefix
-            current_sample = dict(key=prefix)
-        if names!={} and suffix not in names:
-            continue
-        name = names.get(suffix, suffix)
-        current_sample[name] = readfile(file)
-        current_sample["__key__"] = prefix
-    if current_sample is None:
-        raise ValueError("got no samples")
-    if len(current_sample.keys()) > 0:
-        yield current_sample
-
-@itsource
-def itdirtree(root, **names):
-    """Iterates through directory tree yielding samples.
-
-    Keyword arguments are of the form fieldname=extension.
-    All fieldnames must be present in the finished sample or the
-    sample is skipped.
-    """
-    if isinstance(names, str):
-        names = get_string_mapping(names)
-    if names is None: extensions = None
-    else: extensions = names.values()
-    if names is None: names = {}
-    data = itdirnames(root, extensions) | itfilereader(names)
-    required = set(names.keys())
-    for sample in data:
-        if set(sample.keys()).intersection(required) != required:
-            print "bad sample", set(sample.keys()), required
-            continue
-        yield sample
-
 
 
 @itsource
