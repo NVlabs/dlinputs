@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from dlpipes import inputs as dli
+import dlinputs as dli
 
 class Inputs(object):
     def training_data(self, **kw):
