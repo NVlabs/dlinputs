@@ -484,6 +484,7 @@ def itdirtree(top, extensions, epochs=1,
         for fname in lines:
             result = {}
             result["__path__"] = fname
+            result["__epoch__"] = epoch
             for extension in extensions:
                 result[extension] = readfile(fname + "." + extension)
             yield result
@@ -509,6 +510,7 @@ def itbasenames(basenamefile, extensions, split=True, epochs=1,
             result = {}
             path = os.path.join(root, fname)
             result["__path__"] = path
+            result["__epoch__"] = epoch
             for extension in extensions:
                 result[extension] = readfile(path + "." + extension)
             yield result
@@ -539,6 +541,7 @@ def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
                 nerrors += 1
                 continue
             result = {}
+            result["__epoch__"] = epoch
             for name, value in zip(colnames, fnames):
                 if name[0]=="_":
                     result[name] = value
@@ -614,6 +617,7 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
         for s in l:
             u = pyr.choice(s)
             for item in ittarreader(u):
+                item["__epoch__"] = epoch
                 yield item
 
 
@@ -646,24 +650,27 @@ def itsqlite(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
 
 
 @itsource
-def itbookdir(bookdir, epochs=1):
+def itbookdir(bookdir, epochs=1, shuffle=True):
     """Read a dataset from an OCRopus-style book directory."""
     assert os.path.isdir(bookdir), bookdir
     fnames = glob.glob(bookdir + "/????/??????.gt.txt")
     fnames.sort()
-    for fname in fnames:
-        base = re.sub(".gt.txt$", "", fname)
-        if not os.path.exists(base + ".dew.png"):
-            continue
-        image = pylab.imread(base + ".dew.png")
-        if image.ndim == 3:
-            image = np.mean(image, 2)
-        image -= np.amin(image)
-        image /= np.amax(image)
-        image = 1.0 - image
-        with codecs.open(fname, "r", "utf-8") as stream:
-            transcript = stream.read().strip()
-        yield dict(input=image, transcript=transcript)
+    for epoch in xrange(epochs):
+        if shuffle: pyr.shuffle(fnames)
+        for fname in fnames:
+            base = re.sub(".gt.txt$", "", fname)
+            if not os.path.exists(base + ".dew.png"):
+                continue
+            image = pylab.imread(base + ".dew.png")
+            if image.ndim == 3:
+                image = np.mean(image, 2)
+            image -= np.amin(image)
+            image /= np.amax(image)
+            image = 1.0 - image
+            with codecs.open(fname, "r", "utf-8") as stream:
+                transcript = stream.read().strip()
+            yield dict(input=image, transcript=transcript, __epoch__=epoch)
+
 
 ###
 ### Basic Filters
