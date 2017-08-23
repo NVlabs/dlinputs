@@ -20,11 +20,10 @@ parser.add_argument("input")
 parser.add_argument("-t", "--table", default="training")
 parser.add_argument("-s", "--skip", default=0, type=int)
 parser.add_argument("-b", "--bench", default=0, type=int)
+parser.add_argument("-B", "--batched", action="store_true")
 parser.add_argument("-d", "--display", default=None)
 parser.add_argument("-D", "--order", default="BHWD")
-parser.add_argument("-G", "--grid", default="3,3")
 args = parser.parse_args()
-args.grid = eval("({})".format(args.grid))
 
 inputs = dli.loadable.load_input(args.input)
 
@@ -43,13 +42,15 @@ source = getattr(inputs, method)()
 for i in xrange(args.skip):
     source.next()
 
-batch = source.next()
-keys = sorted(batch.keys())
+sample = source.next()
+keys = sorted(sample.keys())
 
 for k in keys:
-    v = batch[k]
+    v = sample[k]
     if isinstance(v, (int, float, str)):
         print "%15s %s" % (k, str(v)[:60])
+    elif isinstance(v, unicode):
+        print "%15s %s" % (k, v.strip().encode("utf-8"))
     elif isinstance(v, list):
         print "%15s %3d %s" % (k, len(v), str(v)[:60])
     elif isinstance(v, np.ndarray):
@@ -70,14 +71,17 @@ if args.bench > 0:
     for i in xrange(args.bench):
         source.next()
     total = time.time() - start
-    print "sec/batch", total/args.bench
+    print "sec/sample", total/args.bench
 
 if args.display is not None:
-    data = batch[args.display]
-    if args.order=="BWH":
-        data = data.transpose(0, 2, 1)
-    n = min(len(data), args.grid[0] * args.grid[1])
-    for i in xrange(n):
-        subplot(args.grid[0], args.grid[1], i+1)
-        imshow(data[i])
-    show()
+    ion()
+    for i in range(1000):
+        data = sample[args.display]
+        if data.ndim==3 and data.shape[2]==1:
+            data = data[:,:,0]
+        if args.batched:
+            data = data[0]
+        imshow(data)
+        show()
+        ginput(1, 1000)
+        sample = source.next()

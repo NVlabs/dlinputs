@@ -753,6 +753,14 @@ def itren(data, **kw):
         sample = {k: sample[v] for k, v in kw.items()}
         yield sample
 
+@itfilter
+def itcopy(data, **kw):
+    """Copy fields."""
+    for sample in data:
+        result = {k: v for k, v in sample.items()}
+        for k, v in kw.items():
+            result[k] = result[v]
+        yield result
 
 @itfilter
 def itmap(data, **keys):
@@ -845,6 +853,8 @@ def makeseq(image):
     assert isinstance(image, np.ndarray), type(image)
     if image.ndim==3 and image.shape[2]==3:
         image = np.mean(image, 2)
+    elif image.ndim==3 and image.shape[2]==1:
+        image = image[:,:,0]
     assert image.ndim==2
     return image.T
 
@@ -852,19 +862,31 @@ def makebatch(images, for_target=False):
     """Given a list of LD sequences, make a BLD batch tensor."""
     assert isinstance(images, list), type(images)
     assert isinstance(images[0], np.ndarray), images
-    assert images[0].ndim==2, images[0].ndim
-    l, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
-    ibatch = np.zeros([len(images), int(l), int(d)])
-    if for_target:
-        ibatch[:, :, 0] = 1.0
-    for i, image in enumerate(images):
-        l, d = image.shape
-        ibatch[i, :l, :d] = image
-    return ibatch
+    if images[0].ndim==2:
+        l, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
+        ibatch = np.zeros([len(images), int(l), int(d)])
+        if for_target:
+            ibatch[:, :, 0] = 1.0
+        for i, image in enumerate(images):
+            l, d = image.shape
+            ibatch[i, :l, :d] = image
+        return ibatch
+    elif images[0].ndim==3:
+        assert not for_target
+        h, w, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
+        ibatch = np.zeros([len(images), h, w, d])
+        for i, image in enumerate(images):
+            h, w, d = image.shape
+            ibatch[i, :h, :w, :d] = image
+        return ibatch
 
-def images2batch(images):
+def images2seqbatch(images):
     """Given a list of images, return a BLD batch tensor."""
     images = [makeseq(x) for x in images]
+    return makebatch(images)
+
+def images2batch(images):
+    """Given a list of images, return a batch tensor."""
     return makebatch(images)
 
 class AsciiCodec(object):
@@ -924,12 +946,21 @@ def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
         yield batched
 
 @itfilter
-def itlinebatcher(data, input="input", target="target", codec=ascii_codec):
+def itlineseqbatcher(data, input="image", transcript="transcript", target="target", codec=ascii_codec):
     """Performs text line batching for OCR."""
     for sample in data:
         sample = sample.copy()
         sample[input] = images2batch(sample[input])
-        sample[target] = transcripts2batch(sample[target], codec=codec)
+        sample[target] = transcripts2batch(sample[transcript], codec=codec)
+        yield sample
+
+@itfilter
+def itlinebatcher(data, input="image", transcript="transcript", target="target", codec=ascii_codec):
+    """Performs text line batching for OCR."""
+    for sample in data:
+        sample = sample.copy()
+        sample[input] = images2batch(sample[input])
+        sample[target] = transcripts2batch(sample[transcript], codec=codec)
         yield sample
 
 ###
