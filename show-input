@@ -75,13 +75,16 @@ if args.bench > 0:
 
 if args.display is not None:
     ion()
+    keys = args.display.split(",")
     for i in range(1000):
-        data = sample[args.display]
-        if data.ndim==3 and data.shape[2]==1:
-            data = data[:,:,0]
-        if args.batched:
-            data = data[0]
-        imshow(data)
+        for j,key in enumerate(keys):
+            subplot(1, len(keys), j+1)
+            data = sample[key]
+            if data.ndim==3 and data.shape[2]==1:
+                data = data[:,:,0]
+            if args.batched:
+                data = data[0]
+            imshow(data)
         show()
         ginput(1, 1000)
         sample = source.next()
