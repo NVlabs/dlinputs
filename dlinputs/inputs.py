@@ -216,13 +216,14 @@ def pilread(stream, color="gray", asfloat=True):
         result = result.astype("f") / 255.0
     return result
 
-def pilreads(data, color="gray", asfloat=True):
+def pilreads(data, color=, asfloat=True):
     """Read an image from a string or buffer using PIL.
 
     Returns a uint8 image if asfloat=False,
     otherwise a float image with values in [0,1].
     Color can be "gray", "rgb" or "rgba".
     """
+    assert color is not None
     return pilread(StringIO.StringIO(data), color=color, asfloat=asfloat)
 
 
@@ -774,6 +775,11 @@ def itmap(data, **keys):
             sample[k] = f(sample[k])
         yield sample
 
+@itfilter
+def ittransform(data, f=None):
+    if f is None: f = lambda x: x
+    for sample in data:
+        yield f(sample)
 
 @itfilter
 def itshuffle(data, bufsize=1000):

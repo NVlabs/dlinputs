@@ -84,6 +84,7 @@ if args.display is not None:
                 data = data[:,:,0]
             if args.batched:
                 data = data[0]
+            gca().set_title("Key: "+key)
             imshow(data)
         show()
         ginput(1, 1000)
