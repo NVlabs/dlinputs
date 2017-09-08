@@ -216,7 +216,7 @@ def pilread(stream, color="gray", asfloat=True):
         result = result.astype("f") / 255.0
     return result
 
-def pilreads(data, color=, asfloat=True):
+def pilreads(data, color, asfloat=True):
     """Read an image from a string or buffer using PIL.
 
     Returns a uint8 image if asfloat=False,
@@ -798,17 +798,17 @@ def itshuffle(data, bufsize=1000):
 
 
 @itfilter
-def itbatch(data, bs=20, tensors=True, partial=True):
+def itbatch(data, batchsize=20, tensors=True, partial=True):
     """Create batches of the given size."""
     batch = []
     for sample in data:
-        if len(batch) >= bs:
+        if len(batch) >= batchsize:
             yield samples_to_batch(batch, tensors=tensors)
             batch = []
         batch.append(sample)
     if len(batch) == 0:
         return
-    elif len(batch) == bs or partial:
+    elif len(batch) == batchsize or partial:
         yield samples_to_batch(batch, tensors=tensors)
 
 
