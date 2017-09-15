@@ -14,6 +14,7 @@ import PIL
 import numpy as np
 import scipy
 import torch
+import codecs
 from types import NoneType
 
 import simplejson
@@ -101,10 +102,12 @@ class ShardWriter(object):
                 if temp.ndim==3: temp = temp.transpose(1, 2, 0)
                 assert temp.ndim in  [2, 3], obj[k].size()
                 v = pildumps(obj[k])
-            else:
-                assert isinstance(
-                    obj[k], (str, unicode, buffer)), (k, ext, type(obj[k]))
+            elif isinstance(obj[k], (str, buffer)):
                 v = obj[k]
+            elif isinstance(obj[k], unicode):
+                v = codecs.encode(obj[k], "utf8")
+            else:
+                raise Exception("unknown object type: {}".format(type(obj[k])))
             assert isinstance(v, (str, unicode, buffer)), (k, type(v),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + ext)
