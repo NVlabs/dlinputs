@@ -59,6 +59,7 @@ if args.input.endswith(".py"):
         "{} does not define {}_data method".format(args.input, args.table)
     source = getattr(inputs, method)()
 elif args.input.endswith(".tgz"):
+    if args.display is None: args.display = ""
     decoders = {key: dli.pilrgb for key in args.display.split(",")}
     source = dli.ittarreader(args.input) | dli.itmap(**decoders)
 else:
