@@ -230,6 +230,18 @@ def pilreads(data, color, asfloat=True):
 pilgray = ft.partial(pilreads, color="gray")
 pilrgb = ft.partial(pilreads, color="rgb")
 
+def iminvert(image):
+    assert np.amin(image) >= -1e-6
+    assert np.amax(image) <= 1+1e-6
+    return 1.0 - clip(image, 0, 1.0)
+
+def autoinvert(image):
+    assert np.amin(image) >= -1e-6
+    assert np.amax(image) <= 1+1e-6
+    if np.median(image) > 0.5:
+        return 1.0 - image
+    else:
+        return image
 
 def pildumps(image, format="PNG"):
     """Compress an image and return it as a string.
@@ -611,13 +623,14 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
     """Read a sharded data set, using a JSON-format shards file to find the shards."""
     epochs = int(epochs)
     shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
-    for i in xrange(epochs):
+    for epoch in xrange(epochs):
         l = list(shards)
         if randomize:
             pyr.shuffle(l)
         for s in l:
             u = pyr.choice(s)
             for item in ittarreader(u):
+                item["__shard__"] = u
                 item["__epoch__"] = epoch
                 yield item
 
@@ -673,6 +686,7 @@ def itbookdir(bookdir, epochs=1, shuffle=True):
             yield dict(input=image, transcript=transcript, __epoch__=epoch)
 
 
+@itsource
 def itmerge(sources, weights=None):
     """Merge samples from multiple sources into a single iterator."""
     source = list(sources)
@@ -690,6 +704,21 @@ def itmerge(sources, weights=None):
 ### Basic Filters
 ###
 
+def print_sample(sample):
+    for k in sorted(sample.keys()):
+        v = sample[k]
+        print k,
+        if isinstance(v, np.ndarray):
+            print v.dtype, v.shape
+        elif isinstance(v, (str, unicode)):
+            print repr(v)[:60]
+        elif isinstance(v, (int, float)):
+            print v
+        elif isinstance(v, buffer):
+            print type(v), len(v)
+        else:
+            print type(v), repr(v)[:60]
+
 @itfilter
 def itinfo(data, every=0):
     """Print info about samples.
@@ -701,18 +730,7 @@ def itinfo(data, every=0):
     for sample in data:
         if (count == 0 and every == 0) or (every > 0 and count % every == 0):
             print "# itinfo", count
-            for k, v in sample.items():
-                print k,
-                if isinstance(v, np.ndarray):
-                    print v.dtype, v.shape
-                elif isinstance(v, (str, unicode)):
-                    print v[:20]
-                elif isinstance(v, (int, float)):
-                    print v
-                elif isinstance(v, buffer):
-                    print type(v), len(v)
-                else:
-                    print type(v), repr(v)[:20]
+            print_sample(sample)
         count += 1
         yield sample
 
@@ -760,11 +778,27 @@ def itselect(source, **kw):
 
 
 @itfilter
-def itren(data, **kw):
+def itren(data, keep_all=False, keep_meta=True, skip_missing=False, **kw):
     """Rename and select fields using new_name="old_name" keyword arguments."""
+    assert not keep_all
     for sample in data:
-        sample = {k: sample[v] for k, v in kw.items()}
-        yield sample
+        skip = False
+        result = {}
+        if keep_meta:
+            for k, v in sample.items():
+                if k[0]=="_":
+                    result[k] = v
+        for k, v in kw.items():
+            if v not in sample:
+                skip = True
+                break
+            result[k] = sample[v]
+        if skip and skip_missing:
+            if skip_missing is 1:
+                print v, ": missing field; skipping"
+                print_sample(sample)
+            continue
+        yield result
 
 @itfilter
 def itcopy(data, **kw):
