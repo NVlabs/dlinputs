@@ -347,6 +347,7 @@ def intlist_to_hotonelist(cs,nc):
     result = np.zeros((2*len(cs)+1,nc))
     for i,j in enumerate(cs):
         result[2*i,0] = 1.0
+        j = min(j, nc-1) # FIX for bad inputs
         result[2*i+1,j] = 1.0
     result[-1,0] = 1.0
     return result
@@ -629,11 +630,13 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
             pyr.shuffle(l)
         for s in l:
             u = pyr.choice(s)
-            for item in ittarreader(u):
-                item["__shard__"] = u
-                item["__epoch__"] = epoch
-                yield item
-
+            try:
+                for item in ittarreader(u):
+                    item["__shard__"] = u
+                    item["__epoch__"] = epoch
+                    yield item
+            except tarfile.ReadError:
+                print "read error in:", u
 
 @itsource
 def itsqlite(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False):
