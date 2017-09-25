@@ -673,10 +673,22 @@ def itbookdir(bookdir, epochs=1, shuffle=True):
             yield dict(input=image, transcript=transcript, __epoch__=epoch)
 
 
+def itmerge(sources, weights=None):
+    """Merge samples from multiple sources into a single iterator."""
+    source = list(sources)
+    assert weights is None, "weighted sampling not implemented yet"
+    while len(sources) > 0:
+        index = pyr.randint(0, len(sources)-1)
+        try:
+            sample = sources[index].next()
+        except StopIteration:
+            del sources[index]
+        yield sample
+    raise StopIteration()
+
 ###
 ### Basic Filters
 ###
-
 
 @itfilter
 def itinfo(data, every=0):
@@ -961,7 +973,7 @@ def itlineseqbatcher(data, input="image", transcript="transcript", target="targe
         yield sample
 
 @itfilter
-def itlinebatcher(data, input="image", transcript="transcript", target="target", codec=ascii_codec):
+def itlinebatcher(data, input="input", transcript="transcript", target="target", codec=ascii_codec):
     """Performs text line batching for OCR."""
     for sample in data:
         sample = sample.copy()
