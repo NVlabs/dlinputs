@@ -33,7 +33,7 @@ them via `ssh` to your home directory on host `mvcdev2` with
 names like `myimages-000000.tgz`, ...:
 
 ```
-find . -name '*.png' -o -name '*.cls' | tarshards -S mvcdev2: myimages
+find . -name '*.png' -o -name '*.cls' | sort | tarshards -S mvcdev2: myimages
 ```
 
 For ssh destinations, you should have set up a password-less login.
