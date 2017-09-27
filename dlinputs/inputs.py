@@ -19,6 +19,7 @@ import urllib2
 import urlparse
 
 import numpy as np
+import pylab
 import PIL
 import pylab
 import scipy.ndimage as ndi
@@ -164,7 +165,7 @@ def make_rgba(image, alpha=255):
         return result
     elif image.shape[2] == 3:
         h, w, _ = image.shape
-        result = zeros((h, w, 4), 'uint8')
+        result = np.zeros((h, w, 4), 'uint8')
         result[:, :, :3] = image
         result[:, :, 3] = alpha
         return result
@@ -260,6 +261,42 @@ def pildumps(image, format="PNG"):
 pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
 
+
+def make_distortions(size, distortions=[(5.0, 3)]):
+    h, w = size
+    total = np.zeros((2, h, w), 'f')
+    for sigma, maxdist in distortions:
+        deltas = pylab.randn(2, h, w)
+        deltas = ndi.gaussian_filter(deltas, (0, sigma, 0))
+        deltas = ndi.gaussian_filter(deltas, (0, 0, sigma))
+        r = np.amax((deltas[...,0]**2 + deltas[...,1]**2)**.5)
+        deltas *= maxdist / r
+        total += deltas
+    deltas = total
+    xy = np.array(np.meshgrid(range(h),range(w))).transpose(0,2,1)
+    deltas += xy
+    return deltas
+
+def map_image_coordinates(image, deltas, order=1, mode="nearest"):
+    if image.ndim==2:
+        return ndi.map_coordinates(image, deltas, order=order)
+    elif image.ndim==3:
+        result = np.zeros(image.shape, image.dtype)
+        for i in range(image.shape[-1]):
+            ndi.map_coordinates(image[...,i], deltas, order=order, output=result[...,i], mode=mode)
+        return result
+
+def random_distortions(images, distortions=[(5.0, 3)], order=1):
+    h, w = images[0].shape[:2]
+    deltas = make_distortions((h, w), distortions)
+    return [map_image_coordinates(image, deltas, order=order) for image in images]
+
+def filtered_noise(size, sigma):
+    data = np.random.uniform(size=size)
+    data = ndi.gaussian_filter(data, 0.5)
+    data -= amin(data)
+    data /= amax(data)
+    return data
 
 def random_affine(ralpha=(-0.2, 0.2), rscale=((0.8, 1.0), (0.8, 1.0))):
     """Compute a random affine transformation matrix."""
@@ -882,21 +919,32 @@ def itslice(*args):
     return itertools.islice(*args)
 
 @itmapper
-def itstandardize(sample, size, keys=["image"], crop=0, mode="nearest", augment=None):
+def itdistort(sample, distortions=[(5.0, 5)], keys=["image"]):
+    images = [sample[k] for k in keys]
+    distorted = random_distortions(images, distortions)
+    result = dict(sample)
+    for k, v in zip(keys, distorted): result[k] = v
+    return result
+
+@itmapper
+def itstandardize(sample, size, keys=["image"], crop=0, mode="nearest",
+                  ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)),
+                  rgamma=None, cgamma=(0.8, 1.2)):
     """Standardize images in a sample."""
-    if augment:
-        affine = random_affine(ralpha=augment.get(
-            "ralpha"), rscale=augment.get("rscale"))
+    if ralpha is True: ralpha = (-0.2, 0.2)
+    if rgamma is True: rgamma = (0.5, 2.0)
+    if ralpha is not None:
+        affine = random_affine(ralpha=ralpha, rscale=rscale)
     else:
         affine = np.eye(2)
     for key in keys:
         sample[key] = standardize(
             sample[key], size, crop=crop, mode=mode, affine=affine)
-    if augment:
+    if rgamma is not None:
         for key in keys:
             sample[key] = random_gamma(sample[key],
-                                       rgamma=augment.get("rgamma"),
-                                       cgamma=augment.get("cgamma"))
+                                       rgamma=rgamma,
+                                       cgamma=cgamma)
     return sample
 
 ###
