@@ -30,7 +30,7 @@ def print_sample(sample):
     for k in keys:
         v = sample[k]
         if isinstance(v, (int, float, str)):
-            print "%15s %s" % (k, str(v)[:60])
+            print "%15s %s" % (k, repr(v)[:60])
         elif isinstance(v, unicode):
             print "%15s %s" % (k, v.strip().encode("utf-8"))
         elif isinstance(v, list):
@@ -59,8 +59,10 @@ if args.input.endswith(".py"):
         "{} does not define {}_data method".format(args.input, args.table)
     source = getattr(inputs, method)()
 elif args.input.endswith(".tgz"):
-    if args.display is None: args.display = ""
-    decoders = {key: dli.pilrgb for key in args.display.split(",")}
+    if args.display is None:
+        decoders = {}
+    else:
+        decoders = {key: dli.pilrgb for key in args.display.split(",")}
     source = dli.ittarreader(args.input) | dli.itmap(**decoders)
 else:
     raise Exception("{}: unknown extension".format(args.input))
