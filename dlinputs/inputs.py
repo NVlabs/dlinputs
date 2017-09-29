@@ -25,7 +25,7 @@ import pylab
 import scipy.ndimage as ndi
 import simplejson
 from numpy import cos, sin
-from numpy.random import uniform
+import numpy.random as npr
 
 from decorators import itfilter, itmapper, itsink, itsource, prints, ComposableIterator
 
@@ -413,10 +413,10 @@ def random_affine(ralpha=(-0.2, 0.2), rscale=((0.8, 1.2), (0.8, 1.2))):
     affine = np.eye(2)
     if rscale is not None:
         (x0, x1), (y0, y1) = rscale
-        affine = np.diag([uniform(x0, x1), uniform(y0, y1)])
+        affine = np.diag([npr.uniform(x0, x1), npr.uniform(y0, y1)])
     if ralpha is not None:
         a0, a1 = ralpha
-        a = uniform(a0, a1)
+        a = npr.uniform(a0, a1)
         c = cos(a)
         s = sin(a)
         m = np.array([[c, -s], [s, c]], 'f')
@@ -435,13 +435,13 @@ def random_gamma(image, rgamma=(0.5, 2.0), cgamma=(0.8, 1.2)):
     """
     image = image.copy()
     if rgamma is not None:
-        gamma = uniform(*rgamma)
+        gamma = npr.uniform(*rgamma)
     else:
         gamma = 1.0
     for plane in range(3):
         g = gamma
         if cgamma is not None:
-            g *= uniform(*cgamma)
+            g *= npr.uniform(*cgamma)
         image[..., plane] = image[..., plane] ** g
     return image
 
@@ -535,9 +535,9 @@ def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
 
     Translate back. Thresholds on class 0, then assigns the maximum class to
     each region. ``pos`` determines the depth of character information returned:
-        * `pos=0`: Return list of recognized characters
-        * `pos=1`: Return list of position-character tuples
-        * `pos=2`: Return list of character-probability tuples
+    - `pos=0`: Return list of recognized characters
+    - `pos=1`: Return list of position-character tuples
+    - `pos=2`: Return list of character-probability tuples
 
 
     :param outputs: 2D array containing posterior probabilities
