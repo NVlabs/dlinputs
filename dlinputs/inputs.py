@@ -39,6 +39,15 @@ def find_directory(path, target="", tests=[], verbose=False, error=True):
 
     If `tests` is supplied, requires those targets to be present as well.
     This only works if the target is a directory.
+
+    :param list path: colon separated path along which to search or list
+    :param str target: target to search for (if empty, finds first path element that exists)
+    :param list tests: list of functions of additional predicates
+    :param bool verbose: output information about tests performed
+    :param bool error: not finding the target is an error
+    :returns: path to target
+    :rtype: str
+
     """
     if isinstance(path, str):
         path = path.split(":")
@@ -67,6 +76,15 @@ def find_directory(path, target="", tests=[], verbose=False, error=True):
 
 def find_file(path, target, tests=[], verbose=False, error=True):
     """Finds the first instance of file on a path.
+
+    :param list path: colon separated path along which to search or list
+    :param str target: target to search for (if empty, finds first path element that exists)
+    :param list tests: list of functions of additional predicates
+    :param bool verbose: output information about tests performed
+    :param bool error: not finding the target is an error
+    :returns: path to target
+    :rtype: str
+
     """
     if isinstance(path, str):
         path = path.split(":")
@@ -89,7 +107,12 @@ def find_file(path, target, tests=[], verbose=False, error=True):
         raise ValueError("cannot find {} on path {}".format(target, path))
 
 def readfile(fname):
-    """Helper function to read a file (binary)."""
+    """Helper function to read a file (binary).
+
+    :param fname: file name to be read
+    :returns: contents of file
+
+    """
     with open(fname, "rb") as stream:
         return stream.read()
 
@@ -98,6 +121,10 @@ def splitallext(path):
     """Helper method that splits off all extension.
 
     Returns base, allext.
+
+    :param path: path with extensions
+    :returns: path with all extensions removed
+
     """
     match = re.match(r"^((?:.*/|)[^.]+)[.]([^/]*)$", path)
     if not match:
@@ -107,7 +134,13 @@ def splitallext(path):
 
 
 def find_basenames(top, extensions):
-    """Finds all basenames that have all the given extensions inside a tree."""
+    """Finds all basenames that have all the given extensions inside a tree.
+
+    :param top: root of directory tree
+    :param extensions: required extensions
+    :returns: iterator over basenames
+
+    """
     assert os.path.isdir(top), top
     if isinstance(extensions, str):
         extensions = extensions.split(",")
@@ -127,6 +160,10 @@ def make_gray(image):
     """Converts any image to a grayscale image by averaging.
 
     Knows about alpha channels etc.
+
+    :param image: rank 2 or 3 ndarray
+    :returns: rank 2 ndarray
+
     """
     if image.ndim == 2:
         return image
@@ -139,6 +176,10 @@ def make_rgb(image):
     """Converts any image to an RGB image.
 
     Knows about alpha channels etc.
+
+    :param image: rank 2 or 3 ndarray
+    :returns: rank 3 ndarray of shape :,:,3
+
     """
     if image.ndim == 2:
         image = image.reshape(image.shape + (1,))
@@ -155,6 +196,11 @@ def make_rgba(image, alpha=255):
     """Converts any image to an RGBA image.
 
     Knows about alpha channels etc.
+
+    :param image: rank 2 or 3 ndarray
+    :param alpha: default alpha value
+    :returns: rank 3 ndarray with shape :,:,4
+
     """
     if image.ndim == 2:
         image = image.reshape(image.shape + (1,))
@@ -173,6 +219,13 @@ def make_rgba(image, alpha=255):
         return image
 
 def invert_mapping(kvp):
+    """Inverts the mapping given by a dictionary.
+
+    :param kvp: mapping to be inverted
+    :returns: inverted mapping
+    :rtype: dictionary
+
+    """
     return {v: k for k, v in kvp.items()}
 
 def get_string_mapping(kvp):
@@ -180,6 +233,10 @@ def get_string_mapping(kvp):
 
     This can take either a string of the form "name=value:name2=value2"
     or a dictionary containing all string keys and values.
+
+    :param kvp: dictionary or string
+    :returns: dictionary
+
     """
     if kvp is None:
         return {}
@@ -197,9 +254,10 @@ def get_string_mapping(kvp):
 def pilread(stream, color="gray", asfloat=True):
     """Read an image from a stream using PIL.
 
-    Returns a uint8 image if asfloat=False,
-    otherwise a float image with values in [0,1].
-    Color can be "gray", "rgb" or "rgba".
+    :param stream: stream to read the image from
+    :param color: "gray", "rgb" or "rgba".
+    :param asfloat: return float image instead of uint8 image
+
     """
     image = PIL.Image.open(stream)
     result = np.array(image, 'uint8')
@@ -220,9 +278,10 @@ def pilread(stream, color="gray", asfloat=True):
 def pilreads(data, color, asfloat=True):
     """Read an image from a string or buffer using PIL.
 
-    Returns a uint8 image if asfloat=False,
-    otherwise a float image with values in [0,1].
-    Color can be "gray", "rgb" or "rgba".
+    :param data: data to be decoded
+    :param color: "gray", "rgb" or "rgba".
+    :param asfloat: return float instead of uint8
+
     """
     assert color is not None
     return pilread(StringIO.StringIO(data), color=color, asfloat=asfloat)
@@ -232,11 +291,26 @@ pilgray = ft.partial(pilreads, color="gray")
 pilrgb = ft.partial(pilreads, color="rgb")
 
 def iminvert(image):
+    """Invert the given image.
+
+    :param image: image
+    :returns: inverted image
+
+    """
     assert np.amin(image) >= -1e-6
     assert np.amax(image) <= 1+1e-6
     return 1.0 - clip(image, 0, 1.0)
 
 def autoinvert(image):
+    """Autoinvert the given document image.
+
+    If the image appears to be black on white, invert it to white on black,
+    otherwise leave it unchanged.
+
+    :param image: document image
+    :returns: autoinverted document image
+
+    """
     assert np.amin(image) >= -1e-6
     assert np.amax(image) <= 1+1e-6
     if np.median(image) > 0.5:
@@ -245,9 +319,13 @@ def autoinvert(image):
         return image
 
 def pildumps(image, format="PNG"):
-    """Compress an image and return it as a string.
+    """Compress an image using PIL and return it as a string.
 
     Can handle float or uint8 images.
+
+    :param image: ndarray representing an image
+    :param format: compression format ("PNG" or "JPEG")
+
     """
     result = StringIO.StringIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
@@ -263,6 +341,16 @@ piljpg = ft.partial(pildumps, format="JPEG")
 
 
 def make_distortions(size, distortions=[(5.0, 3)]):
+    """Generate 2D distortions using filtered Gaussian noise.
+
+    The distortions are a sum of gaussian filtered white noise
+    with the given sigmas and maximum distortions.
+
+    :param size: size of the image for which distortions are generated
+    :param distortions: list of (sigma, maxdist) pairs
+    :returns: a grid of source coordinates suitable for scipy.ndimage.map_coordinates
+
+    """
     h, w = size
     total = np.zeros((2, h, w), 'f')
     for sigma, maxdist in distortions:
@@ -277,7 +365,16 @@ def make_distortions(size, distortions=[(5.0, 3)]):
     deltas += xy
     return deltas
 
-def map_image_coordinates(image, deltas, order=1, mode="nearest"):
+def map_image_coordinates(image, coords, order=1, mode="nearest"):
+    """Given an image, map the image coordinates for each channel.
+
+    :param image: rank 2 or 3 image
+    :param coords: coords to map to
+    :param order: order of the interpolation
+    :param mode: mode for the boundary
+    :returns: distorted image
+
+    """
     if image.ndim==2:
         return ndi.map_coordinates(image, deltas, order=order)
     elif image.ndim==3:
@@ -286,20 +383,33 @@ def map_image_coordinates(image, deltas, order=1, mode="nearest"):
             ndi.map_coordinates(image[...,i], deltas, order=order, output=result[...,i], mode=mode)
         return result
 
-def random_distortions(images, distortions=[(5.0, 3)], order=1):
+def random_distortions(images, distortions=[(5.0, 3)], order=1, mode="nearest"):
+    """Apply a random distortion to a list of images.
+
+    All images must have the same width and height.
+
+    :param images: list of images
+    :param distortions: list of distortion parameters for `make_distortions`
+    :param order: order of the interpolation
+    :param mode: boundary handling
+    :returns: list of distorted images
+
+    """
     h, w = images[0].shape[:2]
     deltas = make_distortions((h, w), distortions)
-    return [map_image_coordinates(image, deltas, order=order) for image in images]
+    return [map_image_coordinates(image, deltas, order=order, mode=mode) for image in images]
 
-def filtered_noise(size, sigma):
-    data = np.random.uniform(size=size)
-    data = ndi.gaussian_filter(data, 0.5)
-    data -= amin(data)
-    data /= amax(data)
-    return data
+def random_affine(ralpha=(-0.2, 0.2), rscale=((0.8, 1.2), (0.8, 1.2))):
+    """Compute a random affine transformation matrix.
 
-def random_affine(ralpha=(-0.2, 0.2), rscale=((0.8, 1.0), (0.8, 1.0))):
-    """Compute a random affine transformation matrix."""
+    Note that this is random scale and random rotation, not an
+    arbitrary affine transformation.
+
+    :param ralpha: range of rotation angles
+    :param rscale: range of scales for x and y
+    :returns: random affine transformation
+
+    """
     affine = np.eye(2)
     if rscale is not None:
         (x0, x1), (y0, y1) = rscale
@@ -315,7 +425,14 @@ def random_affine(ralpha=(-0.2, 0.2), rscale=((0.8, 1.0), (0.8, 1.0))):
 
 
 def random_gamma(image, rgamma=(0.5, 2.0), cgamma=(0.8, 1.2)):
-    """Perform a random gamma transformation on an image."""
+    """Perform a random gamma transformation on an image.
+
+    :param image: input image
+    :param rgamma: grayscale gamma range
+    :param cgamma: separate per channel color gamma range
+    :returns: transformed image
+
+    """
     image = image.copy()
     if rgamma is not None:
         gamma = uniform(*rgamma)
@@ -330,11 +447,22 @@ def random_gamma(image, rgamma=(0.5, 2.0), cgamma=(0.8, 1.2)):
 
 
 def standardize(image, size, crop=0, mode="nearest", affine=np.eye(2)):
-    """Rescale and crop the image to the given size. With crop=0,
-    this rescales the image so that the target size fits snugly
-    into it and cuts out the center; with crop=1, this rescales
-    the image so that the image fits into the target size and
-    fills the boundary in according to `mode`."""
+    """Rescale and crop the image to the given size. 
+
+    With crop=0, this rescales the image so that the target size fits
+    snugly into it and cuts out the center; with crop=1, this rescales
+    the image so that the image fits into the target size and fills
+    the boundary in according to `mode`.
+
+    :param ndarray image: image to be standardized
+    :param tuple size: target size
+    :param bool crop: crop the image
+    :param str mode: boundary mode
+    :param affine: affine transformation to be applied
+    :returns: standardized image
+    :rtype: ndarray
+
+    """
     h, w = image.shape[:2]
     th, tw = size
     oshape = (th, tw, image.shape[2])
@@ -361,6 +489,12 @@ def samples_to_batch(samples, tensors=True):
 
     If `tensors` is True, `ndarray` objects are combined into
     tensor batches.
+
+    :param dict samples: list of samples
+    :param bool tensors: whether to turn lists of ndarrays into a single ndarray
+    :returns: single sample consisting of a batch
+    :rtype: dict
+
     """
     result = {k: [] for k in samples[0].keys()}
     for i in range(len(samples)):
@@ -374,17 +508,24 @@ def samples_to_batch(samples, tensors=True):
     return result
 
 
-def intlist_to_hotonelist(cs,nc):
-    """Helper function for LSTM-based OCR: encode ground truth as array.
+def intlist_to_hotonelist(cs, nc, allow_bad_classes=True):
+    """Helper function for LSTM/CTC-based OCR: encode ground truth as array.
 
     Given a list of target classes `cs` and a total
     maximum number of classes, compute an array that has
     a `1` in each column and time step corresponding to the
-    target class."""
+    target class, with class 0 interspersed.
+
+    :param cs: list of target classes
+    :param nc: total number of classes
+    :returns: ndarray representing a hotone encoding
+
+    """
     result = np.zeros((2*len(cs)+1,nc))
     for i,j in enumerate(cs):
         result[2*i,0] = 1.0
-        j = min(j, nc-1) # FIX for bad inputs
+        if allow_bad_classes:
+            j = min(j, nc-1) # FIX for bad inputs
         result[2*i+1,j] = 1.0
     result[-1,0] = 1.0
     return result
@@ -397,7 +538,14 @@ def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
         * `pos=0`: Return list of recognized characters
         * `pos=1`: Return list of position-character tuples
         * `pos=2`: Return list of character-probability tuples
-     """
+
+
+    :param outputs: 2D array containing posterior probabilities
+    :param threshold: posterior probability threshold
+    :param pos: what to return
+    :returns: decoded hot one outputs
+
+    """
     labels,n = measurements.label(outputs[:,0]<threshold)
     mask = np.tile(labels.reshape(-1,1),(1,outputs.shape[1]))
     maxima = measurements.maximum_position(outputs,mask,np.arange(1,np.amax(mask)+1))
@@ -407,7 +555,12 @@ def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
 
 
 def spliturl(url):
-    """Split a URL into its extension and base."""
+    """Split a URL into its extension and base.
+
+    :param url: input url
+    :returns: tuple of basename and extension
+
+    """
     match = re.search(r"^(.+)\.([^:/]+)$", url)
     if match:
         return match.group(1), match.group(2)
@@ -415,45 +568,48 @@ def spliturl(url):
         return url, ""
 
 
-url_rewriter = None
+def read_url_path(url, urlpath, verbose=False):
+    """Attempts to find `url` on the `urlpath`.
 
+    :param url: relative URL
+    :param urlpath: list or space separated string of base URLs
+    :param verbose: inform user about trials
+    :returns: contents first URL that can be opened or None
+    :rtype: str
 
-def load_url_rewriter(path=None):
-    """Loads a Python module that rewrites URLs names.
-
-    This loads the rewriter from DLP_REWRITER or from $HOME/.dlp_rewriter
     """
-    global url_rewriter
-    if url_rewriter is not None:
-        return
-    if path is None:
-        path = os.getenv("DLP_REWRITER", path)
-    if path is None:
-        path = os.path.join(os.environ.get("HOME", "/"), ".dlp_rewriter")
-    if not os.path.exists(path):
-        def url_rewriter(x): return x
-        return
-    mod = imp.load_source("url_rewriter", path)
-    assert "rewriter" in dir(
-        mod), "no `rewriter` function found in " + pathname
-    assert isinstance(
-        mod.rewriter, types.FunctionType), "rewriter is not a function"
-    url_rewriter = mod.rewriterlsju
-
+    urlpath = urlpath or [""]
+    if isinstance(urlpath, str):
+        urlpath = urlpath.strip().split()
+    for base in urlpath:
+        trial = urlparse.urljoin(base, url)
+        if verbose: print "trying: {}".format(trial)
+        try:
+            return openurl(trial).read()
+        except urllib2.URLError:
+            if verbose: print trial, ": FAILED"
+            continue
+    return None
 
 def findurl(url):
     """Finds a URL using environment variables for helpers.
 
-    Loads DLP_REWRITER (if any) and applies it to the url. Then,
-    if DLP_URLBASE is set, it reinterprets the URL relative to that
-    base. Returns the new URL.
-    """
+    If DLP_URLREWRITER is set in the environment, it is loaded.
+    If dlinputs.url_rewriter is not None, it is applied to the url.
+    If DLP_URLBASE is not None, it is joined to the url as a base url.
 
-    load_url_rewriter()
-    orig = url
-    url = url_rewriter(url)
-    assert isinstance(
-        url, str), "url_rewriter({}) returned {}".format(orig, url)
+    FIXME: make DLP_URLBASE a path
+
+    :param url: url to locate
+    :return: located URL
+    :rtype: str
+
+    """
+    rewriter = os.environ.get("DLP_URLREWRITER", None)
+    if rewriter is not None:
+        execfile(rewriter)
+    if dlinputs.url_rewriter is not None:
+        url = dlinputs.url_rewriter(url)
     base = os.environ.get("DLP_URLBASE", None)
     if base is not None:
         url = urlparse.urljoin(base, url)
@@ -461,25 +617,30 @@ def findurl(url):
 
 
 def openurl(url):
+    """Open a URL with findurl followed by urlopen.
+
+    :param url: url to be opened
+    :returns: result of urlopen
+    :rtype: stream
+
+    """
     url = findurl(url)
     return urllib2.urlopen(url)
 
 
 def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
-    """Read a shards description file from a URL."""
-    urlpath = urlpath or [""]
-    if isinstance(urlpath, str):
-        urlpath = urlpath.strip().split()
-    shards = None
-    for base in urlpath:
-        trial = urlparse.urljoin(base, url)
-        if verbose: print "trying: {}".format(trial)
-        try:
-            shards = simplejson.loads(openurl(trial).read())
-            url = trial
-        except urllib2.URLError:
-            if verbose: print "FAILED"
-            continue
+    """Read a shards description file from a URL and convert relative URLs in shard file.
+
+    :param url: url to read shard file from (JSON format)
+    :param shardtype: default shard type
+    :param urlpath: path on which to search for the shard file
+    :param verbose: output progress
+
+    """
+    data = read_url_path(url, urlpath, verbose=verbose)
+    if data is None:
+        raise Exception("url not found") # FIXME
+    shards = simplejson.loads(data)
     if shards is None:
         raise Exception("cannot find {} on {}".format(url, urlpath))
     if shardtype is not None and "shardtype" in shards:
@@ -497,20 +658,39 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
 
 @itsource
 def itinfinite(sample):
-    """Repeat the same sample over and over again (for testing)."""
+    """Repeat the same sample over and over again (for testing).
+
+    :param sample: sample to be repeated
+    :returns: iterator yielding sample
+
+    """
     while True:
         yield sample
 
 
 @itsource
 def itrepeat(source, nrepeats=int(1e9)):
-    """Repeat data from a source (returned by a callable function)."""
+    """Repeat data from a source (returned by a callable function).
+
+    :param source: callable function yielding an iterator
+    :param nrepeats: number of times to repeat
+    :returns: iterator over `nrepeats` repeats of `source`
+
+    """
     for i in xrange(nrepeats):
         data = source()
         for sample in data:
             yield sample
 
 def check_ds_size(ds, size):
+    """Helper function to check the size of a dataset.
+
+    This is mostly just a nice error message
+
+    :param int ds: dataset size
+    :param tuple size: lower and upper bounds of dataset size
+
+    """
     if isinstance(size, int): size = (size, size)
     if not isinstance(ds, int): ds = len(ds)
     if ds < size[0]:
@@ -523,7 +703,17 @@ def check_ds_size(ds, size):
 @itsource
 def itdirtree(top, extensions, epochs=1,
                 shuffle=True, verbose=True, size=(100,1e9)):
-    """Iterate of training samples in a directory tree."""
+    """Iterate of training samples in a directory tree.
+
+    :param top: top of the directory tree
+    :param list,str extensions: list/comma separated string of extensions
+    :param int epochs: number of epochs to iterate over the data
+    :param bool shuffle: whether to shuffle the data
+    :param bool verbose: whether to output info about the interator
+    :param size: expected dataset size
+    :returns: iterator over samples
+
+    """
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     assert os.path.isdir(top)
@@ -544,7 +734,18 @@ def itdirtree(top, extensions, epochs=1,
 @itsource
 def itbasenames(basenamefile, extensions, split=True, epochs=1,
                 shuffle=True, verbose=True, size=(100,1e9)):
-    """Iterate over training samples given as basenames and extensions."""
+    """Iterate over training samples given as basenames and extensions.
+
+    :param basenamefile: file containing one basename per line
+    :param extensions: list of expected extensions for each basename
+    :param split: remove any extension from files in basenamefile
+    :param epochs: number of times to iterate
+    :param shuffle: shuffle before training
+    :param verbose: verbose output
+    :param size: expected dataset size
+    :returns: iterator
+
+    """
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     root = os.path.abspath(basenamefile)
@@ -569,8 +770,25 @@ def itbasenames(basenamefile, extensions, split=True, epochs=1,
 @itsource
 def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
               epochs=1, shuffle=True, verbose=True, size=(100,1e9)):
-    """Iterate over training samples given by a tabular input."""
-    if isinstance(size, int): size = (size, size)
+    """Iterate over training samples given by a tabular input.
+
+    Columns whose names start with "_" are passed on directly as strings, all other
+    columns are interpreted as file names and read.
+
+    :param str table: tabular input file separated by `separator`
+    :param list,str colnames: column names (keys in sample), list or comman separated
+    :param str separator: separator for columns in input file
+    :param maxerrors: maximum number of read errors
+    :param encoding: text file encoding
+    :param epochs: number of epochs to iterate
+    :param shuffle: shuffle data prior to training
+    :param verbose: verbose output
+    :param size: expected dataset size
+    :returns: iterator
+
+    """
+    if isinstance(size, int):
+        size = (size, size)
     if isinstance(colnames, str):
         colnames = colnames.split(",")
     root = os.path.abspath(table)
@@ -610,11 +828,17 @@ def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
 
 
 @itsource
-def ittarreader(archive):
+def ittarreader(archive, check_sorted=True):
     """Read samples from a tar archive, either locally or given by URL.
 
-    Batches are dictionaries using extensions as keys and containing
-    file contents as values.
+    Tar archives are assumed to be sorted by file name. For each basename,
+    reads all the files with different extensions and returns a dictionary
+    with the extension as key and the file contents as value.
+
+    :param str archive: tar archive with sorted file names (file name or URL)
+    :param bool check_sorted: verify that file names are sorted
+    :returns: iterator over samples
+
     """
     if isinstance(archive, str):
         if re.match(r"^(https?|file):(?i)", archive):
@@ -631,6 +855,8 @@ def ittarreader(archive):
         file = tarinfo.name
         prefix, suffix = splitallext(file)
         if prefix != current_prefix:
+            if check_sorted and prefix <= current_prefix:
+                raise ValueError("tar file does not contain sorted keys")
             if current_sample is not None:
                 yield current_sample
             current_prefix = prefix
@@ -642,23 +868,17 @@ def ittarreader(archive):
 
 
 @itsource
-def itshardnames(url, shardtype="application/x-tgz",
-                 randomize=True, epochs=1, urlpath=None):
-    """An iterator over shard names."""
-    epochs = int(epochs)
-    shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
-    for i in xrange(epochs):
-        l = list(shards)
-        if randomize:
-            pyr.shuffle(l)
-        for s in l:
-            yield pyr.choice(s)
-
-
-@itsource
 def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
                 urlpath=None):
-    """Read a sharded data set, using a JSON-format shards file to find the shards."""
+    """Read a sharded data set, using a JSON-format shards file to find the shards.
+
+    :param url: URL for the shard file (JSON format)
+    :param shardtype: the file type for the shards
+    :param randomize: shuffle the shards prior to reading
+    :param epochs: number of epochs to train for
+    :param urlpath: path of base URLs to search for for url
+
+    """
     epochs = int(epochs)
     shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
     for epoch in xrange(epochs):
@@ -681,6 +901,15 @@ def itsqlite(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
 
     Returns samples as dictionaries, with column names as keys
     and column contents as values (values as returned by sqlite3).
+
+    :param dbfile: SQLite database file
+    :param table: table name to iterate over
+    :param epochs: number of epochs to iterate for
+    :param cols: columns to extract in the sample
+    :param extra: extra clause for SQL query statement (e.g., "order by rand(), "limit 100")
+    :param verbose: output more detailed information
+    :returns: iterator over samples
+
     """
     assert "," not in table
     if "::" in dbfile:
@@ -705,7 +934,14 @@ def itsqlite(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
 
 @itsource
 def itbookdir(bookdir, epochs=1, shuffle=True):
-    """Read a dataset from an OCRopus-style book directory."""
+    """Read a dataset from an OCRopus-style book directory.
+
+    :param bookdir: top level directory in OCRopus bookdir format
+    :param epochs: number of epochs to iterate for
+    :param shuffle: shuffle the samples prior to reading
+    :returns: iterator
+
+    """
     assert os.path.isdir(bookdir), bookdir
     fnames = glob.glob(bookdir + "/????/??????.gt.txt")
     fnames.sort()
@@ -728,7 +964,13 @@ def itbookdir(bookdir, epochs=1, shuffle=True):
 
 @itsource
 def itmerge(sources, weights=None):
-    """Merge samples from multiple sources into a single iterator."""
+    """Merge samples from multiple sources into a single iterator.
+
+    :param sources: list of iterators
+    :param weights: weights for sampling
+    :returns: iterator
+
+    """
     source = list(sources)
     assert weights is None, "weighted sampling not implemented yet"
     while len(sources) > 0:
@@ -745,6 +987,11 @@ def itmerge(sources, weights=None):
 ###
 
 def print_sample(sample):
+    """Pretty print a standard sample.
+
+    :param dict sample: key value pairs used for training
+
+    """
     for k in sorted(sample.keys()):
         v = sample[k]
         print k,
@@ -765,6 +1012,11 @@ def itinfo(data, every=0):
 
     By default only prints the first sample, but with
     `every>0`, prints `every` samples.
+
+    :param data: sample iterator
+    :param every: how often to print information
+    :returns: iterator
+
     """
     count = 0
     for sample in data:
@@ -781,6 +1033,11 @@ def itgrep(source, **kw):
 
     Arguments are of the form `fieldname="regex"`.
     If `_not=True`, samples matching the pattern are rejected.
+
+    :param source: iterator
+    :param kw: fieldname="regex" entries
+    :returns: iterator
+
     """
     _not = not not kw.get("_not", False)
     if "_not" in kw:
@@ -803,6 +1060,11 @@ def itselect(source, **kw):
     """Select samples from the source that match given predicates.
 
     Arguments are of the form `fieldname=predicate`.
+
+    :param source: iterator
+    :param kw: fieldname=predicate selectors
+    :returns: iterator
+
     """
     for item in source:
         for data in source:
@@ -819,7 +1081,16 @@ def itselect(source, **kw):
 
 @itfilter
 def itren(data, keep_all=False, keep_meta=True, skip_missing=False, **kw):
-    """Rename and select fields using new_name="old_name" keyword arguments."""
+    """Rename and select fields using new_name="old_name" keyword arguments.
+
+    :param data: iterator
+    :param keep_all: keep all fields, even those that haven't been renamed
+    :param keep_meta: keep metadata (fields starting with "_")
+    :param skip_missing: skip records where not all fields are present
+    :param kw: new_name="old_name" rename rules
+    :returns: iterator
+
+    """
     assert not keep_all
     for sample in data:
         skip = False
@@ -842,7 +1113,13 @@ def itren(data, keep_all=False, keep_meta=True, skip_missing=False, **kw):
 
 @itfilter
 def itcopy(data, **kw):
-    """Copy fields."""
+    """Copy fields.
+
+    :param data: iterator
+    :param kw: new_value="old_value"
+    :returns: iterator
+
+    """
     for sample in data:
         result = {k: v for k, v in sample.items()}
         for k, v in kw.items():
@@ -854,6 +1131,11 @@ def itmap(data, **keys):
     """Map the fields in each sample using name=function arguments.
 
     Unmentioned fields are left alone.
+
+    :param data: iterator
+    :param keys: name=function pairs, applying function to each sample field
+    :returns: iterator
+
     """
     for sample in data:
         sample = sample.copy()
@@ -863,6 +1145,14 @@ def itmap(data, **keys):
 
 @itfilter
 def ittransform(data, f=None):
+    """Map entire samples using the given function.
+
+    :param data: iterator
+    :param f: function from samples to samples
+    :returns: iterator over transformed samples
+
+    """
+    
     if f is None: f = lambda x: x
     for sample in data:
         yield f(sample)
@@ -873,7 +1163,13 @@ def itshuffle(data, bufsize=1000):
 
     This uses a buffer of size `bufsize`. Shuffling at
     startup is less random; this is traded off against
-    yielding samples quickly."""
+    yielding samples quickly.
+
+    :param data: iterator
+    :param bufsize: buffer size for shuffling
+    :returns: iterator
+
+    """
     buf = []
     for sample in data:
         if len(buf) < bufsize:
@@ -885,7 +1181,15 @@ def itshuffle(data, bufsize=1000):
 
 @itfilter
 def itbatch(data, batchsize=20, tensors=True, partial=True):
-    """Create batches of the given size."""
+    """Create batches of the given size.
+
+    :param data: iterator
+    :param batchsize: target batch size
+    :param tensors: automatically batch lists of ndarrays into ndarrays
+    :param partial: return partial batches
+    :returns: iterator
+
+    """
     batch = []
     for sample in data:
         if len(batch) >= batchsize:
@@ -899,6 +1203,13 @@ def itbatch(data, batchsize=20, tensors=True, partial=True):
 
 
 def maybe_index(v, i):
+    """Index if indexable.
+
+    :param v: object to be indexed
+    :param i: index
+    :returns: v[i] if that succeeds, otherwise v
+
+    """
     try:
         return v[i]
     except:
@@ -906,7 +1217,12 @@ def maybe_index(v, i):
 
 @itfilter
 def itunbatch(data):
-    """Create batches of the given size."""
+    """Unbatch data.
+
+    :param data: iterator over batches
+    :returns: iterator over samples
+
+    """
     for sample in data:
         keys = sample.keys()
         bs = len(sample[keys[0]])
@@ -915,11 +1231,23 @@ def itunbatch(data):
 
 @itfilter
 def itslice(*args):
-    """A pipable version of itertools.islice."""
+    """A pipable version of itertools.islice.
+
+    (Same arguments as islice)
+
+    """
     return itertools.islice(*args)
 
 @itmapper
 def itdistort(sample, distortions=[(5.0, 5)], keys=["image"]):
+    """Apply distortions to images in sample.
+
+    :param sample
+    :param distortions: distortion parameters
+    :param keys: fields to distort
+    :returns: distorted sample
+
+    """
     images = [sample[k] for k in keys]
     distorted = random_distortions(images, distortions)
     result = dict(sample)
@@ -930,7 +1258,20 @@ def itdistort(sample, distortions=[(5.0, 5)], keys=["image"]):
 def itstandardize(sample, size, keys=["image"], crop=0, mode="nearest",
                   ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)),
                   rgamma=None, cgamma=(0.8, 1.2)):
-    """Standardize images in a sample."""
+    """Standardize images in a sample.
+
+    :param sample: sample
+    :param size: target size
+    :param keys: keys for images to be distorted
+    :param crop: whether to crop
+    :param mode: boundary mode
+    :param ralpha: random rotation range (no affine if None)
+    :param rscale: random scale range
+    :param rgamma: random gamma range (no color distortion if None)
+    :param cgamma: random color gamma range
+    :returns: standardized szmple
+
+    """
     if ralpha is True: ralpha = (-0.2, 0.2)
     if rgamma is True: rgamma = (0.5, 2.0)
     if ralpha is not None:
@@ -951,8 +1292,13 @@ def itstandardize(sample, size, keys=["image"], crop=0, mode="nearest",
 ### Specialized input pipelines for OCR, speech, and related tasks.
 ###
 
-def makeseq(image):
-    """Turn an image into an LD sequence."""
+def ld_makeseq(image):
+    """Turn an image into an LD sequence.
+
+    :param image: input image
+    :returns: LD sequence
+
+    """
     assert isinstance(image, np.ndarray), type(image)
     if image.ndim==3 and image.shape[2]==3:
         image = np.mean(image, 2)
@@ -961,8 +1307,16 @@ def makeseq(image):
     assert image.ndim==2
     return image.T
 
-def makebatch(images, for_target=False):
-    """Given a list of LD sequences, make a BLD batch tensor."""
+def seq_makebatch(images, for_target=False):
+    """Given a list of LD sequences, make a BLD batch tensor.
+
+    This performs zero padding as necessary.
+
+    :param images: list of images as LD sequences
+    :param for_target: require ndim==2, inserts training blank steps.
+    :returns: batched image sequences
+
+    """
     assert isinstance(images, list), type(images)
     assert isinstance(images[0], np.ndarray), images
     if images[0].ndim==2:
@@ -984,13 +1338,23 @@ def makebatch(images, for_target=False):
         return ibatch
 
 def images2seqbatch(images):
-    """Given a list of images, return a BLD batch tensor."""
-    images = [makeseq(x) for x in images]
-    return makebatch(images)
+    """Given a list of images, return a BLD batch tensor.
+
+    :param images: list of images
+    :returns: ndarray representing batch
+
+    """
+    images = [ld_makeseq(x) for x in images]
+    return seq_makebatch(images)
 
 def images2batch(images):
-    """Given a list of images, return a batch tensor."""
-    return makebatch(images)
+    """Given a list of images, return a batch tensor.
+
+    :param images: list of imags
+    :returns: batch tensor
+
+    """
+    return seq_makebatch(images)
 
 class AsciiCodec(object):
     """An example of a codec, used for turning strings into tensors."""
@@ -1001,32 +1365,64 @@ class AsciiCodec(object):
         if c==0: return ""
         return chr(ord(" ") + c - 1)
     def size(self):
-        """The number of classes. Zero is always reserved for the empty class."""
+        """The number of classes. Zero is always reserved for the empty class.
+        """
         return 97
     def encode(self, s):
-        """Encode a string."""
+        """Encode a string.
+
+        :param s: string to be encoded
+        :returns: list of integers
+
+        """
         return [self._encode_char(c) for c in s]
     def decode(self, l):
-        """Decode a numerical encoding of a string."""
+        """Decode a numerical encoding of a string.
+
+        :param l: list of integers
+        :returns: string
+
+        """
         return "".join([self._decode_char(x) for x in l])
 
 ascii_codec = AsciiCodec()
 
 def maketarget(s, codec=ascii_codec):
-    """Turn a string into an LD target."""
+    """Turn a string into an LD target.
+
+    :param s: string
+    :param codec: codec
+    :returns: hot one encoding of string
+
+    """
     assert isinstance(s, (str, unicode)), (type(s), s)
     codes = codec.encode(s)
     n = codec.size()
     return intlist_to_hotonelist(codes, n)
 
 def transcripts2batch(transcripts, codec=ascii_codec):
-    """Given a list of strings, makes ndarray target arrays."""
+    """Given a list of strings, makes ndarray target arrays.
+
+    :param transcripts: list of strings
+    :param codec: encoding codec
+    :returns: batched hot one encoding of strings suitable for CTC
+
+    """
     targets = [maketarget(s, codec=codec) for s in transcripts]
-    return makebatch(targets, for_target=True)
+    return seq_makebatch(targets, for_target=True)
 
 @itfilter
 def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
-    """List-batch input samples into similar sized batches."""
+    """List-batch input samples into similar sized batches.
+
+    :param data: iterator of samples
+    :param batchsize: target batch size
+    :param scale: spacing of bucket sizes
+    :param seqkey: input key to use for batching
+    :param batchdim: input dimension to use for bucketing
+    :returns: batches consisting of lists of similar sequence lengths
+
+    """
     buckets = {}
     for sample in data:
         seq = sample[seqkey]
@@ -1050,7 +1446,18 @@ def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
 
 @itfilter
 def itlineseqbatcher(data, input="image", transcript="transcript", target="target", codec=ascii_codec):
-    """Performs text line batching for OCR."""
+    """Performs text line batching for OCR.
+
+    Usually this is used after itbatchedbuckets.
+
+    :param data: iterator over OCR training samples
+    :param input: input field name
+    :param transcript: transcript field name
+    :param target: target field name
+    :param codec: codec used for encoding classes
+    :returns: batched sequences
+
+    """
     for sample in data:
         sample = sample.copy()
         sample[input] = images2batch(sample[input])
@@ -1059,7 +1466,18 @@ def itlineseqbatcher(data, input="image", transcript="transcript", target="targe
 
 @itfilter
 def itlinebatcher(data, input="input", transcript="transcript", target="target", codec=ascii_codec):
-    """Performs text line batching for OCR."""
+    """Performs text line batching for OCR.
+
+    Usually this is used after itbatchedbuckets.
+
+    :param data: iterator over OCR training samples
+    :param input: input field name
+    :param transcript: transcript field name
+    :param target: target field name
+    :param codec: codec used for encoding classes
+    :returns: batched sequences
+
+    """
     for sample in data:
         sample = sample.copy()
         sample[input] = images2batch(sample[input])
@@ -1072,21 +1490,14 @@ def itlinebatcher(data, input="input", transcript="transcript", target="target",
 
 @itsink
 def showgrid(data, key="input", label=None, grid=(4, 8)):
-    """A sink that shows a grid of images."""
-    import pylab
-    rows, cols = grid
-    for i, sample in enumerate(data):
-        if i >= rows * cols:
-            break
-        pylab.subplot(rows, cols, i + 1)
-        pylab.xticks([])
-        pylab.yticks([])
-        pylab.imshow(sample["input"])
+    """A sink that shows a grid of images.
 
+    :param data: iterator
+    :param key: key to be displayed
+    :param label: label field to be displayed
+    :param grid: grid size for display
 
-@itsink
-def showgrid2(data, key="input", value="target", label=None, grid=(4, 8)):
-    """A sink that shows a grid of pairs of images."""
+    """
     import pylab
     rows, cols = grid
     for i, sample in enumerate(data):
@@ -1100,7 +1511,12 @@ def showgrid2(data, key="input", value="target", label=None, grid=(4, 8)):
 
 @itsink
 def batchinfo(data, n=1):
-    """A sink that provides info about samples/batches."""
+    """A sink that provides info about samples/batches.
+
+    :param data: iterator
+    :param n: number of samples to print info for
+
+    """
     for i, sample in enumerate(data):
         if i >= n:
             break
