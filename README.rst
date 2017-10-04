@@ -88,38 +88,38 @@ also planned.)
 For example, to turn an on-disk dataset into a tar files suitable for
 training, just use:
 
-        find . -iname '*.png' -o -iname '*.cls' | sort |
+        find . -iname '*.png' -o -iname '*.cls' | sort | 
             tar -ztvf data.tgz -T -
 
 With sharding, use the included `tarshards` program:
 
-        find . -iname '*.png' -o -iname '*.cls' | sort |
+        find . -iname '*.png' -o -iname '*.cls' | sort | 
             tarshards data
 
 This will now create shards with names like `data-000000.tgz`.
 
 To iterate over this data, you can now use the input pipeline:
 
-        with dlinputs.ops:
-            data = ittarfile("data.tgz") | \
-                   itshuffle(1000) | \
-                   ... same pipeline as above ...
+        with dlinputs.ops: 
+            data = ittarfile("data.tgz") | \ 
+                   itshuffle(1000) | \ 
+                   ... same pipeline as above ... 
 
 Since this is just sequential data, you can also stream this data from a
 web server:
 
-        with dlinputs.ops:
-            data = ittarfile("http://eunomia/data.tgz") | \
-                   itshuffle(1000) | \
-                   ... same pipeline as above ...
+        with dlinputs.ops: 
+            data = ittarfile("http://eunomia/data.tgz") | \ 
+                   itshuffle(1000) | \ 
+                   ... same pipeline as above ... 
 
 To iterate over sharded data, use a url of the form `data-@000123.tgz`,
 where the number of shards is given after the `@` sign:
 
-        with dlinputs.ops:
-            data = ittarshards("http://eunomia/data-@000123.tgz") | \
-                   itshuffle(1000) | \
-                   ... same pipeline as above ...
+        with dlinputs.ops: 
+            data = ittarshards("http://eunomia/data-@000123.tgz") | \ 
+                   itshuffle(1000) | \ 
+                   ... same pipeline as above ... 
 
 The ``ittarshards`` iterator can randomization and load balancing; it
 performs roughly the following operations:
