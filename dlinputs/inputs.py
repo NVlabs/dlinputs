@@ -447,7 +447,7 @@ def random_gamma(image, rgamma=(0.5, 2.0), cgamma=(0.8, 1.2)):
 
 
 def standardize(image, size, crop=0, mode="nearest", affine=np.eye(2)):
-    """Rescale and crop the image to the given size. 
+    """Rescale and crop the image to the given size.
 
     With crop=0, this rescales the image so that the target size fits
     snugly into it and cuts out the center; with crop=1, this rescales
@@ -635,6 +635,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     :param shardtype: default shard type
     :param urlpath: path on which to search for the shard file
     :param verbose: output progress
+    :returns: list of URLs for shard
 
     """
     data = read_url_path(url, urlpath, verbose=verbose)
@@ -650,6 +651,25 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
         for i in range(len(s)):
             s[i] = urlparse.urljoin(url, s[i])
     return shards
+
+def extract_shards(url):
+    """Extract a shard list from a shard URL.
+
+    Shard URLs are URLs containing a string of the form `@000123`.
+    This denotes that the shards are given by a six digit string and
+    that there are 123 shards.
+
+    :param url: shard url
+    :returns: list of URLs for shard
+
+    """
+    prefix, shards, suffix = re.search(r"^(.*)(@[0-9]+)(.*)$", url).groups()
+    f = len(shards) - 1
+    n = int(shards[1:])
+    result = []
+    for i in xrange(n):
+        result.append("%s%0*d%s" % (prefix, f, i, suffix))
+    return result
 
 ###
 ### Data sources.
@@ -880,7 +900,13 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
 
     """
     epochs = int(epochs)
-    shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
+    if url.endswith(".shards"):
+        shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
+    else:
+        shards = extract_shards(url, urlpath)
+        shards = [[s] for s in shards]
+    assert isinstance(shards, list)
+    assert isinstance(shards[0], list)
     for epoch in xrange(epochs):
         l = list(shards)
         if randomize:
@@ -1152,7 +1178,7 @@ def ittransform(data, f=None):
     :returns: iterator over transformed samples
 
     """
-    
+
     if f is None: f = lambda x: x
     for sample in data:
         yield f(sample)
