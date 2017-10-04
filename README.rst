@@ -129,12 +129,12 @@ where the number of shards is given after the `@` sign:
                    itshuffle(1000) | \
                    ... same pipeline as above ...
 
-The ``ittarshards`` iterator can randomization and load balancing; it
-performs roughly the following operations:
+The ``ittarshards`` iterator can perform randomization and load balancing;
+it performs roughly the following operations:
 
 -  shuffle the list of shards
 -  for each shard, randomly pick a URL from the list of URLs
--  iterate through the tar file given by the URL like ``ittarfile``
+-  iterate through the tar file given by the URL, in the same way as ``ittarfile``
 
 Note that a high performance web server for sharded tar files will
 redirect the URLs for each shard to different servers.
