@@ -120,7 +120,7 @@ web server:
                    ... same pipeline as above ...
 
 To iterate over sharded data, use a url of the form `data-@000123.tgz`,
-where the number of shards is given after the ` @ ` sign:
+where the number of shards is given after the @ sign:
 
 ::
 
@@ -186,8 +186,8 @@ Data Augmentation
 -  ``itstandardize`` -- resize to a standard size, optionally augment
 -  ``itdistort`` -- agument by nonlinear distortions
 
-Pipelines as Composition of Iterators
-=====================================
+How are Pipelines Implemented?
+==============================
 
 The code contained within the ``with dlinputs.ops:`` block behaves very
 much like a UNIX pipeline. It constists of two kinds of components:
