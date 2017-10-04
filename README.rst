@@ -120,7 +120,7 @@ web server:
                    ... same pipeline as above ...
 
 To iterate over sharded data, use a url of the form `data-@000123.tgz`,
-where the number of shards is given after the `@` sign:
+where the number of shards is given after the ` @ ` sign:
 
 ::
 
