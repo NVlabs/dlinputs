@@ -3,7 +3,6 @@
 
 import decorators
 from inputs import *
-from zmqpipes import itzmq, zmqserver
 import shardwriter
 import loadable
 import parallel

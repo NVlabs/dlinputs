@@ -22,6 +22,7 @@ scripts = """
     shardindex
     show-input
     show-model
+    tarsplit
 """.split()
 
 setup(

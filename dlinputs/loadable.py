@@ -7,6 +7,13 @@ import torch
 import simplejson
 
 def _convert(x):
+    """Generically convert strings to numbers.
+
+    :param x: string that maybe represents a number
+    :returns: value
+    :rtype: string, float, or int
+
+    """
     try:
         return int(x)
     except ValueError:
@@ -15,13 +22,17 @@ def _convert(x):
         except ValueError:
             return x
 
-def get_params(fname):
+def get_params(fname, separator=":"):
     """Splits a file name into the actual file and optional parameters.
 
     Filenames may be of the form `foo:x=y:a=b`, and this returns 
     `(foo, dict(x="y", a="b")`
+
+    :param fname: file name with optional key-value pairs
+    :param separator: optional separator (default=":")
+
     """
-    params = fname.split(":")
+    params = fname.split(separator)
     fname = params[0]
     params = params[1:]
     params = [p.split("=") for p in params]
@@ -29,13 +40,25 @@ def get_params(fname):
     return fname, params
 
 def load_input(iname, modname="inlib"):
-    """Load an input and return a module containing a get_training /
-    get_testing function."""
+    """Load an input and return a module containing an input pipeline.
+
+    :param iname: input module (.py), with optional key=value pairs
+    :param modname: name for the loaded module
+    :returns: instance of modname.Inputs(**params)
+
+    """
     iname, params = get_params(iname)
     inlib = imp.load_source(modname, iname)
     return inlib.Inputs(**params)
 
 def make_meta():
+    """Make initial model meta information dictionary.
+
+    This contains information like `ntrain`, etc.
+
+    :returns: dictionary of common model-related information.
+
+    """
     return dict(ntrain=0,
                 logging=[],
                 params=[],
@@ -43,6 +66,16 @@ def make_meta():
                 test_loss=[])
 
 def load_model(mname, modname="modlib"):
+    """Load a neural network model from a .py file.
+
+    The model still needs to be created / instantiated by calling
+    its create(...) method.
+
+    :param mname: module name, with optional key=value pairs
+    :param modname: module name to load module into
+    :returns: instance of modname.Model(**params)
+
+    """
     mname, params = get_params(mname)
     if not mname.endswith(".py"):
         return None
@@ -53,7 +86,11 @@ def load_model(mname, modname="modlib"):
 
 def load_net(mname, mparams={}):
     """Load a model, either a module containing a get_model function
-    or a saved torch model. For saved models, also returns metadata."""
+
+    :param mname: module name, either .pt or .py
+    :param mparams: model parameters used for model.create(**params)
+
+    """
     model = load_model(mname)
     if model is not None:
         model = model.create(**mparams)
@@ -65,7 +102,12 @@ def load_net(mname, mparams={}):
     return model
 
 def save_net(mname, model):
-    """Save a model and model metadata."""
+    """Save a model, and separately also save its metadata.
+
+    :param mname: file name for saving
+    :param model: model to be saved
+
+    """
     ext = ".lock"
     torch.save(mname+ext, model)
     os.link(mname+ext, mname)
