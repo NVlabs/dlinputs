@@ -89,13 +89,15 @@ For example, to turn an on-disk dataset into a tar files suitable for
 training, just use:
 
 ::
-        find . -iname '*.png' -o -iname '*.cls' | sort |
+
+        find . -iname '*.png' -o -iname '*.cls' | sort | \
             tar -ztvf data.tgz -T -
 
 With sharding, use the included `tarshards` program:
 
 ::
-        find . -iname '*.png' -o -iname '*.cls' | sort |
+
+        find . -iname '*.png' -o -iname '*.cls' | sort | \
             tarshards data
 
 This will now create shards with names like `data-000000.tgz`.
