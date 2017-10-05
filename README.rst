@@ -70,19 +70,19 @@ Format
 ------
 
 Large machine learning datasets are usually broken up into pieces
-of size 10M - 10G called _shards_. Data within each shard is
+of size 10M - 10G called *shards*. Data within each shard is
 usually processed sequentially.
 
 - sequential reads/writes are much more efficient than random access
 - by shuffling shards, we can randomize DL inputs and still enjoy sequential access
 - shards can be processed in parallel for map-reduce jobs
 
-The `dlinputs` library uses tar files as its main dataset storage format; this
+The ``dlinputs`` library uses tar files as its main dataset storage format; this
 has the advantage that data is represented in the same way as it is on disk
 and that data can be manipulated directly using standard tools.
 However, other formats are supported as well, including directory trees,
 file lists, SQLite databases, and anything that yields a Python iterator.
-(Direct support for video I/O, `tf.Record`/`tf.Example`, and MsgPack is
+(Direct support for video I/O, ``tf.Record``/``tf.Example``, and MsgPack is
 also planned.)
 
 For example, to turn an on-disk dataset into a tar files suitable for
@@ -93,14 +93,14 @@ training, just use:
         find . -iname '*.png' -o -iname '*.cls' | sort | \
             tar -ztvf data.tgz -T -
 
-With sharding, use the included `tarshards` program:
+With sharding, use the included ``tarshards`` program:
 
 ::
 
         find . -iname '*.png' -o -iname '*.cls' | sort | \
             tarshards data
 
-This will now create shards with names like `data-000000.tgz`.
+This will now create shards with names like ``data-000000.tgz``.
 
 To iterate over this data, you can now use the input pipeline:
 
@@ -121,7 +121,7 @@ web server:
                    itshuffle(1000) | \
                    ... same pipeline as above ...
 
-To iterate over sharded data, use a url of the form `data-@000123.tgz`,
+To iterate over sharded data, use a url of the form ``data-@000123.tgz``,
 where the number of shards is given after the @ sign:
 
 ::
@@ -249,5 +249,5 @@ Planned Additions
 
 We're planning the following additional features:
 
-- iterate over `tf.Record`/`tf.Example` files
+- iterate over ``tf.Record``/``tf.Example`` files
 - iterate over concatenated MsgPack data
