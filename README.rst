@@ -15,8 +15,9 @@ Deep learning usually contains at its core logic like the following:
             print epoch, cost
 
 The ``dlpipes`` library is intended to make writing the
-``read_training_samples`` and ``read_test_samples`` functions easy and
-efficient.
+``read_training_samples`` and ``read_test_samples`` functions simple
+while enabling the use of petascale datasets based on
+simple web technologies.
 
 In fact, what is expressed as ``read_training_samples`` above usually
 contains a number of processing steps:
@@ -40,7 +41,7 @@ such a complex input pipeline can simply be written as:
                    itshuffle(1000) | \
                    itmap(png=pnggray, cls=int) | \
                    itren(image="png", cls="cls") | \
-                   itstandardize((224, 224), "png") | \
+                   itstandardize((224, 224), "image") | \
                    itdistort([5, 5]) | \
                    itbatch(20)
 
@@ -59,6 +60,64 @@ just simple python functions that internally look something like:
         def pipeline_stage(data, parameters, ...):
             for sample in data:
                 yield transformed(sample)
+
+
+Loadable Input Pipelines
+========================
+
+Machine learning experiments often involve experimenting with different
+data sources and preprocessing operations. The ``dlinputs`` library
+provides a simple mechanism for loading input pipelines. Here is
+a loadable input pipeline:
+
+::
+
+    #!/usr/bin/python
+    # File: input-sample.py
+
+    import dlinputs as dli
+
+    class Inputs(object):
+        def training_data(self, **kw):
+            return dli.itsqlite("testdata/sample.db", **kw) | \
+                   dli.itmap(image=dli.pilreads, cls=int) | \
+                   dli.itdistort([5,5])
+
+
+Programmatically, you can load input pipelines using the ``load_input``
+function:
+
+::
+
+    factory = dlinputs.loadable.load_input("input-sample.py")
+    training_data = factory.training_data()
+    for sample in training_data:
+        ...
+
+Note that loadable input pipelines are usually expected to return
+unbatched data.
+
+Any method of the form ``..._data(...)`` is assumed to describe
+a dataset.
+
+Separating the input pipeline from your training logic not only makes
+it easier to experiment with different data sources and preprocessing
+pipelines, it also allows the creation of tools. The ``show-input`` tool
+lets you measure the time required to read an input sample, and it
+can also display images contained in the input sample:
+
+::
+
+    $ show-input -b 10 -d image input-sample.py
+    datasets: training
+    showing: training
+
+    __epoch__ 0
+          cls 6
+        image (28, 28) [0.0,1.0] 0.128111(0.300329773671)
+          inx 999
+    ... more output ...
+
 
 Sharded Tar Files
 =================
@@ -188,7 +247,7 @@ Data Augmentation
 -  ``itdistort`` -- agument by nonlinear distortions
 
 Distributed / Parallel Operations
-===============================
+=================================
 
 The focus of the ``dlinputs`` library is to make it easy to use
 sharded tar files served over HTTP as inputs to DL training jobs; this

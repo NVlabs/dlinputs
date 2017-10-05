@@ -134,7 +134,8 @@ class TarWriter(object):
                 ext = k
             converter = self.converters.get(k, self.default_converter)
             v = converter(obj[k])
-            assert isinstance(v, (str, buffer)), (k, type(v),), "converter didn't yield a string"
+            assert isinstance(v, (str, buffer)),  \
+                "converter didn't yield a string: %s" % ((k, type(v)),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + ext)
             ti.size = len(v)
