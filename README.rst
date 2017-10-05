@@ -101,9 +101,11 @@ With sharding, use the included ``tarshards`` program:
             tarshards -s 1e7 data
 
 This will now create shards with names like ``data-000000.tgz`` and a
-shard size of about 10 MB. [#]_
-
-__ [#] Picking shard sizes involves tradeoffs between I/O efficiency, parallelism, and randomization of datasets, but it's a good idea to pick shard sizes that are at least 10 MB big and aim for at least a few dozen shards. Small datasets can otherwise just be stored unsharded.
+shard size of about 10 MB.  (Picking shard sizes involves tradeoffs
+between I/O efficiency, parallelism, and randomization of datasets,
+but it's a good idea to pick shard sizes that are at least 10 MB big
+and aim for at least a few dozen shards. Small datasets can otherwise
+just be stored unsharded.)
 
 To iterate over this data, you can now use the input pipeline:
 
