@@ -574,8 +574,8 @@ def read_url_path(url, urlpath, verbose=False):
     :param url: relative URL
     :param urlpath: list or space separated string of base URLs
     :param verbose: inform user about trials
-    :returns: contents first URL that can be opened or None
-    :rtype: str
+    :returns: contents first URL that can be opened, base url
+    :rtype: tuple
 
     """
     urlpath = urlpath or [""]
@@ -585,17 +585,19 @@ def read_url_path(url, urlpath, verbose=False):
         trial = urlparse.urljoin(base, url)
         if verbose: print "trying: {}".format(trial)
         try:
-            return openurl(trial).read()
+            return openurl(trial).read(), base
         except urllib2.URLError:
             if verbose: print trial, ": FAILED"
             continue
     return None
 
+url_rewriter = None
+
 def findurl(url):
     """Finds a URL using environment variables for helpers.
 
     If DLP_URLREWRITER is set in the environment, it is loaded.
-    If dlinputs.url_rewriter is not None, it is applied to the url.
+    If dlinputs. url_rewriter is not None, it is applied to the url.
     If DLP_URLBASE is not None, it is joined to the url as a base url.
 
     FIXME: make DLP_URLBASE a path
@@ -608,8 +610,8 @@ def findurl(url):
     rewriter = os.environ.get("DLP_URLREWRITER", None)
     if rewriter is not None:
         execfile(rewriter)
-    if dlinputs.url_rewriter is not None:
-        url = dlinputs.url_rewriter(url)
+    if url_rewriter is not None:
+        url = url_rewriter(url)
     base = os.environ.get("DLP_URLBASE", None)
     if base is not None:
         url = urlparse.urljoin(base, url)
@@ -638,7 +640,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     :returns: list of URLs for shard
 
     """
-    data = read_url_path(url, urlpath, verbose=verbose)
+    data, base = read_url_path(url, urlpath, verbose=verbose)
     if data is None:
         raise Exception("url not found") # FIXME
     shards = simplejson.loads(data)
@@ -649,7 +651,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     shards = shards["shards"]
     for s in shards:
         for i in range(len(s)):
-            s[i] = urlparse.urljoin(url, s[i])
+            s[i] = urlparse.urljoin(base, s[i])
     return shards
 
 def extract_shards(url):
@@ -903,7 +905,7 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
     if url.endswith(".shards"):
         shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
     else:
-        shards = extract_shards(url, urlpath)
+        shards = extract_shards(url)
         shards = [[s] for s in shards]
     assert isinstance(shards, list)
     assert isinstance(shards[0], list)
