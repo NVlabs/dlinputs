@@ -71,7 +71,7 @@ Format
 
 Large machine learning datasets are usually broken up into pieces
 of size 10M - 10G called *shards*. Data within each shard is
-usually processed sequentially.
+usually processed sequentially. Using shards has several advantages:
 
 - sequential reads/writes are much more efficient than random access
 - by shuffling shards, we can randomize DL inputs and still enjoy sequential access
@@ -98,9 +98,12 @@ With sharding, use the included ``tarshards`` program:
 ::
 
         find . -iname '*.png' -o -iname '*.cls' | sort | \
-            tarshards data
+            tarshards -s 1e7 data
 
-This will now create shards with names like ``data-000000.tgz``.
+This will now create shards with names like ``data-000000.tgz`` and a
+shard size of about 10 MB. [#]_
+
+__ [#] Picking shard sizes involves tradeoffs between I/O efficiency, parallelism, and randomization of datasets, but it's a good idea to pick shard sizes that are at least 10 MB big and aim for at least a few dozen shards. Small datasets can otherwise just be stored unsharded.
 
 To iterate over this data, you can now use the input pipeline:
 
