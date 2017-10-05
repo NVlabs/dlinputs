@@ -60,9 +60,6 @@ just simple python functions that internally look something like:
             for sample in data:
                 yield transformed(sample)
 
-Pipeline stages can also be executed in parallel, or even distributed
-across multiple nodes or containers; we will talk about that later.
-
 Sharded Tar Files
 =================
 
@@ -162,9 +159,6 @@ supported by the ``ShardWriter`` class.
         for batch in source:
             writer.write(batch["key"], batch)
 
-(For parallelizing such transformations for large datasets, there will
-eventually be additional tools.)
-
 Common Pipeline Operations
 ==========================
 
@@ -192,6 +186,38 @@ Data Augmentation
 
 -  ``itstandardize`` -- resize to a standard size, optionally augment
 -  ``itdistort`` -- agument by nonlinear distortions
+
+Distributed / Parallel Operations
+===============================
+
+The focus of the ``dlinputs`` library is to make it easy to use
+sharded tar files served over HTTP as inputs to DL training jobs; this
+enables massively scalable, distributed I/O using standard, scalable
+web server technologies (how to set up server infrastructures capable
+of serving petascale data sources at very high data rates will be
+described in a separate document).
+
+If your bottleneck is not I/O but preprocessing, you can parallelize
+input pipelines using ``dlinputs.parallelize_input`` as follows:
+
+::
+
+    def make_input():
+        with dlinputs.ops:
+            data = ittarshards("http://eunomia/data-@000123.tgz") | \
+                   itshuffle(1000) | \
+                   itmap(png=pnggray, cls=int) | \
+                   itren(image="png", cls="cls") | \
+                   itstandardize((224, 224), "png") | \
+                   itdistort([5, 5])
+
+    for sample in dlinputs.parallelize_input(make_input, 8):
+        ...
+
+For more complex preprocessing problems, you can use the ``dldist`` library,
+a small library that uses distributed message queueing to let you execute
+preprocessing pipelines on large numbers of distributed machines.
+
 
 How are Pipelines Implemented?
 ==============================
