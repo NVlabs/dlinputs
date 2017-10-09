@@ -578,9 +578,10 @@ def read_url_path(url, urlpath, verbose=False):
     :rtype: tuple
 
     """
-    urlpath = urlpath or [""]
     if isinstance(urlpath, str):
         urlpath = urlpath.strip().split()
+    if urlpath is None:
+        urlpath = [re.sub("[^/]+$", "", url)]
     for base in urlpath:
         trial = urlparse.urljoin(base, url)
         if verbose: print "trying: {}".format(trial)
@@ -641,6 +642,8 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
 
     """
     data, base = read_url_path(url, urlpath, verbose=verbose)
+    if verbose:
+        print "# read_shards", url, "base", base
     if data is None:
         raise Exception("url not found") # FIXME
     shards = simplejson.loads(data)
@@ -891,7 +894,7 @@ def ittarreader(archive, check_sorted=True):
 
 @itsource
 def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
-                urlpath=None):
+                urlpath=None, verbose=True):
     """Read a sharded data set, using a JSON-format shards file to find the shards.
 
     :param url: URL for the shard file (JSON format)
@@ -899,11 +902,13 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
     :param randomize: shuffle the shards prior to reading
     :param epochs: number of epochs to train for
     :param urlpath: path of base URLs to search for for url
+    :param verbose: print info about what is being read
 
     """
     epochs = int(epochs)
     if url.endswith(".shards"):
-        shards = read_shards(url, shardtype=shardtype, urlpath=urlpath)
+        shards = read_shards(url, shardtype=shardtype, urlpath=urlpath,
+                             verbose=verbose)
     else:
         shards = extract_shards(url)
         shards = [[s] for s in shards]
@@ -915,6 +920,8 @@ def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
             pyr.shuffle(l)
         for s in l:
             u = pyr.choice(s)
+            if verbose:
+                print "# reading", s
             try:
                 for item in ittarreader(u):
                     item["__shard__"] = u
@@ -1009,6 +1016,26 @@ def itmerge(sources, weights=None):
             del sources[index]
         yield sample
     raise StopIteration()
+
+@itsource
+def itconcat(sources, maxepoch=1):
+    """Concatenate multiple sources, usually for test sets.
+
+    :param sources: list of iterators
+    :param maxepochs: number of epochs (default=1)
+    :returns: iterator
+
+    """
+    count = 0
+    for source in sources:
+        for sample in source:
+            if maxepoch is not None:
+                if sample["__epoch__"] >= maxepoch:
+                    break
+            sample = dict(sample)
+            sample["__count__"] = count
+            yield sample
+            count += 1
 
 ###
 ### Basic Filters
