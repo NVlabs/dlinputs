@@ -82,6 +82,9 @@ def load_model(mname, modname="modlib"):
     modlib = imp.load_source(modname, mname)
     result = modlib.Model(**params)
     result.META = make_meta()
+    with open(mname, "r") as stream:
+        result.META["py_model"] = stream.read()
+    result.META["py_params"] = params
     return result
 
 def load_net(mname, mparams={}):
