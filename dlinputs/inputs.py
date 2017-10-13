@@ -631,6 +631,28 @@ def openurl(url):
     return urllib2.urlopen(url)
 
 
+def find_url(paths, extra=None):
+    """Given a list of url paths, find the first one that matches.
+
+    :param paths: list of base urls
+    :param extra: extra relative URL to be joined before testing
+    :returns: first path that succeeds
+    """
+
+    if isinstance(paths, str):
+        paths = paths.split()
+    for path in paths:
+        test = path
+        if extra is not None:
+            test = urllib2.urljoin(path, extra)
+        try:
+            urllib2.urlopen(test)
+            return path
+        except:
+            pass
+    return None
+
+
 def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     """Read a shards description file from a URL and convert relative URLs in shard file.
 
