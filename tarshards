@@ -1,0 +1,124 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+import os
+import os.path
+import sys
+import tarfile
+import argparse
+import re
+
+parser = argparse.ArgumentParser("""\
+Bundle files into sharded tarfiles. Optionally upload to S3 or ssh server.
+
+The list of files is given on the standard input.
+
+The following will find all `.png` and `.cls` files in the current
+directory tree, tar them up in shards of size 1 Gbyte, and transfer
+them via `ssh` to your home directory on host `mvcdev2` with
+names like `myimages-000000.tgz`, ...:
+
+```
+find . -name '*.png' -o -name '*.cls' | sort | tarshards -S mvcdev2: myimages
+```
+
+For ssh destinations, you should have set up a password-less login.
+""")
+parser.add_argument("-s", "--shardsize", type=float, default=1e9,
+                    help="size of shards to be uploaded")
+parser.add_argument("-p", "--progress", action="store_true",
+                    help="display progress while uploading")
+parser.add_argument("-m", "--minio", action="store_true",
+                    help="use minio's mc to upload to a server")
+parser.add_argument("-S", "--ssh", default="",
+                    help="use ssh to upload to 'host:directory'")
+parser.add_argument("prefix",
+                    help="prefix to upload to")
+args = parser.parse_args()
+
+all_files = sys.stdin.readlines()
+all_files = [fname.strip() for fname in all_files]
+
+total = 0
+for fname in all_files:
+    assert os.path.exists(fname), "{}: not found".format(fname)
+    total += os.path.getsize(fname)
+
+all_files.sort()
+print
+print "\n".join(all_files[:20])
+print "..."
+print "#", len(all_files), "files", ("%.1e"%total), "bytes"
+print "#", "up to", 1+int(total / args.shardsize), "shards"
+
+total = 0
+last = None
+last_prefix = None
+shard = 0
+mcstream = None
+tarstream = None
+
+def close_streams():
+    global tarstream, mcstream
+    if tarstream is not None:
+        tarstream.close()
+        tarstream = None
+    if mcstream is not None:
+        mcstream.close()
+        mcstream = None
+
+def open_next_stream():
+    global args, shard, tarstream, mcstream
+    close_streams()
+    name = "%s-%06d.tgz" % (args.prefix, shard)
+    if args.ssh != "":
+        host, dest = args.ssh.split(":")
+        if dest == "": dest = "."
+        cmd = "ssh '{}' dd of='{}/{}'".format(host, dest, name)
+        print "# piping to:", cmd
+        mcstream = os.popen(cmd, "wb")
+        tarstream = tarfile.open(mode="w|gz", fileobj=mcstream)
+    elif args.minio:
+        if args.progress:
+            cmd = "dd status=progress | mc pipe %s" % name
+        else:
+            cmd = "mc pipe %s" % name
+        print "# piping to:", cmd
+        mcstream = os.popen(cmd, "wb")
+        tarstream = tarfile.open(mode="w|gz", fileobj=mcstream)
+    else:
+        print "# writing", name
+        tarstream = tarfile.open(name, "w:gz")
+    shard += 1
+
+open_next_stream()
+
+for line in all_files:
+    line = line.strip()
+    assert last is None or last < line, "input not sorted"
+    assert os.path.isfile(line), line
+    last = line
+    size = os.path.getsize(line)
+    total += size
+    prefix = re.sub(r"[.][^./]*$", "", line)
+    # print total, size, line
+    if total >= args.shardsize and prefix != last_prefix:
+        open_next_stream()
+        total = 0
+    tarstream.add(line)
+
+close_streams()

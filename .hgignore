@@ -1,0 +1,7 @@
+syntax: glob
+*.swp
+*.o
+*.pyc
+_*
+.ipynb_checkpoints
+docs/build

@@ -1,0 +1,101 @@
+#!/usr/bin/python
+
+import matplotlib
+# matplotlib.use("GTK")
+
+from pylab import *
+rc("image", cmap="hot")
+import pylab
+import os
+import imp
+import glob
+import numpy as np
+import torch
+import argparse
+import dlinputs as dli
+import time
+
+parser = argparse.ArgumentParser("Display info about an input module.")
+parser.add_argument("input")
+parser.add_argument("-t", "--table", default="training")
+parser.add_argument("-s", "--skip", default=0, type=int)
+parser.add_argument("-b", "--bench", default=0, type=int)
+parser.add_argument("-B", "--batched", action="store_true")
+parser.add_argument("-d", "--display", default=None)
+parser.add_argument("-D", "--order", default="BHWD")
+args = parser.parse_args()
+
+def print_sample(sample):
+    keys = sorted(sample.keys())
+    for k in keys:
+        v = sample[k]
+        if isinstance(v, (int, float, str)):
+            print "%15s %s" % (k, repr(v)[:60])
+        elif isinstance(v, unicode):
+            print "%15s %s" % (k, v.strip().encode("utf-8"))
+        elif isinstance(v, list):
+            print "%15s %3d %s" % (k, len(v), str(v)[:60])
+        elif isinstance(v, np.ndarray):
+            print "%15s %s [%s,%s] %s(%s)" % (k,
+                                    v.shape, np.amin(v), np.amax(v),
+                                    np.mean(v), np.var(v)**.5)
+        elif isinstance(v, torch.Tensor):
+            v = v.cpu().numpy()
+            print "%15s %s [%s,%s] %s(%s)" % (k,
+                                    v.shape, np.amin(v), np.amax(v),
+                                    np.mean(v), np.var(v)**.5)
+        else:
+            print "%15s %s" % (k, type(v))
+
+
+if args.input.endswith(".py"):
+    inputs = dli.loadable.load_input(args.input)
+    datasets = [attr[:-5] for attr in sorted(dir(inputs)) if attr.endswith("_data")]
+    print "datasets:", ", ".join(datasets)
+    print "showing:", args.table
+    print
+    method = "{}_data".format(args.table)
+    assert hasattr(inputs, method), \
+        "{} does not define {}_data method".format(args.input, args.table)
+    source = getattr(inputs, method)()
+elif args.input.endswith(".tgz"):
+    if args.display is None:
+        decoders = {}
+    else:
+        decoders = {key: dli.pilrgb for key in args.display.split(",")}
+    source = dli.ittarreader(args.input) | dli.itmap(**decoders)
+else:
+    raise Exception("{}: unknown extension".format(args.input))
+
+for i in xrange(args.skip):
+    source.next()
+
+sample = source.next()
+
+print_sample(sample)
+
+if args.bench > 0:
+    print
+    start = time.time()
+    for i in xrange(args.bench):
+        source.next()
+    total = time.time() - start
+    print "sec/sample", total/args.bench
+
+if args.display is not None:
+    ion()
+    keys = args.display.split(",")
+    for i in range(1000):
+        print_sample(sample)
+        for j,key in enumerate(keys):
+            subplot(1, len(keys), j+1)
+            data = sample[key]
+            if data.ndim==3 and data.shape[2]==1:
+                data = data[:,:,0]
+            if args.batched:
+                data = data[0]
+            gca().set_title("Key: "+key)
+            imshow(data)
+        show()
+        ginput(1, 1000)
+        sample = source.next()
