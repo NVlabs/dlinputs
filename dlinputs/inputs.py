@@ -868,6 +868,7 @@ def ittarreader(archive, check_sorted=True):
     if isinstance(archive, str):
         if re.match(r"^(https?|file):(?i)", archive):
             archive = urllib2.urlopen(archive)
+    current_count = 0
     current_prefix = None
     current_sample = None
     if isinstance(archive, str):
@@ -882,12 +883,21 @@ def ittarreader(archive, check_sorted=True):
         if prefix != current_prefix:
             if check_sorted and prefix <= current_prefix:
                 raise ValueError("tar file does not contain sorted keys")
-            if current_sample is not None:
+            if current_sample is not None and \
+               not current_sample.get("__bad__", False):
                 yield current_sample
             current_prefix = prefix
             current_sample = dict(__key__=prefix)
-        data = stream.extractfile(tarinfo).read()
-        current_sample[suffix] = data
+        try:
+            data = stream.extractfile(tarinfo).read()
+        except tarfile.ReadError, e:
+            print "tarfile.ReadError at", current_count
+            print "file:", tarinfo.name
+            print e
+            current_sample["__bad__"] = True
+        else:
+            current_sample[suffix] = data
+            current_count += 1
     if len(current_sample.keys()) > 0:
         yield current_sample
 
