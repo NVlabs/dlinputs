@@ -874,8 +874,8 @@ def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
             yield result
 
 
-@itsource
-def ittarreader(archive, check_sorted=True):
+
+def ittarreader1(archive, check_sorted=True):
     """Read samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -923,6 +923,14 @@ def ittarreader(archive, check_sorted=True):
     if len(current_sample.keys()) > 0:
         yield current_sample
 
+
+@itsource
+def ittarreader(archive, epochs=1, **kw):
+    for epoch in xrange(epochs):
+        source = ittarreader1(archive, **kw)
+        for sample in source:
+            sample["__epoch__"] = epoch
+            yield sample
 
 @itsource
 def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
