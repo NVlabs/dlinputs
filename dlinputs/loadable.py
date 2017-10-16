@@ -112,9 +112,10 @@ def save_net(mname, model):
 
     """
     ext = ".lock"
-    torch.save(mname+ext, model)
+    torch.save(model, mname+ext)
     os.link(mname+ext, mname)
     # we save metadata as a JSON file as well to allow fast indexing / search
     if hasattr(model, "META"):
-        simplejson.save(mname+".json", model.META)
-    os.unlink(mname+ext, mname)
+        with open(mname+".json", "w") as stream:
+            simplejson.dump(model.META, stream)
+    os.unlink(mname+ext)
