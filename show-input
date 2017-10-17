@@ -23,6 +23,7 @@ parser.add_argument("-b", "--bench", default=0, type=int)
 parser.add_argument("-B", "--batched", action="store_true")
 parser.add_argument("-d", "--display", default=None)
 parser.add_argument("-D", "--order", default="BHWD")
+parser.add_argument("-p", "--parallel", default=0, type=int)
 args = parser.parse_args()
 
 def print_sample(sample):
@@ -47,8 +48,11 @@ def print_sample(sample):
         else:
             print "%15s %s" % (k, type(v))
 
-
-if args.input.endswith(".py"):
+if args.parallel > 0:
+    method = "{}_data".format(args.table)
+    source = dli.parallel.parallel_load(args.input, method=method, nthreads=args.parallel)
+    print args.input, source
+elif args.input.endswith(".py"):
     inputs = dli.loadable.load_input(args.input)
     datasets = [attr[:-5] for attr in sorted(dir(inputs)) if attr.endswith("_data")]
     print "datasets:", ", ".join(datasets)
