@@ -362,8 +362,8 @@ def make_distortions(size, distortions=[(5.0, 3)]):
         total += deltas
     deltas = total
     xy = np.array(np.meshgrid(range(h),range(w))).transpose(0,2,1)
-    deltas += xy
-    return deltas
+    coords = deltas + xy
+    return coords
 
 def map_image_coordinates(image, coords, order=1, mode="nearest"):
     """Given an image, map the image coordinates for each channel.
@@ -376,11 +376,11 @@ def map_image_coordinates(image, coords, order=1, mode="nearest"):
 
     """
     if image.ndim==2:
-        return ndi.map_coordinates(image, deltas, order=order)
+        return ndi.map_coordinates(image, coords, order=order)
     elif image.ndim==3:
         result = np.zeros(image.shape, image.dtype)
         for i in range(image.shape[-1]):
-            ndi.map_coordinates(image[...,i], deltas, order=order, output=result[...,i], mode=mode)
+            ndi.map_coordinates(image[...,i], coords, order=order, output=result[...,i], mode=mode)
         return result
 
 def random_distortions(images, distortions=[(5.0, 3)], order=1, mode="nearest"):
@@ -396,8 +396,8 @@ def random_distortions(images, distortions=[(5.0, 3)], order=1, mode="nearest"):
 
     """
     h, w = images[0].shape[:2]
-    deltas = make_distortions((h, w), distortions)
-    return [map_image_coordinates(image, deltas, order=order, mode=mode) for image in images]
+    coords = make_distortions((h, w), distortions)
+    return [map_image_coordinates(image, coords, order=order, mode=mode) for image in images]
 
 def random_affine(ralpha=(-0.2, 0.2), rscale=((0.8, 1.2), (0.8, 1.2))):
     """Compute a random affine transformation matrix.
@@ -482,7 +482,6 @@ def standardize(image, size, crop=0, mode="nearest", affine=np.eye(2)):
     result = ndi.affine_transform(image, matrix, offset, order=1,
                                   output_shape=oshape, mode=mode)
     return result
-
 
 def samples_to_batch(samples, tensors=True):
     """Take a collection of samples (dictionaries) and create a batch.
