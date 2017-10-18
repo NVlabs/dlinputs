@@ -93,6 +93,14 @@ function:
     training_data = factory.training_data()
     for sample in training_data:
         ...
+        
+If your input pipeline is slow, you can also parallelize it easily:
+
+::
+
+    training_data = dlinputs.parallel_load("input-sample.py", nthreads=4, method="training_data")
+    for sample in training_data:
+        ...
 
 Note that loadable input pipelines are usually expected to return
 unbatched data.
@@ -146,7 +154,14 @@ training, just use:
 
 ::
 
-        find . -iname '*.png' -o -iname '*.cls' | sort | \
+        tar -ztvf data.tgz --sort data
+        
+For more complex selection of files, or if your ``tar`` doesn't support ``--sort``,
+you can also write:
+
+::
+
+        find data -iname '*.png' -o -iname '*.cls' | sort | \
             tar -ztvf data.tgz -T -
 
 With sharding, use the included ``tarshards`` program:
