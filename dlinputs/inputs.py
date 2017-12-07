@@ -873,8 +873,22 @@ def ittabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
             yield result
 
 
+def base_plus_ext(fname):
+    """Splits pathnames into the file basename plus the extension."""
+    return splitallext(fname)
 
-def ittarreader1(archive, check_sorted=True):
+def dir_plus_file(fname):
+    """Splits pathnames into the dirname plus the filename."""
+    return os.path.split(fname)
+
+def last_dir(fname):
+    """Splits pathnames into the last dir plus the filename."""
+    dirname, plain = os.path.split(fname)
+    prefix, last = os.path.split(dirname)
+    return last, plain
+
+
+def ittarreader1(archive, check_sorted=True, keys=base_plus_ext):
     """Read samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -887,8 +901,10 @@ def ittarreader1(archive, check_sorted=True):
 
     """
     if isinstance(archive, str):
-        if re.match(r"^(https?|file):(?i)", archive):
+        if re.match(r"^(https?|file|s?ftp):(?i)", archive):
             archive = urllib2.urlopen(archive)
+        elif re.match(r"^gs:(?i)", archive):
+            archive = os.popen("gsutil cat '%s'" % archive, "rb")
     current_count = 0
     current_prefix = None
     current_sample = None
@@ -899,8 +915,8 @@ def ittarreader1(archive, check_sorted=True):
     for tarinfo in stream:
         if not tarinfo.isreg():
             continue
-        file = tarinfo.name
-        prefix, suffix = splitallext(file)
+        fname = tarinfo.name
+        prefix, suffix = keys(fname)
         if prefix != current_prefix:
             if check_sorted and prefix <= current_prefix:
                 raise ValueError("tar file does not contain sorted keys")
@@ -921,6 +937,10 @@ def ittarreader1(archive, check_sorted=True):
             current_count += 1
     if len(current_sample.keys()) > 0:
         yield current_sample
+    try: del stream
+    except: pass
+    try: del archive
+    except: pass
 
 
 @itsource
