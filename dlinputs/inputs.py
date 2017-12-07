@@ -18,6 +18,7 @@ import types
 import urllib2
 import urlparse
 import warnings
+from collections import namedtuple
 
 import numpy as np
 import pylab
@@ -697,6 +698,31 @@ def extract_shards(url):
     for i in xrange(n):
         result.append("%s%0*d%s" % (prefix, f, i, suffix))
     return result
+
+ShardEntry = namedtuple("ShardEntry", "name,prefix,index,suffix")
+
+def iterate_shards(url):
+    """Iterates over shards.
+
+    Given a string of the form "prefix-@000123-suffix", yields
+    objects containing:
+
+    - obj.name: expanded name
+    - obj.prefix: prefix value
+    - obj.index: index value (as zero-padded string)
+    - obj.suffix: suffix value
+
+    :param url: shard url
+    :returns: iterator over shards
+
+    """
+    prefix, shards, suffix = re.search(r"^(.*)(@[0-9]+)(.*)$", url).groups()
+    f = len(shards) - 1
+    n = int(shards[1:])
+    result = []
+    for i in xrange(n):
+        index = "%0*d" % (f, i)
+        yield ShardEntry(prefix+index+suffix, prefix, index, suffix)
 
 ###
 ### Data sources.
