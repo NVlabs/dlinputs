@@ -90,7 +90,7 @@ class TarWriter(object):
             self.tarstream = tarfile.open(mode="w|gz", fileobj=self.stream)
         else:
             self.stream = None
-            self.tarstream = tarfile.open(name=fname, mode="w:gz")
+            self.tarstream = tarfile.open(fileobj=fname, mode="w:gz")
 
     def __enter__(self):
         """Context manager."""

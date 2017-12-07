@@ -17,6 +17,7 @@ import tarfile
 import types
 import urllib2
 import urlparse
+import warnings
 
 import numpy as np
 import pylab
@@ -916,10 +917,17 @@ def ittarreader1(archive, check_sorted=True, keys=base_plus_ext):
         if not tarinfo.isreg():
             continue
         fname = tarinfo.name
+        if fname is None:
+            warnings.warn("tarinfo.name is None")
+            continue
         prefix, suffix = keys(fname)
+        if prefix is None:
+            warnings.warn("prefix is None for: %s" % (tarinfo.name,))
+            continue
         if prefix != current_prefix:
             if check_sorted and prefix <= current_prefix:
-                raise ValueError("tar file does not contain sorted keys")
+                raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" % \
+                                 (current_prefix, prefix))
             if current_sample is not None and \
                not current_sample.get("__bad__", False):
                 yield current_sample
