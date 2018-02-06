@@ -2,11 +2,7 @@
 # See the LICENSE file for licensing terms (BSD-style).
 
 import loadable
-
-try:
-    import torch.multiprocessing as mp
-except:
-    import multiprocessing as mp
+import multiprocessing as mp
 
 
 def _parallel_job(factory, args, queue, index):

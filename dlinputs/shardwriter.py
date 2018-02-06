@@ -13,7 +13,6 @@ import time
 import PIL
 import numpy as np
 import scipy
-import torch
 import codecs
 from types import NoneType
 
@@ -43,7 +42,7 @@ def autoconvert(obj):
 
     This handles the most common machine learning object types:
     - numbers and strings turn into strings the obvious way
-    - Torch and Numpy arrays of rank 2,3 and depth 3,4 turn into PNG arrays
+    - Numpy arrays of rank 2,3 and depth 3,4 turn into PNG arrays
 
     :param obj: an int, float, string, or tensor
     :returns: a string or buffer
@@ -57,12 +56,6 @@ def autoconvert(obj):
           (obj.ndim==2 or
            (obj.ndim==3 and obj.shape[2] in [3, 4]))):
         return pildumps(obj)
-    elif (isinstance(obj, torch.FloatTensor) and
-          (obj.ndimension()==2 or
-           (obj.ndimension()==3 and int(obj.size(0)) in [3, 4]))):
-        temp = obj.numpy()
-        if temp.ndim==3: temp = temp.transpose(1, 2, 0)
-        return pildumps(temp)
     elif isinstance(obj, (str, buffer)):
         return obj
     elif isinstance(obj, unicode):

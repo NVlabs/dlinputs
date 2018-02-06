@@ -3,7 +3,6 @@
 import os
 import imp
 import glob
-import torch
 import simplejson
 
 def _convert(x):
@@ -94,6 +93,7 @@ def load_net(mname, mparams={}):
     :param mparams: model parameters used for model.create(**params)
 
     """
+    import torch
     model = load_model(mname)
     if model is not None:
         model = model.create(**mparams)
@@ -111,6 +111,7 @@ def save_net(mname, model):
     :param model: model to be saved
 
     """
+    import torch
     ext = ".lock"
     torch.save(model, mname+ext)
     os.link(mname+ext, mname)

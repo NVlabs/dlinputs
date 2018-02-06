@@ -10,7 +10,6 @@ import os
 import imp
 import glob
 import numpy as np
-import torch
 import argparse
 from dlpipes import io
 from dlpipes import inputs as dli

@@ -14,7 +14,6 @@ import re
 import sqlite3
 import StringIO
 import tarfile
-import types
 import urllib2
 import urlparse
 import warnings
@@ -29,7 +28,7 @@ import simplejson
 from numpy import cos, sin
 import numpy.random as npr
 
-from decorators import itfilter, itmapper, itsink, itsource, prints, ComposableIterator
+from decorators import itfilter, itmapper, itsink, itsource, ComposableIterator
 
 
 ###

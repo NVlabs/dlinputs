@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import torch
 import matplotlib
 # matplotlib.use("GTK")
 
@@ -11,7 +10,6 @@ import os
 import imp
 import glob
 import numpy as np
-import torch
 import argparse
 import dlinputs as dli
 import time
@@ -38,11 +36,6 @@ def print_sample(sample):
         elif isinstance(v, list):
             print "%15s %3d %s" % (k, len(v), str(v)[:60])
         elif isinstance(v, np.ndarray):
-            print "%15s %s [%s,%s] %s(%s)" % (k,
-                                    v.shape, np.amin(v), np.amax(v),
-                                    np.mean(v), np.var(v)**.5)
-        elif isinstance(v, torch.Tensor):
-            v = v.cpu().numpy()
             print "%15s %s [%s,%s] %s(%s)" % (k,
                                     v.shape, np.amin(v), np.amax(v),
                                     np.mean(v), np.var(v)**.5)
