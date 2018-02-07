@@ -15,6 +15,7 @@ import numpy as np
 import scipy
 import codecs
 from types import NoneType
+import storage
 
 import simplejson
 
@@ -79,7 +80,7 @@ class TarWriter(object):
         self.keep_meta = keep_meta
         self.default_converter = default_converter
         if isinstance(fname, (str, unicode)):
-            self.stream = open(fname, "wb")
+            self.stream = storage.generic.open_write(fname)
             self.tarstream = tarfile.open(mode="w|gz", fileobj=self.stream)
         else:
             self.stream = None
@@ -104,18 +105,18 @@ class TarWriter(object):
             self.stream.close()
             self.stream = None
 
-    def write(self, key, obj):
+    def write(self, obj):
         """Write a dictionary to the tar file.
 
         This applies the conversions and renames that the TarWriter
         was configured with.
 
-        :param str key: basename for the tar file entry
         :param str obj: dictionary of objects to be stored
         :returns: size of the entry
 
         """
         total = 0
+        key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
                 continue
@@ -195,18 +196,18 @@ class ShardWriter(object):
         self.tarwriter = TarWriter(name)
         self.shard += 1
 
-    def write(self, key, obj):
+    def write(self, obj):
         """Write an object to the current tar shard.
 
-        :param key: prefix for tar entry
         :param obj: object to be written
         :returns: number of bytes written
         """
+        key = obj["__key__"]
         assert isinstance(key, str)
         assert isinstance(obj, dict)
         if self.tarwriter is None:
             self.open_next_stream()
-        size = tarwriter.write(key, obj)
+        size = tarwriter.write(obj)
         assert size > 0
         self.total += size
         if self.total >= self.shardsize:
