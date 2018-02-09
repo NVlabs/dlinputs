@@ -980,9 +980,16 @@ def ittarreader1(archive, check_sorted=True, keys=base_plus_ext):
 def ittarreader(archive, epochs=1, **kw):
     for epoch in xrange(epochs):
         source = ittarreader1(archive, **kw)
-        for sample in source:
-            sample["__epoch__"] = epoch
-            yield sample
+        while True:
+            try:
+                sample = source.next()
+                sample["__epoch__"] = epoch
+                yield sample
+            except StopIteration:
+                break
+            except Exception, e
+                print e
+                break
 
 @itsource
 def ittarshards(url, shardtype="application/x-tgz", randomize=True, epochs=1,
