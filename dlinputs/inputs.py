@@ -340,6 +340,66 @@ def pildumps(image, format="PNG"):
 pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
 
+def autodecode1(data, tname):
+    extension = re.sub(r".*\.", "", tname).lower()
+    if extension in ["png", "jpg", "jpeg"]:
+        import numpy as np
+        data = StringIO.StringIO(data)
+        try:
+            import imageio
+            return np.array(imageio.imread(data, format=extension))
+        except:
+            pass
+        import scipy.misc
+        return scipy.misc.imread(data)
+    if extension in ["json", "jsn"]:
+        import simplejson
+        return simplejson.loads(data)
+    if extension in ["pyd", "pickle"]:
+        import pickle
+        return pickle.loads(data)
+    if extension in ["mp", "msgpack", "msg"]:
+        import msgpack
+        return msgpack.unpackb(data)
+    return data
+
+def autodecode(sample):
+    return {k: autodecode1(v, k) for k, v in sample.items()}
+
+def autoencode1(data, tname):
+    extension = re.sub(r".*\.", "", tname).lower()
+    if extension in ["png", "jpg", "jpeg"]:
+        import imageio
+        if isinstance(data, np.ndarray):
+            if data.dtype in [np.dtype("f"), np.dtype("d")]:
+                assert np.amin(data) >= 0.0, (data.dtype, np.amin(data))
+                assert np.amax(data) <= 1.0, (data.dtype, np.amax(data))
+                data = np.array(255 * data, dtype='uint8')
+            elif data.dtype in [np.dtype("uint8")]:
+                pass
+            else:
+                raise ValueError("{}: unknown image array dtype".format(data.dtype))
+        else:
+            raise ValueError("{}: unknown image type".format(type(data)))
+        stream = StringIO.StringIO()
+        imageio.imsave(stream, data, format=extension)
+        result = stream.getvalue()
+        del stream
+        return result
+    if extension in ["json", "jsn"]:
+        import simplejson
+        return simplejson.dumps(data)
+    if extension in ["pyd", "pickle"]:
+        import pickle
+        return pickle.dumps(data)
+    if extension in ["mp", "msgpack", "msg"]:
+        import msgpack
+        return msgpack.packb(data)
+    return data
+
+def autoencode(sample):
+    return {k: autoencode1(v, k) for k, v in sample.items()}
+
 
 def make_distortions(size, distortions=[(5.0, 3)]):
     """Generate 2D distortions using filtered Gaussian noise.
@@ -987,7 +1047,7 @@ def ittarreader(archive, epochs=1, **kw):
                 yield sample
             except StopIteration:
                 break
-            except Exception, e
+            except Exception, e:
                 print e
                 break
 
@@ -1564,6 +1624,32 @@ def transcripts2batch(transcripts, codec=ascii_codec):
     """
     targets = [maketarget(s, codec=codec) for s in transcripts]
     return seq_makebatch(targets, for_target=True)
+
+@itfilter
+def itencode(data):
+    """Automatically encode data items based on key extension.
+
+    Known extensions:
+    - png, jpg, jpeg: images
+    - json: JSON
+    - pyd, pickle: Python pickles
+    - mp: Messagepack
+    """
+    for sample in data:
+        yield autoencode(data)
+
+@itfilter
+def itdecode(data):
+    """Automatically decode data items based on key extension.
+
+    Known extensions:
+    - png, jpg, jpeg: images
+    - json: JSON
+    - pyd, pickle: Python pickles
+    - mp: Messagepack
+    """
+    for sample in data:
+        yield autodecode(data)
 
 @itfilter
 def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
