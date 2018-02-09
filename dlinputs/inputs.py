@@ -1040,15 +1040,19 @@ def ittarreader1(archive, check_sorted=True, keys=base_plus_ext):
 def ittarreader(archive, epochs=1, **kw):
     for epoch in xrange(epochs):
         source = ittarreader1(archive, **kw)
+        count = 0
         while True:
             try:
                 sample = source.next()
                 sample["__epoch__"] = epoch
+                count += 1
                 yield sample
             except StopIteration:
                 break
             except Exception, e:
-                print e
+                print "ittarreader archive:", archive
+                print "ittarreader Exception:", e
+                print "quitting after", count, "records"
                 break
 
 @itsource
