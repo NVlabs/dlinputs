@@ -1653,7 +1653,7 @@ def itdecode(data):
     - mp: Messagepack
     """
     for sample in data:
-        yield autodecode(data)
+        yield autodecode(sample)
 
 @itfilter
 def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
