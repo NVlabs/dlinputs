@@ -1396,7 +1396,7 @@ def ittransform(data, f=None):
         yield f(sample)
 
 @itfilter
-def itshuffle(data, bufsize=1000):
+def itshuffle(data, bufsize=1000, initial=100):
     """Shuffle the data in the stream.
 
     This uses a buffer of size `bufsize`. Shuffling at
@@ -1408,12 +1408,17 @@ def itshuffle(data, bufsize=1000):
     :returns: iterator
 
     """
+    assert inital <= bufsize
     buf = []
+    startup = True
     for sample in data:
         if len(buf) < bufsize:
             buf.append(data.next())
         k = pyr.randint(0, len(buf) - 1)
         sample, buf[k] = buf[k], sample
+        if startup and len(buf) < initial:
+            continue
+        startup = False
         yield sample
 
 
