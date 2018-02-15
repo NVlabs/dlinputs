@@ -1408,7 +1408,7 @@ def itshuffle(data, bufsize=1000, initial=100):
     :returns: iterator
 
     """
-    assert inital <= bufsize
+    assert initial <= bufsize
     buf = []
     startup = True
     for sample in data:
