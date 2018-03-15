@@ -13,6 +13,7 @@ import numpy as np
 import argparse
 import dlinputs as dli
 import time
+import re
 
 parser = argparse.ArgumentParser("Display info about an input module.")
 parser.add_argument("input")
@@ -48,6 +49,8 @@ if args.parallel > 0:
     method = "{}_data".format(args.table)
     source = dli.parallel.parallel_load(args.input, method=method, nthreads=args.parallel)
     print args.input, source
+elif re.search("^z[a-z]+:", args.input):
+    source = dli.Comms(args.input).items()
 elif args.input.endswith(".py"):
     inputs = dli.loadable.load_input(args.input)
     datasets = [attr[:-5] for attr in sorted(dir(inputs)) if attr.endswith("_data")]
@@ -87,6 +90,7 @@ if args.display is not None:
     keys = args.display.split(",")
     for i in range(1000):
         print_sample(sample)
+        clf()
         for j,key in enumerate(keys):
             subplot(1, len(keys), j+1)
             data = sample[key]

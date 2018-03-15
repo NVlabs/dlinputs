@@ -18,6 +18,7 @@ import urllib2
 import urlparse
 import warnings
 from collections import namedtuple
+import logging
 
 import numpy as np
 import pylab
@@ -1378,8 +1379,14 @@ def itmap(data, **keys):
     for sample in data:
         sample = sample.copy()
         for k, f in keys.items():
-            sample[k] = f(sample[k])
-        yield sample
+            try:
+                sample[k] = f(sample[k])
+            except Exception, e:
+                logging.warn("itmap {}".format(repr(e)))
+                sample = None
+                break
+        if sample is not None:
+            yield sample
 
 @itfilter
 def ittransform(data, f=None):
