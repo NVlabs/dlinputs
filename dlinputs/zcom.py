@@ -16,7 +16,7 @@ schemes = dict(
     zrsub=(zmq.SUB, True)
 )
 
-class Comms(object):
+class Connection(object):
     def __init__(self, url, encode=True, pack=True):
         self.encode = encode
         self.pack = pack

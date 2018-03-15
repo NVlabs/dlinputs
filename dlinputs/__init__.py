@@ -3,7 +3,6 @@
 
 import decorators
 from inputs import *
-from net import Comms
 import shardwriter
 import loadable
 import parallel
