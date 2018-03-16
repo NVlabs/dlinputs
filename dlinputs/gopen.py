@@ -1,7 +1,5 @@
 import os
-import sys
 from urllib2 import urlparse
-from contextlib import closing
 from subprocess import Popen, PIPE, check_call
 import random
 
@@ -31,7 +29,7 @@ def gopen(url, mode="rb"):
             cmd = "curl --fail -s '%s'" % url
             return os.popen(cmd, "rb")
         elif mode[0]=="w":
-            self.test_location(url)
+            test_curl_write(url)
             cmd = "curl --fail -s -T - '%s'" % url
             return os.popen(cmd, "wb")
         else:

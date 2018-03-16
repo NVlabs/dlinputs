@@ -7,7 +7,6 @@ import os
 import os.path
 import random as pyr
 import re
-import sqlite3
 
 import numpy as np
 import pylab

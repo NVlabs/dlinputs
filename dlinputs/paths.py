@@ -47,7 +47,6 @@ def iterate_shards(url):
     prefix, shards, suffix = re.search(r"^(.*)(@[0-9]+)(.*)$", url).groups()
     f = len(shards) - 1
     n = int(shards[1:])
-    result = []
     for i in xrange(n):
         index = "%0*d" % (f, i)
         yield ShardEntry(prefix+index+suffix, prefix, index, suffix)

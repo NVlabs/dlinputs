@@ -30,6 +30,8 @@ def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
         db.close()
 
 
+sqltypes = None # FIXME
+
 class SqliteWriter(object):
     """A quick and simple way of writing datasets to sqlite3 files.
 

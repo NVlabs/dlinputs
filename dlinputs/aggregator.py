@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
 import argparse
-import dlinputs as dli
-from dlinputs import zcom
+import zcom
 import time
 
 def aggregator(input, output, report=0):

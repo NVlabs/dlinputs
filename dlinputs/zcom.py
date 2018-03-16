@@ -2,7 +2,6 @@ import msgpack
 import zmq
 import inputs
 from urllib2 import urlparse
-import logging
 import collections
 import time
 

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import argparse
-import dlinputs as dli
 from dlinputs import zcom
 import time
 
@@ -29,5 +28,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Display info about an input module.")
     parser.add_argument("-o", "--output", default="zpush://localhost:10000")
     parser.add_argument("-r", "--report", type=int, default=1000)
+    parser.add_argument("input")
     args = parser.parse_args()
-    aggregator(args.input, args.output, report=args.report)
+    loader(args.input, args.output, report=args.report)
