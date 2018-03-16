@@ -2,7 +2,6 @@
 
 import os
 import imp
-import glob
 import simplejson
 
 def _convert(x):

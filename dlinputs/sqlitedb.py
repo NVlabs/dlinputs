@@ -1,29 +1,39 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+import os
 import sqlite3
 
-sqltypes = dict(int="integer", str="text", png="blob", float="real")
+def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False):
+    """Read a dataset from an sqlite3 dbfile and the given table.
+
+    FIXME: update this to standard record conventions, with autoencode/decode
+    """
+    assert "," not in table
+    if "::" in dbfile:
+        dbfile, table = dbfile.rsplit("::", 1)
+    assert os.path.exists(dbfile)
+    sql = "select %s from %s %s" % (cols, table, extra)
+    if verbose:
+        print "#", sql
+    for epoch in xrange(epochs):
+        if verbose:
+            print "# epoch", epoch, "dbfile", dbfile
+        db = sqlite3.connect(dbfile)
+        c = db.cursor()
+        for row in c.execute(sql):
+            cols = [x[0] for x in c.description]
+            sample = {k: v for k, v in zip(cols, row)}
+            sample["__epoch__"] = epoch
+            yield sample
+        c.close()
+        db.close()
 
 
-def identity(x): return x
-
-
-def saveimg(img):
-    return buffer(dli.pildumps(array(img * 255.0, 'uint8')))
-
-
-converters = dict(png=saveimg)
-
-
-class DbWriter(object):
+class SqliteWriter(object):
     """A quick and simple way of writing datasets to sqlite3 files.
 
-    ```
-    dbw = DbWriter("foo.db", "mytable", input="png", transcript="text", cls="int")
-    dbw.add(input=rand(128, 128), transcript="foo", cls=17)
-    ...
-    ```
+    FIXME: update this to standard record conventions, with autoencode/decode
     """
 
     def __init__(self, fname, tname, **kw):

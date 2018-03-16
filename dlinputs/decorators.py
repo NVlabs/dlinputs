@@ -4,8 +4,6 @@
 import itertools
 from functools import wraps
 
-from decorator import decorator
-
 verbose = True
 
 

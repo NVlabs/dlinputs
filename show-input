@@ -12,6 +12,7 @@ import glob
 import numpy as np
 import argparse
 import dlinputs as dli
+from dlinputs import zcom
 import time
 import re
 
@@ -50,7 +51,7 @@ if args.parallel > 0:
     source = dli.parallel.parallel_load(args.input, method=method, nthreads=args.parallel)
     print args.input, source
 elif re.search("^z[a-z]+:", args.input):
-    source = dli.Comms(args.input).items()
+    source = zcom.Connection(args.input).items()
 elif args.input.endswith(".py"):
     inputs = dli.loadable.load_input(args.input)
     datasets = [attr[:-5] for attr in sorted(dir(inputs)) if attr.endswith("_data")]

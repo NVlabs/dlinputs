@@ -1,9 +1,6 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import argparse
-import os
-import os.path
 import pprint
 import re
 import StringIO
@@ -64,83 +61,6 @@ def autoconvert(obj):
     else:
         raise Exception("unknown object type: {}".format(type(obj)))
 
-class TarWriter(object):
-    def __init__(self, fname, converters={}, names=True, keep_meta=False, default_converter=autoconvert):
-        """A class for writing dictionaries to tar files.
-
-        :param str fname: file name for tar file (.tgz)
-        :param dict converters: converters for objects to buffers
-        :param dict names: dictionary mapping extensions to keys (True=use keys as extensions)
-        :param bool keep_meta: keep fields starting with "_"
-        :param function default_converter: converter to use if nothing else is specified (autoconvert)
-        """
-        self.fname = fname
-        self.converters = converters
-        self.names = names
-        self.keep_meta = keep_meta
-        self.default_converter = default_converter
-        if isinstance(fname, (str, unicode)):
-            self.stream = storage.generic.open_write(fname)
-            self.tarstream = tarfile.open(mode="w|gz", fileobj=self.stream)
-        else:
-            self.stream = None
-            self.tarstream = tarfile.open(fileobj=fname, mode="w:gz")
-
-    def __enter__(self):
-        """Context manager."""
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager."""
-        self.finish()
-
-    def close(self):
-        """Close the tar file."""
-        self.finish()
-
-    def finish(self):
-        """Close the tar file."""
-        self.tarstream.close()
-        if self.stream:
-            self.stream.close()
-            self.stream = None
-
-    def write(self, obj):
-        """Write a dictionary to the tar file.
-
-        This applies the conversions and renames that the TarWriter
-        was configured with.
-
-        :param str obj: dictionary of objects to be stored
-        :returns: size of the entry
-
-        """
-        total = 0
-        key = obj["__key__"]
-        for k in sorted(obj.keys()):
-            if not self.keep_meta and k[0]=="_":
-                continue
-            if self.names is not True:
-                if k not in self.names:
-                    continue
-                ext = self.names.get(k, k)
-            else:
-                ext = k
-            converter = self.converters.get(k, self.default_converter)
-            v = converter(obj[k])
-            assert isinstance(v, (str, buffer)),  \
-                "converter didn't yield a string: %s" % ((k, type(v)),)
-            now = time.time()
-            ti = tarfile.TarInfo(key + "." + ext)
-            ti.size = len(v)
-            ti.mtime = now
-            ti.mode = 0o666
-            ti.uname = "bigdata"
-            ti.gname = "bigdata"
-            stream = StringIO.StringIO(v)
-            self.tarstream.addfile(ti, stream)
-            total += ti.size
-        return total
 
 
 class ShardWriter(object):
