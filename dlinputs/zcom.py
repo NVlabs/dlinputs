@@ -47,9 +47,11 @@ class Statistics(object):
         return total / (self.recent[-1][0] - self.recent[0][0])
 
 class Connection(object):
-    def __init__(self, url, encode=True, pack=True, stats_horizon=1000):
+    def __init__(self, url, codec=True, pack=True, stats_horizon=1000):
+        if codec is False:
+            codec = lambda x: x
         self.stats = Statistics(stats_horizon)
-        self.encode = encode
+        self.codec = codec
         self.pack = pack
         self.addr = urlparse.urlparse(url)
         kind, bind = schemes[self.addr.scheme]
@@ -65,8 +67,10 @@ class Connection(object):
         if kind==zmq.SUB:
             self.socket.setsockopt(zmq.SUBSCRIBE, '')
     def send(self, data):
-        if self.encode:
+        if self.codec is True:
             data = inputs.autoencode(data)
+        else:
+            data = self.codec(data)
         if self.pack:
             data = msgpack.dumps(data)
         self.socket.send(data)
@@ -76,8 +80,10 @@ class Connection(object):
         self.stats.add(len(data))
         if self.pack:
             data = msgpack.loads(data)
-        if self.encode:
+        if self.codec is True:
             data = inputs.autodecode(data)
+        else:
+            data = self.codec(data)
         return data
     def serve(self, source):
         for sample in source:

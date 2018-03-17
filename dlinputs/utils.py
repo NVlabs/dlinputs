@@ -8,6 +8,7 @@ import collections
 
 import numpy as np
 import PIL
+import PIL.Image
 
 def print_sample(sample):
     """Pretty print a standard sample.
