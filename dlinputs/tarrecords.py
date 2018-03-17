@@ -41,7 +41,7 @@ def last_dir(fname):
     prefix, last = os.path.split(dirname)
     return last, plain
 
-def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=None):
+def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -53,7 +53,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=None):
     :returns: iterator over samples
 
     """
-    if decode is None:
+    if decode is True:
         decode = utils.autodecode
     elif decode is False:
         decode = lambda x: x

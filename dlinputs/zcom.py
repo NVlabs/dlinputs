@@ -58,14 +58,17 @@ class Connection(object):
         self.context = zmq.Context()
         self.socket = self.context.socket(kind)
         location = "tcp://"+self.addr.netloc
+        self.socket.setsockopt(zmq.LINGER, 0)
         if bind:
-            print "bind", location
             self.socket.bind(location)
         else:
-            print "connect", location
             self.socket.connect(location)
         if kind==zmq.SUB:
             self.socket.setsockopt(zmq.SUBSCRIBE, '')
+    def close(self):
+        self.socket.close()
+        self.socket = None
+        self.context = None
     def send(self, data):
         if self.codec is True:
             data = inputs.autoencode(data)
