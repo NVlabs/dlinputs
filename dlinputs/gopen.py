@@ -78,6 +78,17 @@ def sharditerator(url, epochs=1000000, shuffle=True, **kw):
                 for sample in tarrecords.tariterator(stream, **kw):
                     yield sample
 
-def sharditerator_test(url, **kw):
+def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
+    """Iterate over sharded tar records, opening multiple shards in parallel."""
+    assert multi==1, "multi>1 is unimplemented" # FIXME
+    shards = list(paths.path_shards(url))
+    for epoch in xrange(epochs):
+        if shuffle: random.shuffle(shards)
+        for shard in shards:
+            with gopen(shard) as stream:
+                for sample in tarrecords.tariterator(stream, **kw):
+                    yield sample
+
+def sharditerator_once(url, **kw):
     """Iterate over sharded tar records (no shuffling, one epoch only)."""
     return sharditerator(url, epochs=1, shuffle=False, **kw)

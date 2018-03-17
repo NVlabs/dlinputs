@@ -7,6 +7,9 @@ import re
 import numpy as np
 from functools import wraps
 import logging
+import dbm
+import pickle
+import tempfile
 import utils
 import improc
 
@@ -20,7 +23,7 @@ def curried(f):
     return wrapper
 
 def compose2(f, g):
-    return lambda x: f(g(x))
+    return lambda x: g(f(x))
 
 def compose(*args):
     return reduce(compose2, args)
@@ -61,6 +64,11 @@ def concat(sources, maxepoch=1):
             sample["__count__"] = count
             yield sample
             count += 1
+
+@curried
+def identity(data):
+    for sample in data:
+        yield sample
 
 @curried
 def info(data, every=0):
@@ -251,7 +259,23 @@ def shuffle(data, bufsize=1000, initial=100):
         yield sample
     for sample in buf:
         yield sample
-        
+
+@curried
+def diskshuffle(data, bufsize=1000, initial=100, fname=None):
+    """Shuffle the data in the stream.
+
+    This uses a buffer of size `bufsize`. Shuffling at
+    startup is less random; this is traded off against
+    yielding samples quickly. Data is buffered on disk
+    in a dbm-style database.
+
+    :param data: iterator
+    :param bufsize: buffer size for shuffling
+    :returns: iterator
+
+    """
+    raise Exception("unimplemented") # FIXME
+
 ###
 ### Batching
 ###

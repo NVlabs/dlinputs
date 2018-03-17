@@ -4,6 +4,7 @@
 import functools as ft
 import re
 import StringIO
+import collections
 
 import numpy as np
 import PIL
@@ -27,6 +28,23 @@ def print_sample(sample):
             print type(v), len(v)
         else:
             print type(v), repr(v)[:60]
+
+def type_info(x, use_size=True):
+    if isinstance(x, np.ndarray):
+        if use_size:
+            return (x.dtype,) + tuple(x.shape)
+        else:
+            return (x.dtype, tuple([True]*len(x.shape)))
+    else:
+        return repr(type(x))
+
+def summarize_samples(source, use_size=True):
+    counter = collections.Counter()
+    for sample in source:
+        descriptor = [(k, type_info(v, use_size)) for k, v in sample.items()]
+        descriptor = tuple(sorted(descriptor))
+        counter.update([descriptor])
+    return counter
 
 def make_gray(image):
     """Converts any image to a grayscale image by averaging.
@@ -188,13 +206,21 @@ def autodecode1(data, tname):
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
         data = StringIO.StringIO(data)
+        result = None
         try:
             import imageio
-            return np.array(imageio.imread(data, format=extension))
+            result = np.array(imageio.imread(data, format=extension))
         except:
             pass
-        import scipy.misc
-        return scipy.misc.imread(data)
+        try:
+            import scipy.misc
+            result = scipy.misc.imread(data)
+        except:
+            pass
+        if result.dtype == np.dtype("uint8"):
+            result = np.array(result, 'f')
+            result /= 255.0
+        return result
     if extension in ["json", "jsn"]:
         import simplejson
         return simplejson.loads(data)
