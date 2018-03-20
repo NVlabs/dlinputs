@@ -110,7 +110,7 @@ class TarWriter(object):
             encode = lambda x: x
         self.keep_meta = keep_meta
         self.encode = encode
-        self.stream = None
+        self.stream = fileobj
         self.tarstream = tarfile.open(fileobj=fileobj, mode="w:gz")
         self.user = user or getpass.getuser()
         self.group = group or socket.gethostname()
@@ -161,3 +161,42 @@ class TarWriter(object):
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total
+
+class ShardWriter(object):
+    def __init__(self, pattern, maxcount=100000, maxsize=3e9, keep_meta=False, encode=True, user=None, group=None):
+        self.verbose = 1
+        self.args = dict(keep_meta=keep_meta, encode=encode, user=user, group=group)
+        self.maxcount = maxcount
+        self.maxsize = maxsize
+        self.tarstream = None
+        self.shard = 0
+        self.pattern = pattern
+        self.total = 0
+        self.count = 0
+        self.size = 0
+        self.next_stream()
+    def next_stream(self):
+        if self.tarstream is not None:
+            self.tarstream.close()
+        self.fname = self.pattern % self.shard
+        if self.verbose:
+            print "# writing", self.fname, self.count, self.size, self.total
+        self.shard += 1
+        stream = open(self.fname, "wb")
+        self.tarstream = TarWriter(stream, **self.args)
+        self.count = 0
+        self.size = 0
+    def write(self, obj):
+        if self.tarstream is None or self.count>=self.maxcount or self.size>=self.maxsize:
+            self.next_stream()
+        size = self.tarstream.write(obj)
+        self.count += 1
+        self.total += 1
+        self.size += size
+    def close(self):
+        self.tarstream.close()
+        del self.tarstream
+        del self.shard
+        del self.count
+        del self.size
+

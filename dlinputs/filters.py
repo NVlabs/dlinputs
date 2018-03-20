@@ -149,7 +149,7 @@ def select(source, **kw):
 
 
 @curried
-def rename(data, keep_all=False, keep_meta=True, skip_missing=False, **kw):
+def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
     """Rename and select fields using new_name="old_name" keyword arguments.
 
     :param data: iterator
@@ -179,6 +179,9 @@ def rename(data, keep_all=False, keep_meta=True, skip_missing=False, **kw):
                 utils.print_sample(sample)
             continue
         yield result
+
+def rename(keep_all=False, keep_meta=True, skip_missing=False, **kw):
+    return ren(kw, keep_all=keep_all, keep_meta=keep_meta, skip_missing=skip_missing)
 
 @curried
 def copy(data, **kw):

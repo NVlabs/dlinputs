@@ -1,6 +1,5 @@
 import msgpack
 import zmq
-import inputs
 from urllib2 import urlparse
 import collections
 import time
@@ -71,7 +70,7 @@ class Connection(object):
         self.context = None
     def send(self, data):
         if self.codec is True:
-            data = inputs.autoencode(data)
+            data = utils.autoencode(data)
         else:
             data = self.codec(data)
         if self.pack:
@@ -84,7 +83,7 @@ class Connection(object):
         if self.pack:
             data = msgpack.loads(data)
         if self.codec is True:
-            data = inputs.autodecode(data)
+            data = utils.autodecode(data)
         else:
             data = self.codec(data)
         return data

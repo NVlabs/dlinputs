@@ -204,6 +204,12 @@ piljpg = ft.partial(pildumps, format="JPEG")
 
 def autodecode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
+    converted = try_number(data)
+    if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
+        try:
+            return int(data)
+        except ValueError:
+            return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
         data = StringIO.StringIO(data)
@@ -238,7 +244,9 @@ def autodecode(sample):
 
 def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
-    if extension in ["png", "jpg", "jpeg"]:
+    if isinstance(data, (int, float)):
+        return str(data)
+    elif extension in ["png", "jpg", "jpeg"]:
         import imageio
         if isinstance(data, np.ndarray):
             if data.dtype in [np.dtype("f"), np.dtype("d")]:
