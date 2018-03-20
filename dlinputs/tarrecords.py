@@ -104,9 +104,12 @@ class TarWriter(object):
         :param bool keep_meta: keep fields starting with "_"
         :param function encoder: encoding of samples prior to writing
         """
-        if encoder is None: encoder = utils.autoencode
+        if encode is True:
+            encode = utils.autoencode
+        elif encode is False:
+            encode = lambda x: x
         self.keep_meta = keep_meta
-        self.encoder = encoder
+        self.encode = encode
         self.stream = None
         self.tarstream = tarfile.open(fileobj=fileobj, mode="w:gz")
         self.user = user or getpass.getuser()
@@ -139,7 +142,7 @@ class TarWriter(object):
 
         """
         total = 0
-        obj = self.encoder(obj)
+        obj = self.encode(obj)
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
