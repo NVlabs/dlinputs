@@ -95,3 +95,5 @@ class Connection(object):
         while True:
             result = self.recv()
             yield result
+    def write(self, data):
+        self.send(data)

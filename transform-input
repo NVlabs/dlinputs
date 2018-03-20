@@ -1,0 +1,34 @@
+#!/usr/bin/python
+
+import matplotlib
+# matplotlib.use("GTK")
+
+from pylab import *
+rc("image", cmap="hot")
+import pylab
+import os
+import imp
+import glob
+import numpy as np
+import argparse
+import dlinputs as dli
+from dlinputs import zcom, utils, gopen, filters
+import time
+import re
+
+parser = argparse.ArgumentParser("Display info about an input module.")
+parser.add_argument("-c", "--code", default="filters.shuffle()")
+parser.add_argument("-e", "--every", type=int, default=1000)
+parser.add_argument("input")
+parser.add_argument("output")
+args = parser.parse_args()
+
+source = gopen.open_source(args.input)
+sink = gopen.open_sink(args.output)
+
+pipeline = eval("filters.compose({})".format(args.code))
+transformed = pipeline(source)
+
+for i, sample in enumerate(transformed):
+    if i%1000==0: print i
+    sink.write(sample)

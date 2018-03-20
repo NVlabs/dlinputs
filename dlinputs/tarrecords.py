@@ -97,16 +97,19 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     except: pass
 
 class TarWriter(object):
-    def __init__(self, fileobj, keep_meta=False, encoder=None, user=None, group=None):
+    def __init__(self, fileobj, keep_meta=False, encode=True, user=None, group=None):
         """A class for writing dictionaries to tar files.
 
         :param fileobj fileobj: file name for tar file (.tgz)
         :param bool keep_meta: keep fields starting with "_"
         :param function encoder: encoding of samples prior to writing
         """
-        if encoder is None: encoder = utils.autoencode
+        if encode is True:
+            encode = utils.autoencode
+        elif encode is False:
+            encode = lambda x: x
         self.keep_meta = keep_meta
-        self.encoder = encoder
+        self.encode = encode
         self.stream = None
         self.tarstream = tarfile.open(fileobj=fileobj, mode="w:gz")
         self.user = user or getpass.getuser()
@@ -139,7 +142,7 @@ class TarWriter(object):
 
         """
         total = 0
-        obj = self.encoder(obj)
+        obj = self.encode(obj)
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
