@@ -12,6 +12,7 @@ import pickle
 import tempfile
 import utils
 import improc
+import itertools
 
 def curried(f):
     """A decorator for currying functions in the first argument."""
@@ -89,6 +90,10 @@ def info(data, every=0):
             utils.print_sample(sample)
         count += 1
         yield sample
+
+@curried
+def sliced(data, *args):
+    return itertools.islice(data, *args)
 
 
 @curried
