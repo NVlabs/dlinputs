@@ -204,7 +204,6 @@ piljpg = ft.partial(pildumps, format="JPEG")
 
 def autodecode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
-    converted = try_number(data)
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:
             return int(data)
@@ -217,14 +216,16 @@ def autodecode1(data, tname):
         try:
             import imageio
             result = np.array(imageio.imread(data, format=extension))
-        except:
+        except Exception, e:
+            print e
             pass
         try:
             import scipy.misc
             result = scipy.misc.imread(data)
-        except:
+        except Exception, e:
+            print e
             pass
-        if result.dtype == np.dtype("uint8"):
+        if isinstance(result, np.ndarray) and result.dtype == np.dtype("uint8"):
             result = np.array(result, 'f')
             result /= 255.0
         return result
@@ -301,4 +302,3 @@ def samples_to_batch(samples, tensors=True):
     for k in tensors:
         result[k] = np.array(result[k])
     return result
-

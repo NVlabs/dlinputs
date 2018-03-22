@@ -135,17 +135,16 @@ def select(source, **kw):
     :returns: iterator
 
     """
-    for item in source:
-        for data in source:
-            skip = False
-            for k, f in kw.items():
-                matching = not not f(data[k])
-                if not matching:
-                    skip = True
-                    break
-            if skip:
-                continue
-            yield data
+    for data in source:
+        skip = False
+        for k, f in kw.items():
+            matching = not not f(data[k])
+            if not matching:
+                skip = True
+                break
+        if skip:
+            continue
+        yield data
 
 
 @curried
@@ -199,7 +198,7 @@ def copy(data, **kw):
         yield result
 
 @curried
-def map(data, **keys):
+def map(data, errors_are_fatal=False, **keys):
     """Map the fields in each sample using name=function arguments.
 
     Unmentioned fields are left alone.
@@ -216,10 +215,41 @@ def map(data, **keys):
                 sample[k] = f(sample[k])
             except Exception, e:
                 logging.warn("itmap {}".format(repr(e)))
+                if errors_are_fatal:
+                    global last_sample
+                    last_sample = sample
+                    raise e
                 sample = None
                 break
         if sample is not None:
             yield sample
+
+            
+@curried
+def encode(data):
+    """Automatically encode data items based on key extension.
+
+    Known extensions:
+    - png, jpg, jpeg: images
+    - json: JSON
+    - pyd, pickle: Python pickles
+    - mp: Messagepack
+    """
+    for sample in data:
+        yield utils.autoencode(data)
+
+@curried
+def decode(data):
+    """Automatically decode data items based on key extension.
+
+    Known extensions:
+    - png, jpg, jpeg: images
+    - json: JSON
+    - pyd, pickle: Python pickles
+    - mp: Messagepack
+    """
+    for sample in data:
+        yield utils.autodecode(sample)
 
 @curried
 def transform(data, f=None):
@@ -392,157 +422,9 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
                                         cgamma=cgamma)
     return sample
 
-###
-### Specialized input pipelines for OCR, speech, and related tasks.
-###
-
-def ld_makeseq(image):
-    """Turn an image into an LD sequence.
-
-    :param image: input image
-    :returns: LD sequence
-
-    """
-    assert isinstance(image, np.ndarray), type(image)
-    if image.ndim==3 and image.shape[2]==3:
-        image = np.mean(image, 2)
-    elif image.ndim==3 and image.shape[2]==1:
-        image = image[:,:,0]
-    assert image.ndim==2
-    return image.T
-
-def seq_makebatch(images, for_target=False):
-    """Given a list of LD sequences, make a BLD batch tensor.
-
-    This performs zero padding as necessary.
-
-    :param images: list of images as LD sequences
-    :param for_target: require ndim==2, inserts training blank steps.
-    :returns: batched image sequences
-
-    """
-    assert isinstance(images, list), type(images)
-    assert isinstance(images[0], np.ndarray), images
-    if images[0].ndim==2:
-        l, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
-        ibatch = np.zeros([len(images), int(l), int(d)])
-        if for_target:
-            ibatch[:, :, 0] = 1.0
-        for i, image in enumerate(images):
-            l, d = image.shape
-            ibatch[i, :l, :d] = image
-        return ibatch
-    elif images[0].ndim==3:
-        assert not for_target
-        h, w, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
-        ibatch = np.zeros([len(images), h, w, d])
-        for i, image in enumerate(images):
-            h, w, d = image.shape
-            ibatch[i, :h, :w, :d] = image
-        return ibatch
-
-def images2seqbatch(images):
-    """Given a list of images, return a BLD batch tensor.
-
-    :param images: list of images
-    :returns: ndarray representing batch
-
-    """
-    images = [ld_makeseq(x) for x in images]
-    return seq_makebatch(images)
-
-def images2batch(images):
-    """Given a list of images, return a batch tensor.
-
-    :param images: list of imags
-    :returns: batch tensor
-
-    """
-    return seq_makebatch(images)
-
-class AsciiCodec(object):
-    """An example of a codec, used for turning strings into tensors."""
-    def _encode_char(self, c):
-        if c=="": return 0
-        return max(1, ord(c) - ord(" ") + 1)
-    def _decode_char(self, c):
-        if c==0: return ""
-        return chr(ord(" ") + c - 1)
-    def size(self):
-        """The number of classes. Zero is always reserved for the empty class.
-        """
-        return 97
-    def encode(self, s):
-        """Encode a string.
-
-        :param s: string to be encoded
-        :returns: list of integers
-
-        """
-        return [self._encode_char(c) for c in s]
-    def decode(self, l):
-        """Decode a numerical encoding of a string.
-
-        :param l: list of integers
-        :returns: string
-
-        """
-        return "".join([self._decode_char(x) for x in l])
-
-ascii_codec = AsciiCodec()
-
-def maketarget(s, codec=ascii_codec):
-    """Turn a string into an LD target.
-
-    :param s: string
-    :param codec: codec
-    :returns: hot one encoding of string
-
-    """
-    assert isinstance(s, (str, unicode)), (type(s), s)
-    codes = codec.encode(s)
-    n = codec.size()
-    return utils.intlist_to_hotonelist(codes, n)
-
-def transcripts2batch(transcripts, codec=ascii_codec):
-    """Given a list of strings, makes ndarray target arrays.
-
-    :param transcripts: list of strings
-    :param codec: encoding codec
-    :returns: batched hot one encoding of strings suitable for CTC
-
-    """
-    targets = [maketarget(s, codec=codec) for s in transcripts]
-    return seq_makebatch(targets, for_target=True)
 
 @curried
-def encode(data):
-    """Automatically encode data items based on key extension.
-
-    Known extensions:
-    - png, jpg, jpeg: images
-    - json: JSON
-    - pyd, pickle: Python pickles
-    - mp: Messagepack
-    """
-    for sample in data:
-        yield utils.autoencode(data)
-
-@curried
-def decode(data):
-    """Automatically decode data items based on key extension.
-
-    Known extensions:
-    - png, jpg, jpeg: images
-    - json: JSON
-    - pyd, pickle: Python pickles
-    - mp: Messagepack
-    """
-    for sample in data:
-        yield utils.autodecode(sample)
-
-@curried
-def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
+def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):
     """List-batch input samples into similar sized batches.
 
     :param data: iterator of samples
@@ -574,45 +456,6 @@ def itbatchedbuckets(data, batchsize=5, scale=1.8, seqkey="input", batchdim=1):
         batched["_bucket"] = r
         yield batched
 
-@curried
-def itlineseqbatcher(data, input="image", transcript="transcript", target="target", codec=ascii_codec):
-    """Performs text line batching for OCR.
-
-    Usually this is used after itbatchedbuckets.
-
-    :param data: iterator over OCR training samples
-    :param input: input field name
-    :param transcript: transcript field name
-    :param target: target field name
-    :param codec: codec used for encoding classes
-    :returns: batched sequences
-
-    """
-    for sample in data:
-        sample = sample.copy()
-        sample[input] = images2batch(sample[input])
-        sample[target] = transcripts2batch(sample[transcript], codec=codec)
-        yield sample
-
-@curried
-def itlinebatcher(data, input="input", transcript="transcript", target="target", codec=ascii_codec):
-    """Performs text line batching for OCR.
-
-    Usually this is used after itbatchedbuckets.
-
-    :param data: iterator over OCR training samples
-    :param input: input field name
-    :param transcript: transcript field name
-    :param target: target field name
-    :param codec: codec used for encoding classes
-    :returns: batched sequences
-
-    """
-    for sample in data:
-        sample = sample.copy()
-        sample[input] = images2batch(sample[input])
-        sample[target] = transcripts2batch(sample[transcript], codec=codec)
-        yield sample
 
 ###
 ### various data sinks

@@ -41,6 +41,18 @@ def last_dir(fname):
     prefix, last = os.path.split(dirname)
     return last, plain
 
+def trivial_decode(sample):
+    result = {}
+    for k, v in sample.items():
+        if isinstance(v, buffer):
+            v = str(v)
+        elif isinstance(v, unicode):
+            v = str(codecs.encode(v, "utf-8"))
+        else:
+            assert isinstance(v, str)
+        result[k] = v
+    return result
+
 def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
@@ -56,7 +68,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     if decode is True:
         decode = utils.autodecode
     elif decode is False:
-        decode = lambda x: x
+        decode = trivial_decode
     current_count = 0
     current_prefix = None
     current_sample = None
@@ -143,6 +155,9 @@ class TarWriter(object):
         """
         total = 0
         obj = self.encode(obj)
+        assert "__key__" in obj, "object must contain a __key__"
+        for k, v in obj.items():
+            assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
@@ -180,7 +195,7 @@ class ShardWriter(object):
             self.tarstream.close()
         self.fname = self.pattern % self.shard
         if self.verbose:
-            print "# writing", self.fname, self.count, self.size, self.total
+            print "# writing", self.fname, self.count, "%.1f GB"%(self.size/1e9), self.total
         self.shard += 1
         stream = open(self.fname, "wb")
         self.tarstream = TarWriter(stream, **self.args)
