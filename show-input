@@ -1,20 +1,25 @@
 #!/usr/bin/python
 
+import argparse
+import glob
+import imp
+import os
+import re
+import time
+
 import matplotlib
+import numpy as np
+import pylab
+from pylab import *
+
+import dlinputs as dli
+from dlinputs import gopen
+from dlinputs import utils
+from dlinputs import zcom
+
 # matplotlib.use("GTK")
 
-from pylab import *
 rc("image", cmap="hot")
-import pylab
-import os
-import imp
-import glob
-import numpy as np
-import argparse
-import dlinputs as dli
-from dlinputs import zcom, utils, gopen
-import time
-import re
 
 parser = argparse.ArgumentParser("Display info about an input module.")
 parser.add_argument("input")

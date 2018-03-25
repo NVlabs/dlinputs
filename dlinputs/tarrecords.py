@@ -116,6 +116,8 @@ class TarWriter(object):
         :param bool keep_meta: keep fields starting with "_"
         :param function encoder: encoding of samples prior to writing
         """
+        if isinstance(fileobj, str):
+            fileobj = open(fileobj, "wb")
         if encode is True:
             encode = utils.autoencode
         elif encode is False:

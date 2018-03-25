@@ -19,10 +19,8 @@ assert sys.version_info[0] == 2 and sys.version_info[1] >= 7,\
 
 scripts = """
     tarshards
-    shardindex
     show-input
-    show-model
-    tarsplit
+    training-test-split
 """.split()
 
 setup(
