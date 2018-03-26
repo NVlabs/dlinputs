@@ -99,8 +99,7 @@ def open_source(url, decode=True):
         import zcom
         return zcom.Connection(url, codec=decode).items()
     else:
-        stream = gopen(url)
-        return tarrecords.tariterator(stream, decode=decode)
+        return sharditerator(url, decode=decode)
 
 def open_sink(url, encode=True):
     parsed = urlparse.urlparse(url)
