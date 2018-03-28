@@ -162,7 +162,7 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
     assert not keep_all
     for sample in data:
         skip = False
-        result = {}
+        result = dict(__key__=sample.get("__key__"))
         if keep_meta:
             for k, v in sample.items():
                 if k[0]=="_":
@@ -263,7 +263,9 @@ def transform(data, f=None):
 
     if f is None: f = lambda x: x
     for sample in data:
-        yield f(sample)
+        result = f(sample)
+        result["__key__"] = sample.get("__key__")
+        yield result
 
 ###
 ### Shuffling
