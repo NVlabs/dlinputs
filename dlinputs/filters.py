@@ -5,6 +5,7 @@ import math
 import random as pyr
 import re
 import numpy as np
+import pickle
 from functools import wraps
 import logging
 import dbm
@@ -65,6 +66,55 @@ def concat(sources, maxepoch=1):
             sample["__count__"] = count
             yield sample
             count += 1
+
+def objhash(obj):
+    if not isinstance(obj, (str, buffer)):
+        obj = pickle.dumps(obj, -1)
+    h = hashlib.md5()
+    m.update(obj)
+    return h.hexdigest()
+
+@curried
+def unique(data, key, rekey=False, skip_missing=False, error=True):
+    """Ensure that data is unique in the given key.
+
+    :param key: sample key to be made unique
+    :param rekey: if True, use the hash value as the new key
+    """
+    finished = set()
+    for sample in data:
+        assert key in sample
+        ident = objhash(sample.get(key))
+        if ident in finished:
+            if error:
+                raise Exception("duplicate key")
+            else:
+                continue
+        finished.add(ident)
+        if rekey:
+            sample["__key__"] = ident
+        yield sample
+
+@curried
+def patched(data, patches, maxpatches=10000):
+    """Patch a dataset with another dataset.
+
+    Patches are stored in memory; for larger patch sizes, use diskpatched.
+
+    :param patches: iterator yielding patch samples
+    :param maxpatches: maximum number of patches to load
+    :returns: iterator
+
+    """
+    patchdict = {}
+    for i, sample in enumerate(patches):
+        key = sample["__key__"]
+        assert key not in patchdict, "{}: repeated key".format(key)
+        assert i < maxpatches, "too many patches; increase maxpatches="
+        patchdict[key] = sample
+    for sample in data:
+        key = sample["__key__"]
+        return patchdict.get(key, sample)
 
 @curried
 def identity(data):
