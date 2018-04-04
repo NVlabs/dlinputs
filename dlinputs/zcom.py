@@ -1,9 +1,9 @@
 import msgpack
 import zmq
-import inputs
 from urllib2 import urlparse
 import collections
 import time
+import utils
 
 schemes = dict(
     # (KIND, BIND)
@@ -40,11 +40,17 @@ class Statistics(object):
         return self.total / (self.last - self.start)
     def recent_rate(self):
         if self.count==0: return 0 
-        return len(self.recent) / (self.recent[-1][0] - self.recent[0][0])
+        delta = self.recent[-1][0] - self.recent[0][0]
+        if delta==0: return 0
+        return len(self.recent) / delta
     def recent_throughput(self):
         if self.count==0: return 0
         total = sum(r[1] for r  in self.recent)
-        return total / (self.recent[-1][0] - self.recent[0][0])
+        delta = self.recent[-1][0] - self.recent[0][0]
+        if delta==0: return 0
+        return total / delta
+    def summary(self):
+        return "rate {} throughput {}".format(self.recent_rate(), self.recent_throughput())
 
 class Connection(object):
     def __init__(self, url, codec=True, pack=True, stats_horizon=1000):
@@ -71,7 +77,7 @@ class Connection(object):
         self.context = None
     def send(self, data):
         if self.codec is True:
-            data = inputs.autoencode(data)
+            data = utils.autoencode(data)
         else:
             data = self.codec(data)
         if self.pack:
@@ -84,13 +90,17 @@ class Connection(object):
         if self.pack:
             data = msgpack.loads(data)
         if self.codec is True:
-            data = inputs.autodecode(data)
+            data = utils.autodecode(data)
         else:
             data = self.codec(data)
         return data
-    def serve(self, source):
+    def serve(self, source, report=-1):
+        count = 0
         for sample in source:
             self.send(sample)
+            if report>0 and count%report==0:
+                print "count", count, self.stats.summary()
+            count += 1
     def items(self):
         while True:
             result = self.recv()

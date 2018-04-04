@@ -21,9 +21,14 @@ import sys
 import tarfile
 import argparse
 import re
+import random
+
+from dlinputs import gopen
+from dlinputs import tarrecords
+from dlinputs import utils
 
 parser = argparse.ArgumentParser("""\
-Bundle files into sharded tarfiles. Optionally upload to S3 or ssh server.
+Bundle files into sharded tarfiles.
 
 The list of files is given on the standard input.
 
@@ -38,87 +43,44 @@ find . -name '*.png' -o -name '*.cls' | sort | tarshards -S mvcdev2: myimages
 
 For ssh destinations, you should have set up a password-less login.
 """)
-parser.add_argument("-s", "--shardsize", type=float, default=1e9,
+parser.add_argument("-M", "--maxcount", type=float, default=1e6,
+                    help="size of shards to be uploaded")
+parser.add_argument("-S", "--maxsize", type=float, default=1e9,
                     help="size of shards to be uploaded")
 parser.add_argument("-p", "--progress", action="store_true",
                     help="display progress while uploading")
-parser.add_argument("-m", "--minio", action="store_true",
-                    help="use minio's mc to upload to a server")
-parser.add_argument("-S", "--ssh", default="",
-                    help="use ssh to upload to 'host:directory'")
-parser.add_argument("prefix",
-                    help="prefix to upload to")
+parser.add_argument("-s", "--shuffle", action="store_true",
+                    help="shuffle before writing")
+parser.add_argument("output",
+                    help="output shard format")
 args = parser.parse_args()
+
+assert "%" in args.output
 
 all_files = sys.stdin.readlines()
 all_files = [fname.strip() for fname in all_files]
 
-total = 0
+all_records = {}
 for fname in all_files:
-    assert os.path.exists(fname), "{}: not found".format(fname)
-    total += os.path.getsize(fname)
+    base, ext = path.splitallext(fname)
+    all_records[base] = all_records.get(base, []) + [fname]
+for base in all_records.keys():
+    all_records[base] = sorted(all_records[base])
 
-all_files.sort()
-print
-print "\n".join(all_files[:20])
-print "..."
-print "#", len(all_files), "files", ("%.1e"%total), "bytes"
-print "#", "up to", 1+int(total / args.shardsize), "shards"
 
-total = 0
-last = None
-last_prefix = None
-shard = 0
-mcstream = None
-tarstream = None
+extension_sets = [{path.splitallext(x)[1] for x in bucket} for bucket in all_records.values()]
+counter = collections.Counter(extension_sets)
+print extension_sets.most_common(20)
 
-def close_streams():
-    global tarstream, mcstream
-    if tarstream is not None:
-        tarstream.close()
-        tarstream = None
-    if mcstream is not None:
-        mcstream.close()
-        mcstream = None
+keys = sorted(all_records.keys())
+if args.shuffle:
+    random.shuffle(keys)
 
-def open_next_stream():
-    global args, shard, tarstream, mcstream
-    close_streams()
-    name = "%s-%06d.tgz" % (args.prefix, shard)
-    if args.ssh != "":
-        host, dest = args.ssh.split(":")
-        if dest == "": dest = "."
-        cmd = "ssh '{}' dd of='{}/{}'".format(host, dest, name)
-        print "# piping to:", cmd
-        mcstream = os.popen(cmd, "wb")
-        tarstream = tarfile.open(mode="w|gz", fileobj=mcstream)
-    elif args.minio:
-        if args.progress:
-            cmd = "dd status=progress | mc pipe %s" % name
-        else:
-            cmd = "mc pipe %s" % name
-        print "# piping to:", cmd
-        mcstream = os.popen(cmd, "wb")
-        tarstream = tarfile.open(mode="w|gz", fileobj=mcstream)
-    else:
-        print "# writing", name
-        tarstream = tarfile.open(name, "w:gz")
-    shard += 1
+sink = tarrecords.ShardWriter(args.output, maxcount=args.maxcount, maxsize=args.maxsize)
 
-open_next_stream()
+for i, key in enumerate(keys):
+    bucket = all_records[key]
+    sample = [readfile(fname) for fname in bucket]
+    sink.write(sample)
 
-for line in all_files:
-    line = line.strip()
-    assert last is None or last < line, "input not sorted"
-    assert os.path.isfile(line), line
-    last = line
-    size = os.path.getsize(line)
-    total += size
-    prefix = re.sub(r"[.][^./]*$", "", line)
-    # print total, size, line
-    if total >= args.shardsize and prefix != last_prefix:
-        open_next_stream()
-        total = 0
-    tarstream.add(line)
-
-close_streams()
+sink.close()

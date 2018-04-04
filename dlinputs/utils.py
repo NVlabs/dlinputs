@@ -207,6 +207,11 @@ def autodecode1(data, tname):
         return data
     assert isinstance(data, (str, buffer)), type(data)
     extension = re.sub(r".*\.", "", tname).lower()
+    if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
+        try:
+            return int(data)
+        except ValueError:
+            return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
         stream = StringIO.StringIO(data)
@@ -240,7 +245,9 @@ def autodecode(sample):
 
 def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
-    if extension in ["png", "jpg", "jpeg"]:
+    if isinstance(data, (int, float)):
+        return str(data)
+    elif extension in ["png", "jpg", "jpeg"]:
         import imageio
         if isinstance(data, np.ndarray):
             if data.dtype in [np.dtype("f"), np.dtype("d")]:
@@ -295,4 +302,3 @@ def samples_to_batch(samples, tensors=True):
     for k in tensors:
         result[k] = np.array(result[k])
     return result
-

@@ -23,6 +23,7 @@ def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
         c = db.cursor()
         for row in c.execute(sql):
             cols = [x[0] for x in c.description]
+            row = [str(x) for x in row]
             sample = {k: v for k, v in zip(cols, row)}
             sample["__epoch__"] = epoch
             yield sample

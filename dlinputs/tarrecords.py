@@ -41,6 +41,18 @@ def last_dir(fname):
     prefix, last = os.path.split(dirname)
     return last, plain
 
+def trivial_decode(sample):
+    result = {}
+    for k, v in sample.items():
+        if isinstance(v, buffer):
+            v = str(v)
+        elif isinstance(v, unicode):
+            v = str(codecs.encode(v, "utf-8"))
+        else:
+            assert isinstance(v, str)
+        result[k] = v
+    return result
+
 def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
@@ -56,7 +68,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     if decode is True:
         decode = utils.autodecode
     elif decode is False:
-        decode = lambda x: x
+        decode = trivial_decode
     current_count = 0
     current_prefix = None
     current_sample = None
@@ -104,13 +116,15 @@ class TarWriter(object):
         :param bool keep_meta: keep fields starting with "_"
         :param function encoder: encoding of samples prior to writing
         """
+        if isinstance(fileobj, str):
+            fileobj = open(fileobj, "wb")
         if encode is True:
             encode = utils.autoencode
         elif encode is False:
             encode = lambda x: x
         self.keep_meta = keep_meta
         self.encode = encode
-        self.stream = None
+        self.stream = fileobj
         self.tarstream = tarfile.open(fileobj=fileobj, mode="w:gz")
         self.user = user or getpass.getuser()
         self.group = group or socket.gethostname()
@@ -143,6 +157,9 @@ class TarWriter(object):
         """
         total = 0
         obj = self.encode(obj)
+        assert "__key__" in obj, "object must contain a __key__"
+        for k, v in obj.items():
+            assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
@@ -161,3 +178,42 @@ class TarWriter(object):
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total
+
+class ShardWriter(object):
+    def __init__(self, pattern, maxcount=100000, maxsize=3e9, keep_meta=False, encode=True, user=None, group=None):
+        self.verbose = 1
+        self.args = dict(keep_meta=keep_meta, encode=encode, user=user, group=group)
+        self.maxcount = maxcount
+        self.maxsize = maxsize
+        self.tarstream = None
+        self.shard = 0
+        self.pattern = pattern
+        self.total = 0
+        self.count = 0
+        self.size = 0
+        self.next_stream()
+    def next_stream(self):
+        if self.tarstream is not None:
+            self.tarstream.close()
+        self.fname = self.pattern % self.shard
+        if self.verbose:
+            print "# writing", self.fname, self.count, "%.1f GB"%(self.size/1e9), self.total
+        self.shard += 1
+        stream = open(self.fname, "wb")
+        self.tarstream = TarWriter(stream, **self.args)
+        self.count = 0
+        self.size = 0
+    def write(self, obj):
+        if self.tarstream is None or self.count>=self.maxcount or self.size>=self.maxsize:
+            self.next_stream()
+        size = self.tarstream.write(obj)
+        self.count += 1
+        self.total += 1
+        self.size += size
+    def close(self):
+        self.tarstream.close()
+        del self.tarstream
+        del self.shard
+        del self.count
+        del self.size
+

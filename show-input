@@ -1,20 +1,26 @@
 #!/usr/bin/python
 
+import argparse
+import glob
+import imp
+import os
+import re
+import time
+
 import matplotlib
+import numpy as np
+import pylab
+from pylab import *
+
+import dlinputs as dli
+from dlinputs import gopen
+from dlinputs import utils
+from dlinputs import zcom
+
 # matplotlib.use("GTK")
 
-from pylab import *
 rc("image", cmap="hot")
-import pylab
-import os
-import imp
-import glob
-import numpy as np
-import argparse
-import dlinputs as dli
-from dlinputs import zcom, utils, gopen
-import time
-import re
+>>>>>>> 36dbf45c591a820a07a07994f8f41f474adf6d4f
 
 parser = argparse.ArgumentParser("Display info about an input module.")
 parser.add_argument("input")
@@ -61,5 +67,5 @@ if args.display is not None:
             gca().set_title("Key: "+key)
             imshow(data)
         show()
-        ginput(1, 1000)
+        raw_input()
         sample = source.next()
