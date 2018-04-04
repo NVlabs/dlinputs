@@ -390,8 +390,7 @@ def distort(sample, distortions=[(5.0, 5)], keys=["image"]):
     for k, v in zip(keys, distorted): result[k] = v
     return result
 
-@curried
-def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
+def standardize(sample, size, keys=["png"], crop=0, mode="nearest",
                   ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)),
                   rgamma=None, cgamma=(0.8, 1.2)):
     """Standardize images in a sample.
@@ -408,6 +407,8 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
     :returns: standardized szmple
 
     """
+    if isinstance(keys, str):
+        keys = keys.split(",")
     if ralpha is True: ralpha = (-0.2, 0.2)
     if rgamma is True: rgamma = (0.5, 2.0)
     if ralpha is not None:
@@ -415,7 +416,7 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
     else:
         affine = np.eye(2)
     for key in keys:
-        sample[key] = standardize(
+        sample[key] = improc.standardize(
             sample[key], size, crop=crop, mode=mode, affine=affine)
     if rgamma is not None:
         for key in keys:
@@ -424,6 +425,12 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
                                         cgamma=cgamma)
     return sample
 
+@curried
+def standardized(data, *args, **kw):
+    for sample in data:
+        result = standardize(sample, *args, **kw)
+        assert isinstance(result, dict), result
+        yield result
 
 @curried
 def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):

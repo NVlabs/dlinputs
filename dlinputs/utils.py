@@ -298,7 +298,7 @@ def samples_to_batch(samples, tensors=True):
             result[k].append(samples[i][k])
     if tensors == True:
         tensors = [x for x in result.keys()
-                   if isinstance(result[x][0], (np.ndarray, int, float))]
+                   if isinstance(result[x][0], np.ndarray)]
     for k in tensors:
         result[k] = np.array(result[k])
     return result
