@@ -142,6 +142,23 @@ supported by the ``ShardWriter`` class.
             sample = transform(sample)
             writer.write(sample)
 
+Multiple Data Sources, Patching
+===============================
+
+Data for training is often composed of multiple datasets and corrections.
+It's easy to express such compositions of training datasets with ``dlinputs``:
+
+::
+        ukdata = gopen.sharditerator("http://server/uk-data-@000100.tgz")
+        ukdata_patched = filters.patched("http://server/uk-patches-2017-08.tgz")(ukdata)
+        usdata = gopen.sharditerator("http://server/us-data-@000100.tgz")
+        usdata_patched = filters.patched("http://server/us-patches-2017-09.tgz")(usdata)
+        training_data = filters.merge(ukdata_patched, usdata_patched)
+        batched_data = filters.batched(10)(training_data)
+
+        for sample in batched_data:
+            ...
+
 
 Distributed Processing with ZMQ
 =================
