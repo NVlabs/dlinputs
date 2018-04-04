@@ -12,7 +12,7 @@ import glob
 import numpy as np
 import argparse
 import dlinputs as dli
-from dlinputs import zcom
+from dlinputs import zcom, utils, gopen
 import time
 import re
 
@@ -25,58 +25,17 @@ parser.add_argument("-B", "--batched", action="store_true")
 parser.add_argument("-d", "--display", default=None)
 parser.add_argument("-D", "--decoders", default=None)
 parser.add_argument("-O", "--order", default="BHWD")
-parser.add_argument("-p", "--parallel", default=0, type=int)
 parser.add_argument("-a", "--autodecode", action="store_true")
 args = parser.parse_args()
 
-def print_sample(sample):
-    keys = sorted(sample.keys())
-    for k in keys:
-        v = sample[k]
-        if isinstance(v, (int, float, str)):
-            print "%15s %s" % (k, repr(v)[:60])
-        elif isinstance(v, unicode):
-            print "%15s %s" % (k, v.strip().encode("utf-8"))
-        elif isinstance(v, list):
-            print "%15s %3d %s" % (k, len(v), str(v)[:60])
-        elif isinstance(v, np.ndarray):
-            print "%15s %s [%s,%s] %s(%s)" % (k,
-                                    v.shape, np.amin(v), np.amax(v),
-                                    np.mean(v), np.var(v)**.5)
-        else:
-            print "%15s %s" % (k, type(v))
-
-if args.parallel > 0:
-    method = "{}_data".format(args.table)
-    source = dli.parallel.parallel_load(args.input, method=method, nthreads=args.parallel)
-    print args.input, source
-elif re.search("^z[a-z]+:", args.input):
-    source = zcom.Connection(args.input).items()
-elif args.input.endswith(".py"):
-    inputs = dli.loadable.load_input(args.input)
-    datasets = [attr[:-5] for attr in sorted(dir(inputs)) if attr.endswith("_data")]
-    print "datasets:", ", ".join(datasets)
-    print "showing:", args.table
-    print
-    method = "{}_data".format(args.table)
-    assert hasattr(inputs, method), \
-        "{} does not define {}_data method".format(args.input, args.table)
-    source = getattr(inputs, method)()
-elif args.input.endswith(".tgz"):
-    if args.decoders is None:
-        source = dli.ittarreader(args.input, check_sorted=False) | dli.itdecode()
-    else:
-        decoders = {key: dli.pilrgb for key in args.display.split(",")}
-        source = dli.ittarreader(args.input, check_sorted=False) | dli.itmap(**decoders)
-else:
-    raise Exception("{}: unknown extension".format(args.input))
+source = gopen.open_source(args.input)
 
 for i in xrange(args.skip):
     source.next()
 
 sample = source.next()
 
-print_sample(sample)
+utils.print_sample(sample)
 
 if args.bench > 0:
     print
@@ -90,7 +49,7 @@ if args.display is not None:
     ion()
     keys = args.display.split(",")
     for i in range(1000):
-        print_sample(sample)
+        utils.print_sample(sample)
         clf()
         for j,key in enumerate(keys):
             subplot(1, len(keys), j+1)

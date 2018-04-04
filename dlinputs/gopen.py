@@ -101,3 +101,12 @@ def open_source(url, decode=True):
     else:
         stream = gopen(url)
         return tarrecords.tariterator(stream, decode=decode)
+
+def open_sink(url, encode=True):
+    parsed = urlparse.urlparse(url)
+    if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
+        import zcom
+        return zcom.Connection(url, codec=encode)
+    else:
+        stream = gopen(url, "wb")
+        return tarrecords.TarWriter(stream, encode=encode)
