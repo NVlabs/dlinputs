@@ -39,7 +39,7 @@ such a complex input pipeline can simply be written as:
         source = gopen.sharditerator("http://server/data-@000123.tgz")
         pipeline = filters.compose(
             filters.shuffle(1000),
-            filters.rename(input="png", target=".out.png"),
+            filters.rename(input="png", target="out.png"),
             filters.batched(10))
         for sample in pipeline(source):
             sgd_train(net, sample["input"], sample["target"])
