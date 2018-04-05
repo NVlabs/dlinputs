@@ -48,6 +48,7 @@ All the elements of this pipeline (``shuffle``, ``rename``, ``batched``, etc.) a
 just simple python functions that internally look something like:
 
 ::
+
         @curried
         def pipeline_stage(data, parameters, ...):
             for sample in data:
@@ -56,6 +57,7 @@ just simple python functions that internally look something like:
 or equivalently
 
 ::
+
         def pipeline_stage(parameters, ...):
             def iterator(data):
                 for sample in data:
@@ -149,6 +151,7 @@ Data for training is often composed of multiple datasets and corrections.
 It's easy to express such compositions of training datasets with ``dlinputs``:
 
 ::
+
         ukdata = gopen.sharditerator("http://server/uk-data-@000100.tgz")
         ukdata_patched = filters.patched("http://server/uk-patches-2017-08.tgz")(ukdata)
         usdata = gopen.sharditerator("http://server/us-data-@000100.tgz")
