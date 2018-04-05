@@ -11,6 +11,7 @@ import re
 import numpy as np
 import pylab
 import utils
+import paths
 
 def infinite(sample):
     """Repeat the same sample over and over again (for testing).
@@ -54,7 +55,8 @@ def check_ds_size(ds, size):
                          .format(ds, size))
 
 def dirtree(top, extensions, epochs=1,
-                shuffle=True, verbose=True, size=(100,1e9)):
+                shuffle=True, verbose=True, size=(100,1e9),
+                decode=True):
     """Iterate of training samples in a directory tree.
 
     :param top: top of the directory tree
@@ -66,10 +68,14 @@ def dirtree(top, extensions, epochs=1,
     :returns: iterator over samples
 
     """
+    if decode is True:
+        decode = utils.autodecode
+    elif decode is False:
+        decode = lambda x: x
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     assert os.path.isdir(top)
-    lines = list(utils.find_basenames(top, extensions))
+    lines = list(paths.find_basenames(top, extensions))
     if verbose: print "got {} samples".format(len(lines))
     check_ds_size(lines, size)
     for epoch in xrange(epochs):
@@ -79,12 +85,14 @@ def dirtree(top, extensions, epochs=1,
             result["__path__"] = fname
             result["__epoch__"] = epoch
             for extension in extensions:
-                result[extension] = utils.readfile(fname + "." + extension)
+                result[extension] = paths.readfile(fname + "." + extension)
+            result = decode(result)
             yield result
 
 
 def basenames(basenamefile, extensions, split=True, epochs=1,
-                shuffle=True, verbose=True, size=(100,1e9)):
+                shuffle=True, verbose=True, size=(100,1e9),
+                decode=True):
     """Iterate over training samples given as basenames and extensions.
 
     :param basenamefile: file containing one basename per line
@@ -97,6 +105,10 @@ def basenames(basenamefile, extensions, split=True, epochs=1,
     :returns: iterator
 
     """
+    if decode is True:
+        decode = utils.autodecode
+    elif decode is False:
+        decode = lambda x: x
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     root = os.path.abspath(basenamefile)
@@ -115,11 +127,12 @@ def basenames(basenamefile, extensions, split=True, epochs=1,
             result["__path__"] = path
             result["__epoch__"] = epoch
             for extension in extensions:
-                result[extension] = utils.readfile(path + "." + extension)
+                result[extension] = paths.readfile(path + "." + extension)
+            result = decode(result)
             yield result
 
 def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
-              epochs=1, shuffle=True, verbose=True, size=(100,1e9)):
+              epochs=1, shuffle=True, verbose=True, size=(100,1e9), decode=True):
     """Iterate over training samples given by a tabular input.
 
     Columns whose names start with "_" are passed on directly as strings, all other
@@ -137,6 +150,10 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
     :returns: iterator
 
     """
+    if decode is True:
+        decode = utils.autodecode
+    elif decode is False:
+        decode = lambda x: x
     if isinstance(size, int):
         size = (size, size)
     if isinstance(colnames, str):
@@ -173,8 +190,9 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
                             raise ValueError("not found")
                         nerrors += 1
                         continue
-                    result[name] = utils.readfile(path)
+                    result[name] = paths.readfile(path)
                     result["__path__"+name] = path
+            result = decode(result)
             yield result
 
 

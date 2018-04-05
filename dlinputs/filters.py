@@ -5,6 +5,7 @@ import math
 import random as pyr
 import re
 import numpy as np
+import pickle
 from functools import wraps
 import logging
 import dbm
@@ -65,6 +66,55 @@ def concat(sources, maxepoch=1):
             sample["__count__"] = count
             yield sample
             count += 1
+
+def objhash(obj):
+    if not isinstance(obj, (str, buffer)):
+        obj = pickle.dumps(obj, -1)
+    h = hashlib.md5()
+    m.update(obj)
+    return h.hexdigest()
+
+@curried
+def unique(data, key, rekey=False, skip_missing=False, error=True):
+    """Ensure that data is unique in the given key.
+
+    :param key: sample key to be made unique
+    :param rekey: if True, use the hash value as the new key
+    """
+    finished = set()
+    for sample in data:
+        assert key in sample
+        ident = objhash(sample.get(key))
+        if ident in finished:
+            if error:
+                raise Exception("duplicate key")
+            else:
+                continue
+        finished.add(ident)
+        if rekey:
+            sample["__key__"] = ident
+        yield sample
+
+@curried
+def patched(data, patches, maxpatches=10000):
+    """Patch a dataset with another dataset.
+
+    Patches are stored in memory; for larger patch sizes, use diskpatched.
+
+    :param patches: iterator yielding patch samples
+    :param maxpatches: maximum number of patches to load
+    :returns: iterator
+
+    """
+    patchdict = {}
+    for i, sample in enumerate(patches):
+        key = sample["__key__"]
+        assert key not in patchdict, "{}: repeated key".format(key)
+        assert i < maxpatches, "too many patches; increase maxpatches="
+        patchdict[key] = sample
+    for sample in data:
+        key = sample["__key__"]
+        return patchdict.get(key, sample)
 
 @curried
 def identity(data):
@@ -390,8 +440,7 @@ def distort(sample, distortions=[(5.0, 5)], keys=["image"]):
     for k, v in zip(keys, distorted): result[k] = v
     return result
 
-@curried
-def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
+def standardize(sample, size, keys=["png"], crop=0, mode="nearest",
                   ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)),
                   rgamma=None, cgamma=(0.8, 1.2)):
     """Standardize images in a sample.
@@ -408,6 +457,8 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
     :returns: standardized szmple
 
     """
+    if isinstance(keys, str):
+        keys = keys.split(",")
     if ralpha is True: ralpha = (-0.2, 0.2)
     if rgamma is True: rgamma = (0.5, 2.0)
     if ralpha is not None:
@@ -415,7 +466,7 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
     else:
         affine = np.eye(2)
     for key in keys:
-        sample[key] = standardize(
+        sample[key] = improc.standardize(
             sample[key], size, crop=crop, mode=mode, affine=affine)
     if rgamma is not None:
         for key in keys:
@@ -424,6 +475,12 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
                                         cgamma=cgamma)
     return sample
 
+@curried
+def standardized(data, *args, **kw):
+    for sample in data:
+        result = standardize(sample, *args, **kw)
+        assert isinstance(result, dict), result
+        yield result
 
 @curried
 def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):

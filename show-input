@@ -19,7 +19,6 @@ from dlinputs import zcom
 
 # matplotlib.use("GTK")
 
-rc("image", cmap="hot")
 rc("figure", figsize="20,10")
 
 parser = argparse.ArgumentParser("Display info about an input module.")
