@@ -8,6 +8,7 @@ import urllib2
 import urlparse
 from collections import namedtuple
 import simplejson
+from numpy import clip
 
 def split_sharded_path(path):
     """Split a path containing shard notation into prefix, format, suffix, and number."""
@@ -330,3 +331,23 @@ def extract_shards(url):
 
 ShardEntry = namedtuple("ShardEntry", "name,prefix,index,suffix")
 
+def parse_save_path(path, extension="pt"):
+    if extension is not None:
+        extension = "\\." + extension
+    match = re.search(r"^.*-([0-9]{6,})-([0-9]{6,})"+extension, path)
+    if not match:
+        return 0, None
+    return int(match.group(1))*1000, int(match.group(2))*1e-6
+
+def make_save_path(prefix, ntrain, error, extension="pt"):
+    assert isinstance(ntrain, int)
+    assert isinstance(error, float)
+    assert ntrain < 1e12
+    assert error >= -1e-6
+    assert error <= 1+1e-6
+    if extension is not None:
+        extension = "." + extension
+    error = clip(error, 0, 1)
+    kilos = int(ntrain // 1000)
+    micros = int(error * 1e6)
+    return prefix + "-{:09d}-{:06d}".format(kilos, micros) + extension
