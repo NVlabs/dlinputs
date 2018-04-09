@@ -1,0 +1,45 @@
+#!/usr/bin/python
+import argparse
+import itertools
+import os
+
+import editdistance
+import psutil
+import pylab
+import torch
+from torch import nn
+import torch.optim as optim
+from torch.autograd import Variable
+import numpy as np
+import re
+import glob
+
+from dlinputs import utils
+from dlinputs import paths
+
+# matplotlib.use("GTK")
+pylab.rc("image", cmap="hot")
+from pylab import *
+
+parser = argparse.ArgumentParser("""Show model training graphs.""")
+args = parser.parse_args()
+
+fnames = glob.glob("*")
+
+graphs = {}
+
+for fname in fnames:
+    match = re.search(r"^(.*)-([0-9]{6,})-([0-9]{6,}).pt", fname)
+    if not match: continue
+    key, ntrain, err = match.groups()
+    graphs[key] = graphs.get(key, []) + [(int(ntrain)*1e3, int(err)*1e-6)]
+
+xscale('log')
+yscale('log')
+handles = []
+for key, graph in graphs.items():
+    graph = sorted(graph)
+    handles += [plot(*zip(*graph), label=key)[0]]
+legend(handles=handles)
+
+ginput(1, 100000)

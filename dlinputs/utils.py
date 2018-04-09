@@ -241,7 +241,14 @@ def autodecode1(data, tname):
     return data
 
 def autodecode(sample):
-    return {k: autodecode1(v, k) for k, v in sample.items()}
+    result = {}
+    for k, v in sample.items():
+        if k[0] == "_":
+            result[k] = v
+            continue
+        assert v is not None, (k, sample)
+        result[k] = autodecode1(v, k)
+    return result
 
 def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()

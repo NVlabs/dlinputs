@@ -198,7 +198,7 @@ def select(source, **kw):
 
 
 @curried
-def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
+def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True):
     """Rename and select fields using new_name="old_name" keyword arguments.
 
     :param data: iterator
@@ -209,72 +209,72 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
     :returns: iterator
 
     """
-    assert not keep_all
+    error = False
     for sample in data:
-        skip = False
-        result = dict(__key__=sample.get("__key__"))
+        if keep_all:
+            result = dict(sample)
+        else:
+            result = dict(__key__=sample.get("__key__"))
+        for k in kw.values():
+            if k in sample: continue
+            if error_missing:
+                print "ren", kw, "key", k, "missing from sample", sample.keys()
+                result = None
+                error = True
+                break
+            if skip_missing:
+                result = None
+                break
+        if error: break
+        if result is None: continue
         if keep_meta:
             for k, v in sample.items():
                 if k[0]=="_":
                     result[k] = v
         for k, v in kw.items():
-            if v not in sample:
-                skip = True
-                break
             result[k] = sample[v]
-        if skip and skip_missing:
-            if skip_missing is 1:
-                print v, ": missing field; skipping"
-                utils.print_sample(sample)
-            continue
         yield result
 
-def rename(keep_all=False, keep_meta=True, skip_missing=False, **kw):
-    return ren(kw, keep_all=keep_all, keep_meta=keep_meta, skip_missing=skip_missing)
+def rename(keep_all=False, keep_meta=True, skip_missing=False, error_missing=True, **kw):
+    return ren(kw, keep_all=keep_all, keep_meta=keep_meta, skip_missing=skip_missing, error_missing=error_missing)
+
+def copy(keep_meta=True, skip_missing=False, error_missing=True, **kw):
+    return ren(kw, keep_all=True, keep_meta=keep_meta, skip_missing=skip_missing, error_missing=error_missing)
 
 @curried
-def copy(data, **kw):
-    """Copy fields.
-
-    :param data: iterator
-    :param kw: new_value="old_value"
-    :returns: iterator
-
-    """
-    for sample in data:
-        result = {k: v for k, v in sample.items()}
-        for k, v in kw.items():
-            result[k] = result[v]
-        yield result
-
-@curried
-def map(data, errors_are_fatal=False, **keys):
+def map(data, error_missing=True, errors_are_fatal=False, **kw):
     """Map the fields in each sample using name=function arguments.
 
     Unmentioned fields are left alone.
 
     :param data: iterator
-    :param keys: name=function pairs, applying function to each sample field
+    :param kw: name=function pairs, applying function to each sample field
     :returns: iterator
 
     """
+    error = False
     for sample in data:
         sample = sample.copy()
-        for k, f in keys.items():
+        for k, f in kw.items():
+            if error_missing and k not in sample:
+                print "map", kw, "key", k, "missing from sample", sample.keys()
+                error = True
+                break
+            if error: break
             try:
                 sample[k] = f(sample[k])
             except Exception, e:
                 logging.warn("itmap {}".format(repr(e)))
                 if errors_are_fatal:
-                    global last_sample
-                    last_sample = sample
-                    raise e
+                    print e
+                    error = True
+                    break
                 sample = None
                 break
         if sample is not None:
             yield sample
 
-            
+
 @curried
 def encode(data):
     """Automatically encode data items based on key extension.

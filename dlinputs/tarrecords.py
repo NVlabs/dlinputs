@@ -53,7 +53,7 @@ def trivial_decode(sample):
         result[k] = v
     return result
 
-def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
+def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -92,7 +92,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
                not current_sample.get("__bad__", False):
                 yield decode(current_sample)
             current_prefix = prefix
-            current_sample = dict(__key__=prefix)
+            current_sample = dict(__key__=prefix, __source__=source)
         try:
             data = stream.extractfile(tarinfo).read()
         except tarfile.ReadError, e:
