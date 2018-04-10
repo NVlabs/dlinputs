@@ -22,24 +22,30 @@ pylab.rc("image", cmap="hot")
 from pylab import *
 
 parser = argparse.ArgumentParser("""Show model training graphs.""")
+parser.add_argument("-r", "--reload", type=float, default=60.0)
+parser.add_argument("files", nargs="*")
 args = parser.parse_args()
 
-fnames = glob.glob("*")
+if args.files == []: args.files = ["*"]
 
-graphs = {}
+fnames = []
+for arg in args.files:
+    fnames += glob.glob(arg)
 
-for fname in fnames:
-    match = re.search(r"^(.*)-([0-9]{6,})-([0-9]{6,}).pt", fname)
-    if not match: continue
-    key, ntrain, err = match.groups()
-    graphs[key] = graphs.get(key, []) + [(int(ntrain)*1e3, int(err)*1e-6)]
+while 1:
+    graphs = {}
+    for fname in fnames:
+        match = re.search(r"^(.*)-([0-9]{6,})-([0-9]{6,}).pt", fname)
+        if not match: continue
+        key, ntrain, err = match.groups()
+        graphs[key] = graphs.get(key, []) + [(int(ntrain)*1e3, int(err)*1e-6)]
 
-xscale('log')
-yscale('log')
-handles = []
-for key, graph in graphs.items():
-    graph = sorted(graph)
-    handles += [plot(*zip(*graph), label=key)[0]]
-legend(handles=handles)
-
-ginput(1, 100000)
+    clf()
+    xscale('log')
+    yscale('log')
+    handles = []
+    for key, graph in graphs.items():
+        graph = sorted(graph)
+        handles += [plot(*zip(*graph), label=key)[0]]
+    legend(handles=handles)
+    ginput(1, args.reload)
