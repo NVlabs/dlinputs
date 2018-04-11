@@ -28,11 +28,10 @@ args = parser.parse_args()
 
 if args.files == []: args.files = ["*"]
 
-fnames = []
-for arg in args.files:
-    fnames += glob.glob(arg)
-
 while 1:
+    fnames = []
+    for arg in args.files:
+        fnames += glob.glob(arg)
     graphs = {}
     for fname in fnames:
         match = re.search(r"^(.*)-([0-9]{6,})-([0-9]{6,}).pt", fname)
