@@ -23,6 +23,10 @@ from pylab import *
 
 parser = argparse.ArgumentParser("""Show model training graphs.""")
 parser.add_argument("-r", "--reload", type=float, default=60.0)
+parser.add_argument("-x", "--linear_x", action="store_true")
+parser.add_argument("-y", "--linear_y", action="store_true")
+parser.add_argument("-n", "--mintrain", type=int, default=1)
+parser.add_argument("-t", "--tail", type=int, default=1000000)
 parser.add_argument("files", nargs="*")
 args = parser.parse_args()
 
@@ -40,11 +44,13 @@ while 1:
         graphs[key] = graphs.get(key, []) + [(int(ntrain)*1e3, int(err)*1e-6)]
 
     clf()
-    xscale('log')
-    yscale('log')
+    if not args.linear_x: xscale('log')
+    if not args.linear_y: yscale('log')
     handles = []
     for key, graph in graphs.items():
         graph = sorted(graph)
+        graph = graph[-args.tail:]
+        graph = [(x, y) for x, y in graph if x >= args.mintrain]
         handles += [plot(*zip(*graph), label=key)[0]]
     legend(handles=handles)
     ginput(1, args.reload)
