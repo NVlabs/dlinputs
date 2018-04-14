@@ -307,5 +307,7 @@ def samples_to_batch(samples, tensors=True):
         tensors = [x for x in result.keys()
                    if isinstance(result[x][0], np.ndarray)]
     for k in tensors:
+        sizes = {a.shape for a in result[k]}
+        assert len(sizes) == 1, sizes
         result[k] = np.array(result[k])
     return result
