@@ -167,11 +167,12 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
             for k, v in sample.items():
                 if k[0]=="_":
                     result[k] = v
-        for k, v in kw.items():
-            if v not in sample:
+        for k, vs in kw.items():
+            present = [v for v in vs.split() if v in sample]
+            if len(present) == 0:
                 skip = True
                 break
-            result[k] = sample[v]
+            result[k] = sample[present[0]]
         if skip and skip_missing:
             if skip_missing is 1:
                 print v, ": missing field; skipping"

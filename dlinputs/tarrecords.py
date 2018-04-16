@@ -53,6 +53,75 @@ def trivial_decode(sample):
         result[k] = v
     return result
 
+def valid_sample(sample):
+    return (sample is not None and
+            len(sample.keys()) > 0 and
+            not sample.get("__bad__", False))
+           
+def group_by_keys(keys=base_plus_ext):
+    """Groups key, value pairs into samples."""
+    def iterator(data):
+        current_count = 0
+        current_sample = None
+        for fname, value in data:
+            prefix, suffix = keys(fname)
+            if prefix is None:
+                continue
+            if current_sample is not None and prefix == current_sample["__key__"]:
+                current_sample[suffix] = value
+                continue
+            if valid_sample(current_sample):
+                yield current_sample
+            current_sample = dict(__key__=prefix)
+            current_sample[suffix] = value
+        if valid_sample(current_sample):
+            yield current_sample
+    return iterator
+
+def tardata(fileobj):
+    """Iterator yielding filename, content pairs for the given tar stream."""
+    stream = tarfile.open(fileobj=fileobj, mode="r|*")
+    for tarinfo in stream:
+        if not tarinfo.isreg(): continue
+        fname = tarinfo.name
+        if fname is None: continue
+        data = stream.extractfile(tarinfo).read()
+        yield fname, data
+    del stream
+
+def decoder(decode=True):
+    """Apply tariterator-like decoding to the stream of samples."""
+    if decode is True:
+        decode = utils.autodecode
+    elif decode is False:
+        decode = trivial_decode
+    def iterator(data):
+        for sample in data:
+            yield decode(sample)
+    return iterator
+
+def tariterator1(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
+    """Alternative (new) implementation of tariterator."""
+    content = tardata(fileobj)
+    samples = group_by_keys(keys=keys)(content)
+    decoded = decoder(decode=decode)(samples)
+    return decoded
+
+def zipdata(fname):
+    """Iterator yielding filename, content pairs for the given zip file."""
+    import zipfile
+    zf = zipfile.ZipFile(fname)
+    fnames = sorted(zf.namelist())
+    for fname in fnames:
+        data = zf.open(fname).read()
+        yield fname, data
+    
+def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
+    content = zipdata(fname)
+    samples = group_by_keys(keys=keys)(content)
+    decoded = decoder(decode=decode)(samples)
+    return decoded
+
 def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
@@ -88,8 +157,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
             if check_sorted and prefix <= current_prefix:
                 raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" % \
                                  (current_prefix, prefix))
-            if current_sample is not None and \
-               not current_sample.get("__bad__", False):
+            if valid_sample(current_sample):
                 yield decode(current_sample)
             current_prefix = prefix
             current_sample = dict(__key__=prefix)
@@ -103,7 +171,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
         else:
             current_sample[suffix] = data
             current_count += 1
-    if len(current_sample.keys()) > 0:
+    if valid_sample(current_sample):
         yield decode(current_sample)
     try: del stream
     except: pass
