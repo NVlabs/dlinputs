@@ -36,95 +36,33 @@ such a complex input pipeline can simply be written as:
 
 ::
 
-        with dlinputs.ops:
-            data = itfiles(root_dir, "png,cls") | \
-                   itshuffle(1000) | \
-                   itmap(png=pnggray, cls=int) | \
-                   itren(image="png", cls="cls") | \
-                   itstandardize((224, 224), "image") | \
-                   itdistort([5, 5]) | \
-                   itbatch(20)
+        source = gopen.sharditerator("http://server/data-@000123.tgz")
+        pipeline = filters.compose(
+            filters.shuffle(1000),
+            filters.rename(input="png", target="out.png"),
+            filters.batched(10))
+        for sample in pipeline(source):
+            sgd_train(net, sample["input"], sample["target"])
 
-        for sample in data:
-            sgd_train(net, sample["input"}, sample["target"])
-
-In this code, the statement ``with dlinputs.ops`` simple *temporarily*
-imports the input operators from the ``dlinputs`` package; we could just
-as well have said ``dlinputs.itfiles`` etc.
-
-All the elements of this pipeline (``itfiles``, ``itshuffle``, etc.) are
+All the elements of this pipeline (``shuffle``, ``rename``, ``batched``, etc.) are
 just simple python functions that internally look something like:
 
 ::
 
+        @curried
         def pipeline_stage(data, parameters, ...):
             for sample in data:
                 yield transformed(sample)
 
-
-Loadable Input Pipelines
-========================
-
-Machine learning experiments often involve experimenting with different
-data sources and preprocessing operations. The ``dlinputs`` library
-provides a simple mechanism for loading input pipelines. Here is
-a loadable input pipeline:
+or equivalently
 
 ::
 
-    #!/usr/bin/python
-    # File: input-sample.py
-
-    import dlinputs as dli
-
-    class Inputs(object):
-        def training_data(self, **kw):
-            return dli.itsqlite("testdata/sample.db", **kw) | \
-                   dli.itmap(image=dli.pilreads, cls=int) | \
-                   dli.itdistort([5,5])
-
-
-Programmatically, you can load input pipelines using the ``load_input``
-function:
-
-::
-
-    factory = dlinputs.loadable.load_input("input-sample.py")
-    training_data = factory.training_data()
-    for sample in training_data:
-        ...
-        
-If your input pipeline is slow, you can also parallelize it easily:
-
-::
-
-    training_data = dlinputs.parallel_load("input-sample.py", nthreads=4, method="training_data")
-    for sample in training_data:
-        ...
-
-Note that loadable input pipelines are usually expected to return
-unbatched data.
-
-Any method of the form ``..._data(...)`` is assumed to describe
-a dataset.
-
-Separating the input pipeline from your training logic not only makes
-it easier to experiment with different data sources and preprocessing
-pipelines, it also allows the creation of tools. The ``show-input`` tool
-lets you measure the time required to read an input sample, and it
-can also display images contained in the input sample:
-
-::
-
-    $ show-input -b 10 -d image input-sample.py
-    datasets: training
-    showing: training
-
-    __epoch__ 0
-          cls 6
-        image (28, 28) [0.0,1.0] 0.128111(0.300329773671)
-          inx 999
-    ... more output ...
+        def pipeline_stage(parameters, ...):
+            def iterator(data):
+                for sample in data:
+                    yield transformed(sample)
+            return iterator
 
 
 Sharded Tar Files
@@ -155,7 +93,7 @@ training, just use:
 ::
 
         tar -ztvf data.tgz --sort data
-        
+
 For more complex selection of files, or if your ``tar`` doesn't support ``--sort``,
 you can also write:
 
@@ -182,33 +120,11 @@ To iterate over this data, you can now use the input pipeline:
 
 ::
 
-        with dlinputs.ops:
-            data = ittarfile("data.tgz") | \
-                   itshuffle(1000) | \
-                   ... same pipeline as above ...
+        for sample in gopen.sharditerator("data-@000010.tgz"):
+            ...
 
-Since this is just sequential data, you can also stream this data from a
-web server:
-
-::
-
-        with dlinputs.ops:
-            data = ittarfile("http://eunomia/data.tgz") | \
-                   itshuffle(1000) | \
-                   ... same pipeline as above ...
-
-To iterate over sharded data, use a url of the form ``data-@000123.tgz``,
-where the number of shards is given after the @ sign:
-
-::
-
-        with dlinputs.ops:
-            data = ittarshards("http://eunomia/data-@000123.tgz") | \
-                   itshuffle(1000) | \
-                   ... same pipeline as above ...
-
-The ``ittarshards`` iterator can perform randomization and load balancing;
-it performs roughly the following operations:
+The ``sharditerator`` can perform randomization and load balancing by
+performing roughly the following operations:
 
 -  shuffle the list of shards
 -  for each shard, randomly pick a URL from the list of URLs
@@ -217,137 +133,54 @@ it performs roughly the following operations:
 Note that a high performance web server for sharded tar files will
 redirect the URLs for each shard to different servers.
 
-Shard Writing
--------------
-
 In addition to training DL models from sharded tar files, another very
 common operation is dataset transformations. Such transformations are
 supported by the ``ShardWriter`` class.
 
 ::
 
-        writer = shardwriter.ShardWriter("result",
-                                          converters=...,
-                                          names=...,
-                                          shardsize=1e8)
-        for batch in source:
-            writer.write(batch["key"], batch)
+        writer = tarrecords.ShardWriter("result")
+        for sample in source:
+            sample = transform(sample)
+            writer.write(sample)
 
-Common Pipeline Operations
-==========================
+Multiple Data Sources, Patching
+===============================
 
-Data Sources
-------------
-
-The ``dlinputs`` library provides a number of common input sources:
-
--  ``itfiles`` -- files and directories
--  ``itsqlite`` -- SQLite data sources
--  ``ittarfile`` -- tar files (including from URLs)
--  ``ittarshards`` -- sharded tar files (including from URLs)
-
-Data Transformations
---------------------
-
--  ``itshuffle`` -- shuffle samples
--  ``itren`` -- select and rename input fields
--  ``itmap`` -- apply functions to input fields
--  ``itbatch`` -- build batches from samples
--  ``itbatchedbuckets`` -- build batches from similarly sized samples
-
-Data Augmentation
------------------
-
--  ``itstandardize`` -- resize to a standard size, optionally augment
--  ``itdistort`` -- agument by nonlinear distortions
-
-Distributed / Parallel Operations
-=================================
-
-The focus of the ``dlinputs`` library is to make it easy to use
-sharded tar files served over HTTP as inputs to DL training jobs; this
-enables massively scalable, distributed I/O using standard, scalable
-web server technologies (how to set up server infrastructures capable
-of serving petascale data sources at very high data rates will be
-described in a separate document).
-
-If your bottleneck is not I/O but preprocessing, you can parallelize
-input pipelines using ``dlinputs.parallelize_input`` as follows:
+Data for training is often composed of multiple datasets and corrections.
+It's easy to express such compositions of training datasets with ``dlinputs``:
 
 ::
 
-    def make_input():
-        with dlinputs.ops:
-            data = ittarshards("http://eunomia/data-@000123.tgz") | \
-                   itshuffle(1000) | \
-                   itmap(png=pnggray, cls=int) | \
-                   itren(image="png", cls="cls") | \
-                   itstandardize((224, 224), "png") | \
-                   itdistort([5, 5])
+        ukdata = gopen.sharditerator("http://server/uk-data-@000100.tgz")
+        ukdata_patched = filters.patched("http://server/uk-patches-2017-08.tgz")(ukdata)
+        usdata = gopen.sharditerator("http://server/us-data-@000100.tgz")
+        usdata_patched = filters.patched("http://server/us-patches-2017-09.tgz")(usdata)
+        training_data = filters.merge(ukdata_patched, usdata_patched)
+        batched_data = filters.batched(10)(training_data)
 
-    for sample in dlinputs.parallelize_input(make_input, 8):
-        ...
-
-For more complex preprocessing problems, you can use the ``dldist`` library,
-a small library that uses distributed message queueing to let you execute
-preprocessing pipelines on large numbers of distributed machines.
+        for sample in batched_data:
+            ...
 
 
-How are Pipelines Implemented?
-==============================
+Distributed Processing with ZMQ
+=================
 
-The code contained within the ``with dlinputs.ops:`` block behaves very
-much like a UNIX pipeline. It constists of two kinds of components:
+The ``dlinputs`` library also supports large scale distributed preprocessing
+pipelines using the primitives in the ``zcom`` library. This uses MessagePack and
+ZMQ for moving data between compute nodes. This code works particularly well
+in environments like Kubernetes.
 
--  ``itfiles`` is a data *source*
--  ``itshuffle``, ``itmap``, ... are *filters*
+Command Line Tools
+==================
 
-Note that the result of any of these pipeline operations is simply a
-Python *iterator*. By convention, the objects that we iterate over are
-dictionaries with string keys and values that are usually strings,
-tensors, or numbers. That is, the ``itfiles`` function call above
-corresponds roughly to a function like this:
+There are a few simple command line tools:
 
-::
-
-        def itfiles(...):
-            for fname, fname2 in find_filenames(...):
-                yield dict(png=open(fname).read(),
-                           cls=open(fname2).read())
-
-The ``itmap`` call corresponds roughly to the following function:
-
-::
-
-        def itmap(...):
-            def mapper(data):
-                for sample in data:
-                    yield dict(png=pnggray(sample["png"]),
-                               cls=int(sample["cls"]))
-            return mapper
-
-In fact, if you want to write your own filter, ``dlinputs`` provides a
-simple notation that allows you to do so without the currying. For
-example, here is a simple filter that selects all records containing the
-given fields:
-
-::
-
-        @dlinputs.itfilter
-        def select_image(data, fields):
-            for sample in data:
-                if all(field in sample for field in fields):
-                    yield sample
-
-You can now write the following (note that the ``@dlinputs.itfilter``
-decorator has implicitly curried the function so that the first
-argument, ``data`` is not explicit anymore):
-
-::
-
-        data = itfiles(root_dir, "png,cls") | \
-               itfilter(["png", "cls"]) | \
-               ...
+- ``run-tests``: run tests
+- ``show-input``: iterate over sharded tar files or network inputs and print/display
+- ``tarshards``: create tar shards from a list of files
+- ``transform-input``: simple utility for transforming sharded tar files
+- ``training-test-split``: split data into training/test samples
 
 Planned Additions
 =================
@@ -355,4 +188,3 @@ Planned Additions
 We're planning the following additional features:
 
 - iterate over ``tf.Record``/``tf.Example`` files
-- iterate over concatenated MsgPack data

@@ -5,6 +5,7 @@ import math
 import random as pyr
 import re
 import numpy as np
+import pickle
 from functools import wraps
 import logging
 import dbm
@@ -65,6 +66,55 @@ def concat(sources, maxepoch=1):
             sample["__count__"] = count
             yield sample
             count += 1
+
+def objhash(obj):
+    if not isinstance(obj, (str, buffer)):
+        obj = pickle.dumps(obj, -1)
+    h = hashlib.md5()
+    m.update(obj)
+    return h.hexdigest()
+
+@curried
+def unique(data, key, rekey=False, skip_missing=False, error=True):
+    """Ensure that data is unique in the given key.
+
+    :param key: sample key to be made unique
+    :param rekey: if True, use the hash value as the new key
+    """
+    finished = set()
+    for sample in data:
+        assert key in sample
+        ident = objhash(sample.get(key))
+        if ident in finished:
+            if error:
+                raise Exception("duplicate key")
+            else:
+                continue
+        finished.add(ident)
+        if rekey:
+            sample["__key__"] = ident
+        yield sample
+
+@curried
+def patched(data, patches, maxpatches=10000):
+    """Patch a dataset with another dataset.
+
+    Patches are stored in memory; for larger patch sizes, use diskpatched.
+
+    :param patches: iterator yielding patch samples
+    :param maxpatches: maximum number of patches to load
+    :returns: iterator
+
+    """
+    patchdict = {}
+    for i, sample in enumerate(patches):
+        key = sample["__key__"]
+        assert key not in patchdict, "{}: repeated key".format(key)
+        assert i < maxpatches, "too many patches; increase maxpatches="
+        patchdict[key] = sample
+    for sample in data:
+        key = sample["__key__"]
+        return patchdict.get(key, sample)
 
 @curried
 def identity(data):
@@ -148,7 +198,7 @@ def select(source, **kw):
 
 
 @curried
-def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
+def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True):
     """Rename and select fields using new_name="old_name" keyword arguments.
 
     :param data: iterator
@@ -159,14 +209,29 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
     :returns: iterator
 
     """
-    assert not keep_all
+    error = False
     for sample in data:
-        skip = False
-        result = {}
+        if keep_all:
+            result = dict(sample)
+        else:
+            result = dict(__key__=sample.get("__key__"))
+        for k in kw.values():
+            if k in sample: continue
+            if error_missing:
+                print "ren", kw, "key", k, "missing from sample", sample.keys()
+                result = None
+                error = True
+                break
+            if skip_missing:
+                result = None
+                break
+        if error: break
+        if result is None: continue
         if keep_meta:
             for k, v in sample.items():
                 if k[0]=="_":
                     result[k] = v
+        skip = False
         for k, vs in kw.items():
             present = [v for v in vs.split() if v in sample]
             if len(present) == 0:
@@ -180,52 +245,46 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False):
             continue
         yield result
 
-def rename(keep_all=False, keep_meta=True, skip_missing=False, **kw):
-    return ren(kw, keep_all=keep_all, keep_meta=keep_meta, skip_missing=skip_missing)
+def rename(keep_all=False, keep_meta=True, skip_missing=False, error_missing=True, **kw):
+    return ren(kw, keep_all=keep_all, keep_meta=keep_meta, skip_missing=skip_missing, error_missing=error_missing)
+
+def copy(keep_meta=True, skip_missing=False, error_missing=True, **kw):
+    return ren(kw, keep_all=True, keep_meta=keep_meta, skip_missing=skip_missing, error_missing=error_missing)
 
 @curried
-def copy(data, **kw):
-    """Copy fields.
-
-    :param data: iterator
-    :param kw: new_value="old_value"
-    :returns: iterator
-
-    """
-    for sample in data:
-        result = {k: v for k, v in sample.items()}
-        for k, v in kw.items():
-            result[k] = result[v]
-        yield result
-
-@curried
-def map(data, errors_are_fatal=False, **keys):
+def map(data, error_missing=True, errors_are_fatal=False, **kw):
     """Map the fields in each sample using name=function arguments.
 
     Unmentioned fields are left alone.
 
     :param data: iterator
-    :param keys: name=function pairs, applying function to each sample field
+    :param kw: name=function pairs, applying function to each sample field
     :returns: iterator
 
     """
+    error = False
     for sample in data:
         sample = sample.copy()
-        for k, f in keys.items():
+        for k, f in kw.items():
+            if error_missing and k not in sample:
+                print "map", kw, "key", k, "missing from sample", sample.keys()
+                error = True
+                break
+            if error: break
             try:
                 sample[k] = f(sample[k])
             except Exception, e:
                 logging.warn("itmap {}".format(repr(e)))
                 if errors_are_fatal:
-                    global last_sample
-                    last_sample = sample
-                    raise e
+                    print e
+                    error = True
+                    break
                 sample = None
                 break
         if sample is not None:
             yield sample
 
-            
+
 @curried
 def encode(data):
     """Automatically encode data items based on key extension.
@@ -264,7 +323,9 @@ def transform(data, f=None):
 
     if f is None: f = lambda x: x
     for sample in data:
-        yield f(sample)
+        result = f(sample)
+        result["__key__"] = sample.get("__key__")
+        yield result
 
 ###
 ### Shuffling
@@ -389,8 +450,7 @@ def distort(sample, distortions=[(5.0, 5)], keys=["image"]):
     for k, v in zip(keys, distorted): result[k] = v
     return result
 
-@curried
-def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
+def standardize(sample, size, keys=["png"], crop=0, mode="nearest",
                   ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)),
                   rgamma=None, cgamma=(0.8, 1.2)):
     """Standardize images in a sample.
@@ -407,6 +467,8 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
     :returns: standardized szmple
 
     """
+    if isinstance(keys, str):
+        keys = keys.split(",")
     if ralpha is True: ralpha = (-0.2, 0.2)
     if rgamma is True: rgamma = (0.5, 2.0)
     if ralpha is not None:
@@ -414,7 +476,7 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
     else:
         affine = np.eye(2)
     for key in keys:
-        sample[key] = standardize(
+        sample[key] = improc.standardize(
             sample[key], size, crop=crop, mode=mode, affine=affine)
     if rgamma is not None:
         for key in keys:
@@ -423,6 +485,12 @@ def standardize(sample, size, keys=["image"], crop=0, mode="nearest",
                                         cgamma=cgamma)
     return sample
 
+@curried
+def standardized(data, *args, **kw):
+    for sample in data:
+        result = standardize(sample, *args, **kw)
+        assert isinstance(result, dict), result
+        yield result
 
 @curried
 def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):

@@ -99,7 +99,7 @@ def open_source(url, decode=True):
         import zcom
         return zcom.Connection(url, codec=decode).items()
     else:
-        return sharditerator(url, decode=decode)
+        return sharditerator(url, decode=decode, source=url)
 
 def open_sink(url, encode=True):
     parsed = urlparse.urlparse(url)

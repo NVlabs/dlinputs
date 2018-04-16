@@ -19,7 +19,8 @@ from dlinputs import zcom
 
 # matplotlib.use("GTK")
 
-rc("image", cmap="hot")
+rc("figure", figsize="20,10")
+rc("image", cmap="gray")
 
 parser = argparse.ArgumentParser("Display info about an input module.")
 parser.add_argument("input")
@@ -66,5 +67,5 @@ if args.display is not None:
             gca().set_title("Key: "+key)
             imshow(data)
         show()
-        ginput(1, 1000)
+        raw_input()
         sample = source.next()

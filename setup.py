@@ -21,6 +21,7 @@ scripts = """
     tarshards
     show-input
     training-test-split
+    lsmodel
 """.split()
 
 setup(

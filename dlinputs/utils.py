@@ -203,6 +203,9 @@ pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
 
 def autodecode1(data, tname):
+    if isinstance(data, (int, float, unicode)):
+        return data
+    assert isinstance(data, (str, buffer)), type(data)
     extension = re.sub(r".*\.", "", tname).lower()
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:
@@ -211,21 +214,16 @@ def autodecode1(data, tname):
             return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
-        data = StringIO.StringIO(data)
+        stream = StringIO.StringIO(data)
         result = None
         try:
             import imageio
-            result = np.array(imageio.imread(data, format=extension))
-        except Exception, e:
-            print e
+            result = np.array(imageio.imread(stream))
+        except Exception, exn1:
             pass
-        try:
-            import scipy.misc
-            result = scipy.misc.imread(data)
-        except Exception, e:
-            print e
-            pass
-        if isinstance(result, np.ndarray) and result.dtype == np.dtype("uint8"):
+        if result is None:
+            result = (exn1, data)
+        elif result.dtype == np.dtype("uint8"):
             result = np.array(result, 'f')
             result /= 255.0
         return result
@@ -238,10 +236,19 @@ def autodecode1(data, tname):
     if extension in ["mp", "msgpack", "msg"]:
         import msgpack
         return msgpack.unpackb(data)
+    if extension in ["cls", "cls2", "index", "inx"]:
+        return int(str(data))
     return data
 
 def autodecode(sample):
-    return {k: autodecode1(v, k) for k, v in sample.items()}
+    result = {}
+    for k, v in sample.items():
+        if k[0] == "_":
+            result[k] = v
+            continue
+        assert v is not None, (k, sample)
+        result[k] = autodecode1(v, k)
+    return result
 
 def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
@@ -298,7 +305,9 @@ def samples_to_batch(samples, tensors=True):
             result[k].append(samples[i][k])
     if tensors == True:
         tensors = [x for x in result.keys()
-                   if isinstance(result[x][0], (np.ndarray, int, float))]
+                   if isinstance(result[x][0], np.ndarray)]
     for k in tensors:
+        sizes = {a.shape for a in result[k]}
+        assert len(sizes) == 1, sizes
         result[k] = np.array(result[k])
     return result

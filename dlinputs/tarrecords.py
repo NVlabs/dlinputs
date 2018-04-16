@@ -57,7 +57,7 @@ def valid_sample(sample):
     return (sample is not None and
             len(sample.keys()) > 0 and
             not sample.get("__bad__", False))
-           
+
 def group_by_keys(keys=base_plus_ext):
     """Groups key, value pairs into samples."""
     def iterator(data):
@@ -115,14 +115,14 @@ def zipdata(fname):
     for fname in fnames:
         data = zf.open(fname).read()
         yield fname, data
-    
+
 def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
     content = zipdata(fname)
     samples = group_by_keys(keys=keys)(content)
     decoded = decoder(decode=decode)(samples)
     return decoded
 
-def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
+def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -160,7 +160,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
             if valid_sample(current_sample):
                 yield decode(current_sample)
             current_prefix = prefix
-            current_sample = dict(__key__=prefix)
+            current_sample = dict(__key__=prefix, __source__=source)
         try:
             data = stream.extractfile(tarinfo).read()
         except tarfile.ReadError, e:
@@ -227,6 +227,7 @@ class TarWriter(object):
         obj = self.encode(obj)
         assert "__key__" in obj, "object must contain a __key__"
         for k, v in obj.items():
+            if k[0]=="_": continue
             assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
