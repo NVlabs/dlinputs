@@ -29,12 +29,17 @@ parser.add_argument("-s", "--skip", default=0, type=int)
 parser.add_argument("-b", "--bench", default=0, type=int)
 parser.add_argument("-B", "--batched", action="store_true")
 parser.add_argument("-d", "--display", default=None)
-parser.add_argument("-D", "--decoders", default=None)
+parser.add_argument("--decoders", default=None)
 parser.add_argument("-O", "--order", default="BHWD")
 parser.add_argument("-a", "--autodecode", action="store_true")
+parser.add_argument("-D", "--source", default=None)
 args = parser.parse_args()
 
-source = gopen.open_source(args.input)
+if args.source is not None:
+    execfile(args.source)
+    source = make_source()
+else:
+    source = gopen.open_source(args.input)
 
 for i in xrange(args.skip):
     source.next()

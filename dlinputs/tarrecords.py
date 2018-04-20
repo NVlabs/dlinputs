@@ -58,7 +58,7 @@ def valid_sample(sample):
             len(sample.keys()) > 0 and
             not sample.get("__bad__", False))
 
-def group_by_keys(keys=base_plus_ext):
+def group_by_keys(keys=base_plus_ext, lcase=True):
     """Groups key, value pairs into samples."""
     def iterator(data):
         current_count = 0
@@ -73,6 +73,8 @@ def group_by_keys(keys=base_plus_ext):
             if valid_sample(current_sample):
                 yield current_sample
             current_sample = dict(__key__=prefix)
+            if lcase:
+                suffix = suffix.lower()
             current_sample[suffix] = value
         if valid_sample(current_sample):
             yield current_sample
@@ -122,7 +124,7 @@ def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
     decoded = decoder(decode=decode)(samples)
     return decoded
 
-def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None):
+def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None, lcase=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -169,6 +171,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             print e
             current_sample["__bad__"] = True
         else:
+            if lcase:
+                suffix = suffix.lower()
             current_sample[suffix] = data
             current_count += 1
     if valid_sample(current_sample):

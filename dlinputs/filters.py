@@ -196,6 +196,14 @@ def select(source, **kw):
             continue
         yield data
 
+def find_key(sample, keys):
+    for k in keys.split():
+        if k in sample: return k
+    return None
+
+def has_key(sample, keys):
+    return find_key(sample, keys) is not None
+
 
 @curried
 def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True):
@@ -215,34 +223,19 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_miss
             result = dict(sample)
         else:
             result = dict(__key__=sample.get("__key__"))
-        for k in kw.values():
-            if k in sample: continue
-            if error_missing:
-                print "ren", kw, "key", k, "missing from sample", sample.keys()
-                result = None
-                error = True
-                break
-            if skip_missing:
-                result = None
-                break
-        if error: break
-        if result is None: continue
+        has_all_keys = all(has_key(sample, k) for k in kw.values())
+        if error_missing and not has_all_keys:
+            raise ValueError("missing keys, got {}, want {}".format(sample.keys(), kw))
+        if skip_missing and not has_all_keys:
+            continue
         if keep_meta:
             for k, v in sample.items():
                 if k[0]=="_":
                     result[k] = v
-        skip = False
-        for k, vs in kw.items():
-            present = [v for v in vs.split() if v in sample]
-            if len(present) == 0:
-                skip = True
-                break
-            result[k] = sample[present[0]]
-        if skip and skip_missing:
-            if skip_missing is 1:
-                print v, ": missing field; skipping"
-                utils.print_sample(sample)
-            continue
+        for k, keys in kw.items():
+            key = find_key(sample, keys)
+            if key is None: continue
+            result[k] = sample[key]
         yield result
 
 def rename(keep_all=False, keep_meta=True, skip_missing=False, error_missing=True, **kw):
@@ -381,7 +374,7 @@ def diskshuffle(data, bufsize=1000, initial=100, fname=None):
 ###
 
 @curried
-def batched(data, batchsize=20, tensors=True, partial=True):
+def batched(data, batchsize=20, tensors=True, partial=True, expand=False):
     """Create batches of the given size.
 
     :param data: iterator
@@ -394,13 +387,13 @@ def batched(data, batchsize=20, tensors=True, partial=True):
     batch = []
     for sample in data:
         if len(batch) >= batchsize:
-            yield utils.samples_to_batch(batch, tensors=tensors)
+            yield utils.samples_to_batch(batch, tensors=tensors, expand=expand)
             batch = []
         batch.append(sample)
     if len(batch) == 0:
         return
     elif len(batch) == batchsize or partial:
-        yield utils.samples_to_batch(batch, tensors=tensors)
+        yield utils.samples_to_batch(batch, tensors=tensors, expand=expand)
 
 
 def maybe_index(v, i):
