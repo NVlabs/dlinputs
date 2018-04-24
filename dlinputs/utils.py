@@ -294,7 +294,7 @@ def autoencode(sample):
     return {k: autoencode1(v, k) for k, v in sample.items()}
 
 
-def samples_to_batch(samples, tensors=True, expand=False):
+def samples_to_batch(samples, combine_tensors=True, expand=False):
     """Take a collection of samples (dictionaries) and create a batch.
 
     If `tensors` is True, `ndarray` objects are combined into
@@ -307,28 +307,24 @@ def samples_to_batch(samples, tensors=True, expand=False):
 
     """
     if expand:
-        return samples_to_batch_expanded(samples, tensors=tensors)
+        return samples_to_batch_expanded(samples)
     result = {k: [] for k in samples[0].keys()}
     for i in range(len(samples)):
         for k in result.keys():
             result[k].append(samples[i][k])
-    if tensors == True:
-        tensors = [x for x in result.keys()
-                   if isinstance(result[x][0], np.ndarray)]
-    for k in tensors:
-        sizes = {a.shape for a in result[k]}
-        assert len(sizes) == 1, sizes
-        result[k] = np.array(result[k])
+    if combine_tensors == True:
+        tensor_names = [x for x in result.keys()
+                        if isinstance(result[x][0], np.ndarray)]
+        for k in tensor_names:
+            sizes = {a.shape for a in result[k]}
+            assert len(sizes) == 1, sizes
+            result[k] = np.array(result[k])
     return result
 
-def samples_to_batch_expanded(samples, tensors=True):
+def samples_to_batch_expanded(samples):
     """Take a collection of samples (dictionaries) and create a batch.
 
-    If `tensors` is True, `ndarray` objects are combined into
-    tensor batches.
-
     :param dict samples: list of samples
-    :param bool tensors: whether to turn lists of ndarrays into a single ndarray
     :returns: single sample consisting of a batch
     :rtype: dict
 
@@ -337,9 +333,8 @@ def samples_to_batch_expanded(samples, tensors=True):
     for i in range(len(samples)):
         for k in result.keys():
             result[k].append(samples[i][k])
-    if tensors == True:
-        tensor_names = [x for x in result.keys()
-                        if isinstance(result[x][0], np.ndarray)]
+    tensor_names = [x for x in result.keys()
+                    if isinstance(result[x][0], np.ndarray)]
     for k in tensor_names:
         size = result[k][0].shape
         for r in result[k][1:]:
@@ -349,4 +344,9 @@ def samples_to_batch_expanded(samples, tensors=True):
             sub = [i] + [slice(0, x) for x in t.shape]
             output[sub] = t
         result[k] = output
+    return result
+
+def metadict(sample, data={}):
+    result = {k: v for k, v in sample.items() if k[0]=="_"}
+    result.update(data)
     return result

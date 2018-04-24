@@ -204,6 +204,13 @@ def find_key(sample, keys):
 def has_key(sample, keys):
     return find_key(sample, keys) is not None
 
+@curried
+def with_keys(data, *args):
+    for sample in data:
+        has_all_keys = all(has_key(sample, k) for k in args)
+        if not has_all_keys:
+            continue
+        yield sample
 
 @curried
 def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True):
@@ -374,7 +381,7 @@ def diskshuffle(data, bufsize=1000, initial=100, fname=None):
 ###
 
 @curried
-def batched(data, batchsize=20, tensors=True, partial=True, expand=False):
+def batched(data, batchsize=20, combine_tensors=True, partial=True, expand=False):
     """Create batches of the given size.
 
     :param data: iterator
@@ -387,13 +394,13 @@ def batched(data, batchsize=20, tensors=True, partial=True, expand=False):
     batch = []
     for sample in data:
         if len(batch) >= batchsize:
-            yield utils.samples_to_batch(batch, tensors=tensors, expand=expand)
+            yield utils.samples_to_batch(batch, combine_tensors=combine_tensors, expand=expand)
             batch = []
         batch.append(sample)
     if len(batch) == 0:
         return
     elif len(batch) == batchsize or partial:
-        yield utils.samples_to_batch(batch, tensors=tensors, expand=expand)
+        yield utils.samples_to_batch(batch, combine_tensors=tensors, expand=expand)
 
 
 def maybe_index(v, i):
