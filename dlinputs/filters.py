@@ -400,7 +400,7 @@ def batched(data, batchsize=20, combine_tensors=True, partial=True, expand=False
     if len(batch) == 0:
         return
     elif len(batch) == batchsize or partial:
-        yield utils.samples_to_batch(batch, combine_tensors=tensors, expand=expand)
+        yield utils.samples_to_batch(batch, combine_tensors=combine_tensors, expand=expand)
 
 
 def maybe_index(v, i):
