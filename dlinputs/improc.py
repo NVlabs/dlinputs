@@ -6,7 +6,6 @@ import pylab
 import numpy.random as npr
 import scipy.ndimage as ndi
 from numpy import cos, sin
-from scipy.ndimage import measurements
 
 
 def invert(image):

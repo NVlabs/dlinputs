@@ -1,14 +1,8 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import dbm
-import itertools
-
 import numpy as np
 from scipy.ndimage import measurements
-
-import utils
-import improc
 
 
 def intlist_to_hotonelist(cs, nc, allow_bad_classes=True):

@@ -10,6 +10,7 @@ import os.path
 import tarfile
 import StringIO
 import warnings
+import codecs
 
 import utils
 
@@ -62,7 +63,6 @@ def valid_sample(sample):
 def group_by_keys(keys=base_plus_ext, lcase=True):
     """Groups key, value pairs into samples."""
     def iterator(data):
-        current_count = 0
         current_sample = None
         for fname, value in data:
             prefix, suffix = keys(fname)

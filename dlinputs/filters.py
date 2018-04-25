@@ -2,7 +2,6 @@
 # See the LICENSE file for licensing terms (BSD-style).
 
 import re
-import dbm
 import math
 import pickle
 import random as pyr
@@ -69,11 +68,12 @@ def concat(sources, maxepoch=1):
             count += 1
 
 def objhash(obj):
+    import hashlib
     if not isinstance(obj, (str, buffer)):
         obj = pickle.dumps(obj, -1)
-    h = hashlib.md5()
+    m = hashlib.md5()
     m.update(obj)
-    return h.hexdigest()
+    return m.hexdigest()
 
 @curried
 def unique(data, key, rekey=False, skip_missing=False, error=True):
@@ -225,7 +225,6 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_miss
     :returns: iterator
 
     """
-    error = False
     for sample in data:
         if keep_all:
             result = dict(sample)

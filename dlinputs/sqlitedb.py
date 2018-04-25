@@ -53,7 +53,7 @@ class SqliteWriter(object):
             decls += [name + " " + sqltypes.get(kind, "text")]
             cols += [name]
             vals += [":" + name]
-            self.converters[name] = converters.get(kind, identity)
+            self.converters[name] = converters.get(kind, lambda x: x)
         decls = ",".join(decls)
         cols = ",".join(cols)
         vals = ",".join(vals)
