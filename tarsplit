@@ -1,14 +1,12 @@
 #!/usr/bin/python
 
-import os
-import imp
 import re
-import glob
-import argparse
+import imp
 import random as pyr
+import argparse
+
 import dlinputs as dli
 from dlinputs import shardwriter
-import time
 
 parser = argparse.ArgumentParser("Split a tar file into test and training sets.")
 parser.add_argument("-p", "--probability", type=float, default=0.1)

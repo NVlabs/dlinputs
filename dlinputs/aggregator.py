@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-import argparse
-import zcom
 import time
+import argparse
+
+import zcom
+
 
 def aggregator(input, output, report=0):
     if report>0:

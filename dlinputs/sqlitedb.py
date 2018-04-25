@@ -4,6 +4,7 @@
 import os
 import sqlite3
 
+
 def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False):
     """Read a dataset from an sqlite3 dbfile and the given table.
 

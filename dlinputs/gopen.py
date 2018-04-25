@@ -1,10 +1,11 @@
 import os
-from urllib2 import urlparse
-from subprocess import Popen, PIPE, check_call
 import random
+from urllib2 import urlparse
+from subprocess import PIPE, Popen, check_call
 
 import paths
 import tarrecords
+
 
 def test_curl_write(self, location):
     """Test whether we can write to a location using curl."""

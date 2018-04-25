@@ -15,17 +15,11 @@
 # limitations under the License.
 
 
-import os
-import os.path
 import sys
-import tarfile
-import argparse
-import re
 import random
+import argparse
 
-from dlinputs import gopen
-from dlinputs import tarrecords
-from dlinputs import utils
+from dlinputs import gopen, utils, tarrecords
 
 parser = argparse.ArgumentParser("""\
 Bundle files into sharded tarfiles.

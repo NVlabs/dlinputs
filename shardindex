@@ -16,12 +16,11 @@
 
 
 import os
-import os.path
-import sys
-import tarfile
-import argparse
 import re
 import glob
+import os.path
+import argparse
+
 import simplejson
 
 parser = argparse.ArgumentParser("""\

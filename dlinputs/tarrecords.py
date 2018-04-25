@@ -2,16 +2,17 @@
 # See the LICENSE file for licensing terms (BSD-style).
 
 import os
-import os.path
-import StringIO
-import tarfile
-import warnings
 import re
 import time
-import getpass
 import socket
+import getpass
+import os.path
+import tarfile
+import StringIO
+import warnings
 
 import utils
+
 
 def splitallext(path):
     """Helper method that splits off all extension.
@@ -289,4 +290,3 @@ class ShardWriter(object):
         del self.shard
         del self.count
         del self.size
-

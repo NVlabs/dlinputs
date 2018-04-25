@@ -1,22 +1,14 @@
 #!/usr/bin/python
 
-import argparse
-import glob
 import imp
-import os
-import re
-import time
+import argparse
 
-import matplotlib
 import numpy as np
 import pylab
-from pylab import *
-
 import dlinputs as dli
-from dlinputs import filters
-from dlinputs import gopen
-from dlinputs import utils
-from dlinputs import zcom
+import matplotlib
+from pylab import *
+from dlinputs import zcom, gopen, utils, filters
 
 # matplotlib.use("GTK")
 

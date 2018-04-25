@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 import argparse
+
 import zcom
-import paths
 import gopen
+import paths
+
 
 def loader(input, output, report=0, epochs=1000000000):
     if report>0:

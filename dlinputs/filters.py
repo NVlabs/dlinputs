@@ -1,19 +1,20 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import math
-import random as pyr
 import re
-import numpy as np
-import pickle
-from functools import wraps
-import logging
 import dbm
+import math
 import pickle
-import tempfile
+import random as pyr
+import logging
+import itertools
+from functools import wraps
+
+import numpy as np
+
 import utils
 import improc
-import itertools
+
 
 def curried(f):
     """A decorator for currying functions in the first argument."""
@@ -569,5 +570,3 @@ def batchinfo(data, n=1):
                 print v.shape, np.amin(v), np.mean(v), np.amax(v),
             print
         print
-
-

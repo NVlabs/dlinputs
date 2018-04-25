@@ -1,8 +1,10 @@
-import msgpack
-import zmq
-from urllib2 import urlparse
-import collections
 import time
+import collections
+from urllib2 import urlparse
+
+import zmq
+import msgpack
+
 import utils
 
 schemes = dict(

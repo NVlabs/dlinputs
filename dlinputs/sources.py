@@ -1,17 +1,19 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import codecs
-import glob
 import os
-import os.path
-import random as pyr
 import re
+import glob
+import codecs
+import random as pyr
+import os.path
 
 import numpy as np
 import pylab
-import utils
+
 import paths
+import utils
+
 
 def infinite(sample):
     """Repeat the same sample over and over again (for testing).
@@ -223,4 +225,3 @@ def bookdir(bookdir, epochs=1, shuffle=True):
             with codecs.open(fname, "r", "utf-8") as stream:
                 transcript = stream.read().strip()
             yield dict(input=image, transcript=transcript, __epoch__=epoch)
-

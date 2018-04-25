@@ -1,14 +1,15 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import functools as ft
 import re
 import StringIO
+import functools as ft
 import collections
 
-import numpy as np
 import PIL
+import numpy as np
 import PIL.Image
+
 
 def print_sample(sample):
     """Pretty print a standard sample.

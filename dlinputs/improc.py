@@ -3,10 +3,11 @@
 
 import numpy as np
 import pylab
+import numpy.random as npr
 import scipy.ndimage as ndi
 from numpy import cos, sin
-import numpy.random as npr
 from scipy.ndimage import measurements
+
 
 def invert(image):
     """Invert the given image.
@@ -178,5 +179,3 @@ def standardize(image, size, crop=0, mode="nearest", affine=np.eye(2)):
     result = ndi.affine_transform(image, matrix, offset, order=1,
                                   output_shape=oshape, mode=mode)
     return result
-
-

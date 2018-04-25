@@ -1,19 +1,15 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import math
-import random as pyr
-import re
-import numpy as np
-from functools import wraps
-import logging
 import dbm
-import pickle
-import tempfile
+import itertools
+
+import numpy as np
+from scipy.ndimage import measurements
+
 import utils
 import improc
-import itertools
-from scipy.ndimage import measurements
+
 
 def intlist_to_hotonelist(cs, nc, allow_bad_classes=True):
     """Helper function for LSTM/CTC-based OCR: encode ground truth as array.

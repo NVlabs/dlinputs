@@ -2,13 +2,15 @@
 # See the LICENSE file for licensing terms (BSD-style).
 
 import os
-import os.path
 import re
+import os.path
 import urllib2
 import urlparse
 from collections import namedtuple
+
 import simplejson
 from numpy import clip
+
 
 def split_sharded_path(path):
     """Split a path containing shard notation into prefix, format, suffix, and number."""

@@ -1,25 +1,22 @@
 #!/usr/bin/python
-import argparse
-import itertools
-import os
-
-import editdistance
-import psutil
-import pylab
-import torch
-from torch import nn
-import torch.optim as optim
-from torch.autograd import Variable
-import numpy as np
 import re
 import glob
+import argparse
+import itertools
 
-from dlinputs import utils
-from dlinputs import paths
+import numpy as np
+import pylab
+import torch
+import psutil
+import torch.optim as optim
+import editdistance
+from pylab import *
+from torch import nn
+from dlinputs import paths, utils
+from torch.autograd import Variable
 
 # matplotlib.use("GTK")
 pylab.rc("image", cmap="hot")
-from pylab import *
 
 parser = argparse.ArgumentParser("""Show model training graphs.""")
 parser.add_argument("-r", "--reload", type=float, default=60.0)

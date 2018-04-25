@@ -1,8 +1,9 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import loadable
 import multiprocessing as mp
+
+import loadable
 
 
 def _parallel_job(factory, args, queue, index):

@@ -1,11 +1,13 @@
-from pylab import *
-import numpy as np
-import scipy as sc
-import scipy.ndimage as ndi
-import pylab as pl
-import matplotlib as mpl
-from IPython import display
 from itertools import islice
+
+import numpy as np
+import pylab as pl
+import scipy as sc
+import matplotlib as mpl
+import scipy.ndimage as ndi
+from pylab import *
+from IPython import display
+
 import dlinputs; reload(dlinputs); dli = dlinputs
 
 urlpath = """
