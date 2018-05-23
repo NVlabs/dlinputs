@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from dlinputs import paths
+from imp import reload
 
 def test_split_sharded_path():
 	assert paths.split_sharded_path("http://server/a-@010-b") == ('http://server/a-%03d-b', 10)
@@ -17,8 +18,8 @@ def test_find_file():
 	assert paths.find_file("/bar:/etc:/usr/bin:/foo:/bin:/usr:/bam", "ls", verbose=1) == "/bin/ls"
 
 def test_writefile_readfile():
-	paths.writefile("/tmp/abc", "def")
-	assert paths.readfile("/tmp/abc") == "def"
+	paths.writefile("/tmp/abc", "def".encode())
+	assert paths.readfile("/tmp/abc").decode() == "def"
 
 def test_splitalltext():
 	assert paths.splitallext("a/b/c.d.e") == ("a/b/c", "d.e")
