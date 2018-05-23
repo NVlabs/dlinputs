@@ -1,10 +1,8 @@
-from builtins import next
 from dlinputs import gopen
-from imp import reload
 import numpy as np
 
 def test_gopen():
-	assert gopen.gopen("/etc/passwd").read()[:4].decode() == "root"
+	assert gopen.gopen("/etc/passwd").read()[:4] == "root"
 
 def test_url():
 	assert gopen.test_url("/etc/passwd")

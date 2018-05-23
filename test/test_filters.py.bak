@@ -1,16 +1,13 @@
-from builtins import str
-from builtins import range
 import dlinputs.filters as dlf
-from imp import reload
 reload(dlf)
-
+from itertools import imap
 import numpy as np
 
 def test_compose():
   def f(it):
       for x in it: yield x+1
   g = dlf.compose(f, f, f)
-  assert list(g(range(5))) == [3,4,5,6,7]
+  assert list(g(xrange(5))) == [3,4,5,6,7]
 
   reload(dlf)
   def f(s):
