@@ -6,13 +6,12 @@ import numpy as np
 import pdb
 
 def test_gopen():
-	assert gopen.gopen("/etc/passwd").read()[:4].decode() == "root"
+	assert gopen.gopen("/etc/passwd").read().decode()[:4] == "root"
 
 def test_url():
 	assert gopen.test_url("/etc/passwd")
 	assert not gopen.test_url("/etc/")
 	assert not gopen.test_url("/etc/LSKDJFLKJLFJ")
-	pdb.set_trace()
 	assert gopen.test_url("http://www.google.com/")
 	assert not gopen.test_url("http://www.slkJLKJLFKDJLJ.com/")
 

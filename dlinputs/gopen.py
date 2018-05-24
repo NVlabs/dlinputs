@@ -4,6 +4,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import range
 from io import open
+
 import os
 import pdb
 import random
@@ -22,26 +23,24 @@ def test_curl_write(self, location):
         raise Exception("{}: cannot write location".format(location))
     check_call(["curl", "--fail", "-X", "DELETE", location])
 
-# Python 3 os.popen() only has mode = "r" or "w"
-# Python 2 code was using default mode as "rb"; changing it to only "r"
 def gopen(url, mode="r"):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
     parsed = urlparse(url)
     if parsed.scheme == "gs":
         if mode[0]=="r":
-            return Popen("gsutil cat '%s'" % url, stdout=PIPE, stderr=PIPE, shell=True)
+            return Popen("gsutil cat '%s'" % url, stdout=PIPE, stderr=PIPE, shell=True).stdout
         elif mode[0]=="w":
-            return Popen("gsutil cp - '%s'" % url, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+            return Popen("gsutil cp - '%s'" % url, stdin=PIPE, stderr=PIPE, shell=True).stdin
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
             cmd = "curl --fail -s '%s'" % url
-            return Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+            return Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).stdout
         elif mode[0]=="w":
             test_curl_write(url)
             cmd = "curl --fail -s -T - '%s'" % url
-            return Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+            return Popen(cmd, stdin=PIPE, stderr=PIPE, shell=True).stdin
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in ["", "file"]:
@@ -56,8 +55,7 @@ def test_url(url, size=17):
     """Test whether the given URL is accessible."""
     try:
         with gopen(url) as stream:
-            pdb.set_trace()
-            data = stream.communicate()[0][:size]
+            data = stream.read(size)
         if len(data) == size:
             return True
         return False
@@ -76,7 +74,6 @@ def test_shards(url, size=17, complete=False):
 def find_shards(urls, size=17, complete=False):
     """Given a list of shard URLs, find the first one that exists."""
     for url in urls:
-        pdb.set_trace()
         if test_shards(url, size=size, complete=False):
             return url
 
