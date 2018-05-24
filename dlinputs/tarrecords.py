@@ -54,6 +54,10 @@ def last_dir(fname):
 def trivial_decode(sample):
     result = {}
     for k, v in list(sample.items()):
+        # trivial_decode is called when decode is set to False in tariterator
+        # So, you are not expected to decode
+        # If v is bytes, return bytes
+        # If v is str, ensure it is a unicode string by returning utf encoding of string.
         if isinstance(v, bytes):
             v = v
         elif isinstance(v, str):
@@ -239,14 +243,14 @@ class TarWriter(object):
         assert "__key__" in obj, "object must contain a __key__"
         for k, v in list(obj.items()):
             if k[0]=="_": continue
-            assert isinstance(v, (str, bytes)), "{} doesn't map to a string after encoding ({})".format(k, type(v))
+            assert isinstance(v, (bytes)), "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
                 continue
             v = obj[k]
-            assert isinstance(v, (str, bytes)),  \
-                "converter didn't yield a string: %s" % ((k, type(v)),)
+            assert isinstance(v, (bytes)),  \
+                "converter/encoder didn't yield a bytes: %s" % ((k, type(v)),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + k)
             ti.size = len(v)

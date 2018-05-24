@@ -286,6 +286,7 @@ def autoencode1(data, tname):
                 raise ValueError("{}: unknown image array dtype".format(data.dtype))
         else:
             raise ValueError("{}: unknown image type".format(type(data)))
+        # You've encoded the data. So, it needs to be written as a Byte string. So, using BytesIO below.
         stream = io.BytesIO()
         imageio.imsave(stream, data, format=extension)
         result = stream.getvalue()
