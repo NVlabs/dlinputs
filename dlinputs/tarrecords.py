@@ -54,12 +54,10 @@ def last_dir(fname):
 def trivial_decode(sample):
     result = {}
     for k, v in list(sample.items()):
-        if isinstance(v, (str, bytes)):
-            v = str(v)
+        if isinstance(v, bytes):
+            v = v
         elif isinstance(v, str):
             v = str(codecs.encode(v, "utf-8"))
-        else:
-            assert isinstance(v, str)
         result[k] = v
     return result
 
@@ -256,7 +254,7 @@ class TarWriter(object):
             ti.mode = 0o666
             ti.uname = "bigdata"
             ti.gname = "bigdata"
-            stream = io.StringIO(v)
+            stream = io.BytesIO(v)
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total
