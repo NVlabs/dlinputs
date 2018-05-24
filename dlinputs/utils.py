@@ -8,6 +8,7 @@ standard_library.install_aliases()
 from builtins import str
 from builtins import range
 from past.utils import old_div
+import pdb
 import re
 import io
 import functools as ft
@@ -183,7 +184,7 @@ def pilreads(data, color, asfloat=True):
 
     """
     assert color is not None
-    return pilread(io.StringIO(data), color=color, asfloat=asfloat)
+    return pilread(io.BytesIO(data), color=color, asfloat=asfloat)
 
 
 pilgray = ft.partial(pilreads, color="gray")
@@ -198,7 +199,7 @@ def pildumps(image, format="PNG"):
     :param format: compression format ("PNG" or "JPEG")
 
     """
-    result = io.StringIO()
+    result = io.BytesIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
         assert np.amin(image) > -0.001 and np.amax(image) < 1.001
         image = np.clip(image, 0.0, 1.0)
@@ -213,7 +214,7 @@ piljpg = ft.partial(pildumps, format="JPEG")
 def autodecode1(data, tname):
     if isinstance(data, (int, float, str)):
         return data
-    assert isinstance(data, (str, buffer)), type(data)
+    # assert isinstance(data, (str, buffer)), type(data)
     extension = re.sub(r".*\.", "", tname).lower()
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:
@@ -222,7 +223,7 @@ def autodecode1(data, tname):
             return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
-        stream = io.StringIO(data)
+        stream = io.BytesIO(data)
         result = None
         try:
             import imageio
@@ -282,7 +283,7 @@ def autoencode1(data, tname):
                 raise ValueError("{}: unknown image array dtype".format(data.dtype))
         else:
             raise ValueError("{}: unknown image type".format(type(data)))
-        stream = io.StringIO()
+        stream = io.BytesIO()
         imageio.imsave(stream, data, format=extension)
         result = stream.getvalue()
         del stream
