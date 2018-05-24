@@ -1,11 +1,10 @@
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
-# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
-# See the LICENSE file for licensing terms (BSD-style).
-
 from future import standard_library
 standard_library.install_aliases()
+from io import open
+
 from builtins import str
 from past.utils import old_div
 from builtins import object
@@ -22,6 +21,7 @@ import codecs
 
 from . import utils
 
+import pdb
 
 def splitallext(path):
     """Helper method that splits off all extension.
@@ -54,7 +54,7 @@ def last_dir(fname):
 def trivial_decode(sample):
     result = {}
     for k, v in list(sample.items()):
-        if isinstance(v, buffer):
+        if isinstance(v, (str, bytes)):
             v = str(v)
         elif isinstance(v, str):
             v = str(codecs.encode(v, "utf-8"))
@@ -241,13 +241,13 @@ class TarWriter(object):
         assert "__key__" in obj, "object must contain a __key__"
         for k, v in list(obj.items()):
             if k[0]=="_": continue
-            assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
+            assert isinstance(v, (str, bytes)), "{} doesn't map to a string after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
                 continue
             v = obj[k]
-            assert isinstance(v, (str, buffer)),  \
+            assert isinstance(v, (str, bytes)),  \
                 "converter didn't yield a string: %s" % ((k, type(v)),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + k)

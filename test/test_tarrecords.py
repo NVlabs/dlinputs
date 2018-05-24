@@ -1,20 +1,24 @@
 from __future__ import unicode_literals
+from io import open
+from imp import reload
+
 from builtins import range
 from dlinputs import tarrecords
-from imp import reload
 reload(tarrecords)
+
 import numpy as np
 import glob
+import pdb
 
 def test_tardata():
-	stream = open("testdata/imagenet-000000.tgz")
+	stream = open("test/testdata/imagenet-000000.tgz", mode='rb')
 	data = tarrecords.tardata(stream)
 	samples = list(data)
-	assert samples[0] == ('10.cls', '304'), samples[0]
+	assert samples[0] == ('10.cls', b'304'), samples[0]
 	assert {2} == set([len(x) for x in samples])
 
 def test_group_by_keys():
-	stream = open("testdata/imagenet-000000.tgz")
+	stream = open("test/testdata/imagenet-000000.tgz", mode='rb')
 	data = tarrecords.tardata(stream)
 	data = tarrecords.group_by_keys()(data)
 	samples = list(data)
@@ -27,7 +31,7 @@ def test_group_by_keys():
 # get_ipython().system(u'file 10.png')
 
 def test_decoder():
-	stream = open("testdata/imagenet-000000.tgz")
+	stream = open("test/testdata/imagenet-000000.tgz", mode='rb')
 	data = tarrecords.tardata(stream)
 	data = tarrecords.group_by_keys()(data)
 	data = tarrecords.decoder()(data)
@@ -38,7 +42,7 @@ def test_decoder():
 	assert 'cls' in keys
 
 def test_tariterator1():
-	stream = open("testdata/imagenet-000000.tgz")
+	stream = open("test/testdata/imagenet-000000.tgz", mode='rb')
 	data = tarrecords.tariterator1(stream)
 	samples = list(data)
 	assert len(samples)==47
@@ -47,7 +51,7 @@ def test_tariterator1():
 	assert samples[-1]["png"].shape == (400, 300, 3)
 
 def test_tariterator():
-	stream = open("testdata/imagenet-000000.tgz")
+	stream = open("test/testdata/imagenet-000000.tgz", mode='rb')
 	data = tarrecords.tariterator(stream)
 	samples = list(data)
 	assert len(samples)==47
@@ -60,7 +64,7 @@ def test_tariterator():
 	assert samples[-1]["png"].shape == (400, 300, 3)
 
 def test_TarWriter():
-	stream = open("testdata/imagenet-000000.tgz")
+	stream = open("test/testdata/imagenet-000000.tgz", mode='rb')
 	data = tarrecords.tariterator(stream)
 	samples = list(data)
 		
@@ -74,7 +78,7 @@ def test_TarWriter():
 	# Check if test.tgz was created
 	assert len(glob.glob("/tmp/test.tgz")) == 1
 
-	stream = open("/tmp/test.tgz")
+	stream = open("/tmp/test.tgz", mode='rb')
 	data = tarrecords.tariterator(stream)
 	samples = list(data)
 	assert len(samples)==47
