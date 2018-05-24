@@ -41,12 +41,12 @@ def test_sharditerator_once():
 
 def test_open_source():
 	reload(gopen)
-	data = gopen.open_source("testdata/sample.tgz")
+	data = gopen.open_source("test/testdata/sample.tgz")
 	sample = next(data)
 	assert isinstance(sample["png"], np.ndarray)
 
 	reload(gopen)
-	data = gopen.open_source("testdata/sample.tgz", decode=False)
+	data = gopen.open_source("test/testdata/sample.tgz", decode=False)
 	sample = next(data)
-	assert isinstance(sample["png"], (buffer, str)), sample["png"]
+	assert isinstance(sample["png"], (bytes, str)), sample["png"]
 
