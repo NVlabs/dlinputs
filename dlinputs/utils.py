@@ -214,7 +214,10 @@ piljpg = ft.partial(pildumps, format="JPEG")
 def autodecode1(data, tname):
     if isinstance(data, (int, float, str)):
         return data
-    # assert isinstance(data, (str, buffer)), type(data)
+
+    # OLD py2 code: assert isinstance(data, (str, buffer)), type(data)
+    assert isinstance(data, (str, bytes)), type(data)
+
     extension = re.sub(r".*\.", "", tname).lower()
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from dlinputs import utils
 import numpy as np
 

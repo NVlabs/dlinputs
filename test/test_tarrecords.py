@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from builtins import range
 from dlinputs import tarrecords
 from imp import reload
