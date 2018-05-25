@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from six import string_types
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
@@ -75,9 +77,9 @@ def find_directory(path, target="", tests=[], verbose=False, error=True):
     :rtype: str
 
     """
-    if isinstance(path, str):
+    if isinstance(path, string_types):
         path = path.split(":")
-    if isinstance(tests, str):
+    if isinstance(tests, string_types):
         tests = [tests]
     for root in path:
         if not os.path.isdir(root):
@@ -112,7 +114,7 @@ def find_file(path, target, tests=[], verbose=False, error=True):
     :rtype: str
 
     """
-    if isinstance(path, str):
+    if isinstance(path, string_types):
         path = path.split(":")
     for root in path:
         if not os.path.isdir(root):
@@ -178,7 +180,7 @@ def find_basenames(top, extensions):
 
     """
     assert os.path.isdir(top), top
-    if isinstance(extensions, str):
+    if isinstance(extensions, string_types):
         extensions = extensions.split(",")
     if extensions is not None:
         extensions = set(extensions)
@@ -217,7 +219,7 @@ def read_url_path(url, urlpath, verbose=False):
     :rtype: tuple
 
     """
-    if isinstance(urlpath, str):
+    if isinstance(urlpath, string_types):
         urlpath = urlpath.strip().split()
     if urlpath is None:
         urlpath = [re.sub("[^/]+$", "", url)]
@@ -278,7 +280,7 @@ def find_url(paths, extra=None):
     :returns: first path that succeeds
     """
 
-    if isinstance(paths, str):
+    if isinstance(paths, string_types):
         paths = paths.split()
     for path in paths:
         test = path

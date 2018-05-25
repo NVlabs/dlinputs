@@ -11,7 +11,7 @@ def test_path_shards():
 	assert len(list(paths.path_shards("http://server/a-@010-b"))) == 10
 
 def test_find_directory():
-	assert paths.find_directory("/bar:/etc:/foo:/bin:/usr:/bam", "lib", verbose=1) == "/usr/lib"
+	assert paths.find_directory("/bar:/etc:/foo:/bin:/usr:/bam", "lib", verbose=True) == "/usr/lib"
 
 def test_find_file():
 	assert paths.find_file("/bar:/etc:/usr/bin:/foo:/bin:/usr:/bam", "ls", verbose=1) == "/bin/ls"
