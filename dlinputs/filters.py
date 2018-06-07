@@ -1,6 +1,9 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+import os
+import tempfile
+import shelve
 import re
 import math
 import pickle
@@ -569,3 +572,40 @@ def batchinfo(data, n=1):
                 print v.shape, np.amin(v), np.mean(v), np.amax(v),
             print
         print
+
+@curried
+def cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=None):
+    start = None
+    cache_full = False
+    try:
+        total = 0
+        if path is True:
+            path = tempfile.mktemp()
+        if path is not None:
+            cache = shelve.open(path, protocol=-1)
+        else:
+            cache = {}
+        for sample in data:
+            value = objhash(sample[key])
+            if start is None:
+                start = value
+            else:
+                if start == value:
+                    cache_full = True
+            if cache_full: break
+            sample["__index__"] = total
+            cache[str(total)] = sample
+            sample = dict(sample)
+            sample["__epoch__"] = 0
+            total += 1
+            if total > max_size:
+                raise Exception("cache size exceeded")
+            yield sample
+        for epoch in range(1, nepochs):
+            for i in range(total):
+                sample = dict(cache[str(i)])
+                sample["__epoch__"] = epoch
+                yield sample
+    finally:
+        if path is not None and os.path.exists(path):
+            os.unlink(path)
