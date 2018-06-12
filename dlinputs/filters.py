@@ -7,6 +7,9 @@ from __future__ import absolute_import
 from builtins import zip
 from builtins import range
 from past.utils import old_div
+import os
+import tempfile
+import shelve
 import re
 import math
 import pickle
@@ -576,3 +579,74 @@ def batchinfo(data, n=1):
                 print(v.shape, np.amin(v), np.mean(v), np.amax(v), end=' ')
             print()
         print()
+
+
+def precache(data, cache, key="__key__", max_size=1000000):
+    total = 0
+    start = None
+    cache_full = False
+    for sample in data:
+        value = objhash(sample[key])
+        if start is None:
+            start = value
+        else:
+            if start == value:
+                cache_full = True
+        if cache_full: break
+        sample["__index__"] = total
+        cache[str(total)] = sample
+        sample = dict(sample)
+        sample["__epoch__"] = 0
+        total += 1
+        if total > max_size:
+            raise Exception("cache size exceeded")
+        yield sample
+
+def cacheserver(cache, start, stop):
+    keys = cache.keys()
+    for epoch in range(start, stop):
+        pyr.shuffle(keys)
+        for k in keys:
+            v = cache[k]
+            sample = dict(v)
+            sample["__epoch__"] = epoch
+            yield sample
+
+@curried
+def cached(data, nepochs=1000000, max_size=1000000000, key="__key__"):
+    cache = {}
+    for sample in precache(data, cache, key=key, max_size=max_size):
+        yield sample
+    for sample in cacheserver(cache, 1, nepochs):
+        yield sample
+
+@curried
+def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=None):
+    try:
+        if path is None:
+            path = tempfile.mktemp()
+        cache = shelve.open(path, protocol=-1)
+        for sample in precache(data, cache, key=key, max_size=max_size):
+            yield sample
+        for sample in cacheserver(cache, 1, nepochs):
+            yield sample
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+
+@curried
+def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__key__", verbose=False):
+    if not os.path.exists(path) and not os.path.exists(path+".dat"):
+        if verbose: print "creating", path
+        cache = shelve.open(path, protocol=-1)
+        for sample in precache(data, cache, key=key, max_size=max_size):
+            yield sample
+        start = 1
+    else:
+        assert os.path.exists(path) or os.path.exists(path+".dat")
+        if verbose: print "opening", path
+        cache = shelve.open(path, protocol=-1)
+        start = 0
+    for sample in cacheserver(cache, start, nepochs):
+        yield sample
+    cache.close()
