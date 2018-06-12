@@ -637,14 +637,14 @@ def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=
 @curried
 def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__key__", verbose=False):
     if not os.path.exists(path) and not os.path.exists(path+".dat"):
-        if verbose: print "creating", path
+        if verbose: print("creating", path)
         cache = shelve.open(path, protocol=-1)
         for sample in precache(data, cache, key=key, max_size=max_size):
             yield sample
         start = 1
     else:
         assert os.path.exists(path) or os.path.exists(path+".dat")
-        if verbose: print "opening", path
+        if verbose: print("opening", path)
         cache = shelve.open(path, protocol=-1)
         start = 0
     for sample in cacheserver(cache, start, nepochs):
