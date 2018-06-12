@@ -9,6 +9,7 @@ from builtins import str
 from past.utils import old_div
 from builtins import object
 import os
+import sys
 import re
 import time
 import socket
@@ -54,14 +55,23 @@ def last_dir(fname):
 def trivial_decode(sample):
     result = {}
     for k, v in list(sample.items()):
-        # trivial_decode is called when decode is set to False in tariterator
-        # So, you are not expected to decode
-        # If v is bytes, return bytes
-        # If v is str, ensure it is a unicode string by returning utf encoding of string.
-        if isinstance(v, bytes):
-            v = v
-        elif isinstance(v, str):
-            v = str(codecs.encode(v, "utf-8"))
+        if sys.version_info[0]==2:
+            if isinstance(v, buffer):
+                v = str(v)
+            elif isinstance(v, str):
+                v = str(codecs.encode(v, "utf-8"))                
+            else:
+                assert isinstance(v, str)
+        else:
+            # Python 3 doesn't support the buffer data type. And everything is decoded as Bytes.
+            # So, in case of Python 3:
+            # If v is bytes, return bytes
+            # If v is str, ensure it is a unicode string by returning utf encoding of string.
+            if isinstance(v, bytes):
+                v = v
+            elif isinstance(v, str):
+                v = str(codecs.encode(v, "utf-8"))
+
         result[k] = v
     return result
 
@@ -243,14 +253,25 @@ class TarWriter(object):
         assert "__key__" in obj, "object must contain a __key__"
         for k, v in list(obj.items()):
             if k[0]=="_": continue
-            assert isinstance(v, (bytes)), "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
+            if sys.version_info[0]==2:
+                # In Python 2, v should map to string after encoding
+                assert isinstance(v, (str)), "{} doesn't map to a str after encoding ({})".format(k, type(v))
+            else:
+                # In Python 3, encoding is always done to Bytes.
+                assert isinstance(v, (bytes)), "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
                 continue
             v = obj[k]
-            assert isinstance(v, (bytes)),  \
-                "converter/encoder didn't yield a bytes: %s" % ((k, type(v)),)
+
+            if sys.version_info[0]==2:
+                assert isinstance(v, (str, buffer)),  \
+                    "converter/encoder didn't yield a string: %s" % ((k, type(v)),)                
+            else:
+                # In Python 3, converter always yield's bytes
+                assert isinstance(v, (bytes)),  \
+                    "converter/encoder didn't yield a bytes: %s" % ((k, type(v)),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + k)
             ti.size = len(v)
@@ -258,7 +279,12 @@ class TarWriter(object):
             ti.mode = 0o666
             ti.uname = "bigdata"
             ti.gname = "bigdata"
-            stream = io.BytesIO(v)
+
+            if sys.version_info[2]==2:
+                stream = io.StringIO(v)
+            else:
+                stream = io.BytesIO(v)
+
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total
