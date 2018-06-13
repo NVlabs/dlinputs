@@ -6,7 +6,6 @@ from __future__ import absolute_import
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
 from past.utils import old_div
 from builtins import object
 import os
@@ -19,9 +18,15 @@ import tarfile
 import io
 import warnings
 import codecs
+import six
+import sys
 
 from . import utils
 
+if sys.version_info[0]==3:
+    from builtins import str
+    buffer = str
+    unicode = str
 
 def splitallext(path):
     """Helper method that splits off all extension.
@@ -56,7 +61,8 @@ def trivial_decode(sample):
     for k, v in list(sample.items()):
         if isinstance(v, buffer):
             v = str(v)
-        elif isinstance(v, str):
+        elif isinstance(v, unicode):
+		    # If it is a unicode string, return utf-8 encoded version
             v = str(codecs.encode(v, "utf-8"))
         else:
             assert isinstance(v, str)
@@ -256,7 +262,9 @@ class TarWriter(object):
             ti.mode = 0o666
             ti.uname = "bigdata"
             ti.gname = "bigdata"
-            stream = io.StringIO(v)
+            # Since, you are writing to file, it should be of type bytes
+            assert isinstance(v, bytes), type(v)
+            stream = six.BytesIO(v)
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total

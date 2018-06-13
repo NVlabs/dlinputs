@@ -5,11 +5,12 @@ from __future__ import print_function
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import str
 from builtins import range
 from past.utils import old_div
 import re
 import io
+import six
+import sys
 import functools as ft
 import collections
 
@@ -17,6 +18,10 @@ import PIL
 import numpy as np
 import PIL.Image
 
+if sys.version_info[0]==3:
+    from builtins import str    
+    unicode = str
+    buffer = str
 
 def print_sample(sample):
     """Pretty print a standard sample.
@@ -29,7 +34,8 @@ def print_sample(sample):
         print(k, end=' ')
         if isinstance(v, np.ndarray):
             print(v.dtype, v.shape)
-        elif isinstance(v, str):
+        # Unicode change, very simple. If str or unicode, print as is
+        elif isinstance(v, six.string_types):
             print(repr(v)[:60])
         elif isinstance(v, (int, float)):
             print(v)
@@ -139,7 +145,8 @@ def get_string_mapping(kvp):
     """
     if kvp is None:
         return {}
-    if isinstance(kvp, str):
+    # str, unicode change. Very simple. If string type, split and retrun key, value pair
+    if isinstance(kvp, six.string_types):
         return {k: v for k, v in [kv.split("=", 1) for kv in kvp.split(":")]}
     elif isinstance(kvp, dict):
         for k, v in list(kvp.items()):
@@ -183,7 +190,7 @@ def pilreads(data, color, asfloat=True):
 
     """
     assert color is not None
-    return pilread(io.StringIO(data), color=color, asfloat=asfloat)
+    return pilread(six.BytesIO(data), color=color, asfloat=asfloat)
 
 
 pilgray = ft.partial(pilreads, color="gray")
@@ -198,7 +205,9 @@ def pildumps(image, format="PNG"):
     :param format: compression format ("PNG" or "JPEG")
 
     """
-    result = io.StringIO()
+    # BytesIO change very simple. You are creating an image, saving it as bytes to resut which you'll 
+    # write to disk as Bytes.
+    result = six.BytesIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
         assert np.amin(image) > -0.001 and np.amax(image) < 1.001
         image = np.clip(image, 0.0, 1.0)
@@ -211,9 +220,15 @@ pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
 
 def autodecode1(data, tname):
-    if isinstance(data, (int, float, str)):
+    # Unicode change. If it is alread an unicode string, no decoding (Byte->Unicode req)
+    if isinstance(data, (int, float, unicode)):
         return data
-    assert isinstance(data, (str, buffer)), type(data)
+    if sys.version_info[0]==2:
+        # Then, it has to be byte string, which is also of type str
+        assert isinstance(data, (str, buffer)), type(data)
+    else:
+        # In Python 3, it has to be a bytes string at this point. You've checked if it is normal string above (unicode check)
+        assert isinstance(data, (bytes)), type(data)
     extension = re.sub(r".*\.", "", tname).lower()
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:
@@ -222,7 +237,8 @@ def autodecode1(data, tname):
             return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
-        stream = io.StringIO(data)
+        # BytesIO change. You are reading from file as Bytes
+        stream = six.BytesIO(data)
         result = None
         try:
             import imageio
@@ -282,7 +298,8 @@ def autoencode1(data, tname):
                 raise ValueError("{}: unknown image array dtype".format(data.dtype))
         else:
             raise ValueError("{}: unknown image type".format(type(data)))
-        stream = io.StringIO()
+        # BytesIO change, very simple. You are encoding. So, if unicode string, you want to convert it to Bytes string.
+        stream = io.BytesIO()
         imageio.imsave(stream, data, format=extension)
         result = stream.getvalue()
         del stream
