@@ -1,6 +1,9 @@
+from __future__ import division
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from builtins import range
+from past.utils import old_div
 import numpy as np
 import pylab
 import numpy.random as npr
@@ -54,10 +57,10 @@ def make_distortions(size, distortions=[(5.0, 3)]):
         deltas = ndi.gaussian_filter(deltas, (0, sigma, 0))
         deltas = ndi.gaussian_filter(deltas, (0, 0, sigma))
         r = np.amax((deltas[...,0]**2 + deltas[...,1]**2)**.5)
-        deltas *= maxdist / r
+        deltas *= old_div(maxdist, r)
         total += deltas
     deltas = total
-    xy = np.array(np.meshgrid(range(h),range(w))).transpose(0,2,1)
+    xy = np.array(np.meshgrid(list(range(h)),list(range(w)))).transpose(0,2,1)
     coords = deltas + xy
     return coords
 
@@ -168,8 +171,8 @@ def standardize(image, size, crop=0, mode="nearest", affine=np.eye(2)):
         scale = max(h * 1.0 / th, w * 1.0 / tw)
     affine = np.eye(2)
     affine = affine * scale
-    center = np.array(image.shape[:2], 'f') / 2
-    tcenter = np.array([th, tw], 'f') / 2
+    center = old_div(np.array(image.shape[:2], 'f'), 2)
+    tcenter = old_div(np.array([th, tw], 'f'), 2)
     delta = np.matmul(affine, tcenter) - center
     matrix = np.eye(3)
     matrix[:2, :2] = affine

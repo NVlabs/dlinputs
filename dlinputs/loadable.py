@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-import urlparse
+from future import standard_library
+standard_library.install_aliases()
+import urllib.parse
 
 def _convert(x):
     """Generically convert strings to numbers.

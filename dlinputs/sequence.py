@@ -1,6 +1,8 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from builtins import chr
+from builtins import object
 import numpy as np
 from scipy.ndimage import measurements
 

@@ -1,3 +1,10 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+from past.utils import old_div
 import time
 import collections
 from urllib2 import urlparse
@@ -5,7 +12,7 @@ from urllib2 import urlparse
 import zmq
 import msgpack
 
-import utils
+from . import utils
 
 schemes = dict(
     # (KIND, BIND)
@@ -36,21 +43,21 @@ class Statistics(object):
         self.recent.append((self.last, x))
     def rate(self):
         if self.count==0: return 0
-        return self.count / (self.last - self.start)
+        return old_div(self.count, (self.last - self.start))
     def throughput(self):
         if self.count==0: return 0
-        return self.total / (self.last - self.start)
+        return old_div(self.total, (self.last - self.start))
     def recent_rate(self):
         if self.count==0: return 0 
         delta = self.recent[-1][0] - self.recent[0][0]
         if delta==0: return 0
-        return len(self.recent) / delta
+        return old_div(len(self.recent), delta)
     def recent_throughput(self):
         if self.count==0: return 0
         total = sum(r[1] for r  in self.recent)
         delta = self.recent[-1][0] - self.recent[0][0]
         if delta==0: return 0
-        return total / delta
+        return old_div(total, delta)
     def summary(self):
         return "rate {} throughput {}".format(self.recent_rate(), self.recent_throughput())
 
@@ -101,7 +108,7 @@ class Connection(object):
         for sample in source:
             self.send(sample)
             if report>0 and count%report==0:
-                print "count", count, self.stats.summary()
+                print("count", count, self.stats.summary())
             count += 1
     def items(self):
         while True:

@@ -1,6 +1,14 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
+from builtins import object
 import os
 import re
 import time
@@ -8,11 +16,11 @@ import socket
 import getpass
 import os.path
 import tarfile
-import StringIO
+import io
 import warnings
 import codecs
 
-import utils
+from . import utils
 
 
 def splitallext(path):
@@ -45,10 +53,10 @@ def last_dir(fname):
 
 def trivial_decode(sample):
     result = {}
-    for k, v in sample.items():
+    for k, v in list(sample.items()):
         if isinstance(v, buffer):
             v = str(v)
-        elif isinstance(v, unicode):
+        elif isinstance(v, str):
             v = str(codecs.encode(v, "utf-8"))
         else:
             assert isinstance(v, str)
@@ -57,7 +65,7 @@ def trivial_decode(sample):
 
 def valid_sample(sample):
     return (sample is not None and
-            len(sample.keys()) > 0 and
+            len(list(sample.keys())) > 0 and
             not sample.get("__bad__", False))
 
 def group_by_keys(keys=base_plus_ext, lcase=True):
@@ -166,10 +174,10 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             current_sample = dict(__key__=prefix, __source__=source)
         try:
             data = stream.extractfile(tarinfo).read()
-        except tarfile.ReadError, e:
-            print "tarfile.ReadError at", current_count
-            print "file:", tarinfo.name
-            print e
+        except tarfile.ReadError as e:
+            print("tarfile.ReadError at", current_count)
+            print("file:", tarinfo.name)
+            print(e)
             current_sample["__bad__"] = True
         else:
             if lcase:
@@ -231,7 +239,7 @@ class TarWriter(object):
         total = 0
         obj = self.encode(obj)
         assert "__key__" in obj, "object must contain a __key__"
-        for k, v in obj.items():
+        for k, v in list(obj.items()):
             if k[0]=="_": continue
             assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
         key = obj["__key__"]
@@ -248,7 +256,7 @@ class TarWriter(object):
             ti.mode = 0o666
             ti.uname = "bigdata"
             ti.gname = "bigdata"
-            stream = StringIO.StringIO(v)
+            stream = io.StringIO(v)
             self.tarstream.addfile(ti, stream)
             total += ti.size
         return total
@@ -271,7 +279,7 @@ class ShardWriter(object):
             self.tarstream.close()
         self.fname = self.pattern % self.shard
         if self.verbose:
-            print "# writing", self.fname, self.count, "%.1f GB"%(self.size/1e9), self.total
+            print("# writing", self.fname, self.count, "%.1f GB"%(old_div(self.size,1e9)), self.total)
         self.shard += 1
         stream = open(self.fname, "wb")
         self.tarstream = TarWriter(stream, **self.args)

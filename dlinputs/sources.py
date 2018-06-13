@@ -1,6 +1,10 @@
+from __future__ import print_function
+from __future__ import absolute_import
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from builtins import zip
+from builtins import range
 import os
 import re
 import glob
@@ -11,8 +15,8 @@ import os.path
 import numpy as np
 import pylab
 
-import paths
-import utils
+from . import paths
+from . import utils
 
 
 def infinite(sample):
@@ -33,7 +37,7 @@ def generator(source, nrepeats=int(1e9)):
     :returns: iterator over `nrepeats` repeats of `source`
 
     """
-    for i in xrange(nrepeats):
+    for i in range(nrepeats):
         data = source()
         for sample in data:
             yield sample
@@ -78,9 +82,9 @@ def dirtree(top, extensions, epochs=1,
         extensions = extensions.split(",")
     assert os.path.isdir(top)
     lines = list(paths.find_basenames(top, extensions))
-    if verbose: print "got {} samples".format(len(lines))
+    if verbose: print("got {} samples".format(len(lines)))
     check_ds_size(lines, size)
-    for epoch in xrange(epochs):
+    for epoch in range(epochs):
         if shuffle: pyr.shuffle(lines)
         for fname in lines:
             result = {}
@@ -116,10 +120,10 @@ def basenames(basenamefile, extensions, split=True, epochs=1,
     root = os.path.abspath(basenamefile)
     root = os.path.dirname(root)
     with open(basenamefile, "r") as stream:
-        lines = [line.strip() for line in stream.xreadlines()]
-    if verbose: print "got {} samples".format(len(lines))
+        lines = [line.strip() for line in stream]
+    if verbose: print("got {} samples".format(len(lines)))
     check_ds_size(lines, size)
-    for epoch in xrange(epochs):
+    for epoch in range(epochs):
         if shuffle: pyr.shuffle(lines)
         for fname in lines:
             if split:
@@ -164,17 +168,17 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
     root = os.path.dirname(root)
     with codecs.open(table, "r", encoding) as stream:
         lines = stream.readlines()
-    if verbose: print "got {} samples".format(len(lines))
+    if verbose: print("got {} samples".format(len(lines)))
     check_ds_size(lines, size)
     nerrors = 0
-    for epoch in xrange(epochs):
+    for epoch in range(epochs):
         if shuffle: pyr.shuffle(lines)
         for line in lines:
             line = line.strip()
             if line[0] == "#": continue
             fnames = line.split(separator)
             if len(fnames) != len(colnames):
-                print "bad input: {}".format(line)
+                print("bad input: {}".format(line))
                 if nerrors > maxerrors:
                     raise ValueError("bad input")
                 nerrors += 1
@@ -187,7 +191,7 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
                 else:
                     path = os.path.join(root, value)
                     if not os.path.exists(path):
-                        print "{}: not found".format(path)
+                        print("{}: not found".format(path))
                         if nerrors > maxerrors:
                             raise ValueError("not found")
                         nerrors += 1
@@ -210,7 +214,7 @@ def bookdir(bookdir, epochs=1, shuffle=True):
     assert os.path.isdir(bookdir), bookdir
     fnames = glob.glob(bookdir + "/????/??????.gt.txt")
     fnames.sort()
-    for epoch in xrange(epochs):
+    for epoch in range(epochs):
         if shuffle: pyr.shuffle(fnames)
         for fname in fnames:
             base = re.sub(".gt.txt$", "", fname)

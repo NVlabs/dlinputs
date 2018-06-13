@@ -1,14 +1,18 @@
+from __future__ import print_function
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from past.builtins import execfile
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import os
 import re
 import os.path
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 from collections import namedtuple
 
-import simplejson
 from numpy import clip
 
 
@@ -50,7 +54,7 @@ def iterate_shards(url):
     prefix, shards, suffix = re.search(r"^(.*)(@[0-9]+)(.*)$", url).groups()
     f = len(shards) - 1
     n = int(shards[1:])
-    for i in xrange(n):
+    for i in range(n):
         index = "%0*d" % (f, i)
         yield ShardEntry(prefix+index+suffix, prefix, index, suffix)
 
@@ -77,15 +81,15 @@ def find_directory(path, target="", tests=[], verbose=False, error=True):
         if not os.path.isdir(root):
             continue
         candidate = os.path.join(root, target)
-        if verbose: print "trying", candidate
+        if verbose: print("trying", candidate)
         if not os.path.isdir(candidate):
             continue
         failed = False
         for extra in tests:
             testpath = os.path.join(candidate, extra)
-            if verbose: print "testing", testpath
+            if verbose: print("testing", testpath)
             if not os.path.exists(testpath):
-                if verbose: print "FAILED"
+                if verbose: print("FAILED")
                 failed = True
                 break
         if failed: continue
@@ -112,13 +116,13 @@ def find_file(path, target, tests=[], verbose=False, error=True):
         if not os.path.isdir(root):
             continue
         candidate = os.path.join(root, target)
-        if verbose: print "trying", candidate
+        if verbose: print("trying", candidate)
         if not os.path.isfile(candidate):
             continue
         failed = False
         for extra in tests:
             if not extra(candidate):
-                if verbose: print "FAILED"
+                if verbose: print("FAILED")
                 failed = True
                 break
         if failed: continue
@@ -216,12 +220,12 @@ def read_url_path(url, urlpath, verbose=False):
     if urlpath is None:
         urlpath = [re.sub("[^/]+$", "", url)]
     for base in urlpath:
-        trial = urlparse.urljoin(base, url)
-        if verbose: print "trying: {}".format(trial)
+        trial = urllib.parse.urljoin(base, url)
+        if verbose: print("trying: {}".format(trial))
         try:
             return openurl(trial).read(), base
-        except urllib2.URLError:
-            if verbose: print trial, ": FAILED"
+        except urllib.error.URLError:
+            if verbose: print(trial, ": FAILED")
             continue
     return None
 
@@ -248,7 +252,7 @@ def findurl(url):
         url = url_rewriter(url)
     base = os.environ.get("DLP_URLBASE", None)
     if base is not None:
-        url = urlparse.urljoin(base, url)
+        url = urllib.parse.urljoin(base, url)
     return url
 
 
@@ -261,7 +265,7 @@ def openurl(url):
 
     """
     url = findurl(url)
-    return urllib2.urlopen(url)
+    return urllib.request.urlopen(url)
 
 
 def find_url(paths, extra=None):
@@ -279,7 +283,7 @@ def find_url(paths, extra=None):
         if extra is not None:
             test = urllib2.urljoin(path, extra)
         try:
-            urllib2.urlopen(test)
+            urllib.request.urlopen(test)
             return path
         except:
             pass
@@ -298,7 +302,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     """
     data, base = read_url_path(url, urlpath, verbose=verbose)
     if verbose:
-        print "# read_shards", url, "base", base
+        print("# read_shards", url, "base", base)
     if data is None:
         raise Exception("url not found") # FIXME
     shards = simplejson.loads(data)
@@ -309,7 +313,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     shards = shards["shards"]
     for s in shards:
         for i in range(len(s)):
-            s[i] = urlparse.urljoin(base, s[i])
+            s[i] = urllib.parse.urljoin(base, s[i])
     return shards
 
 def extract_shards(url):
@@ -327,7 +331,7 @@ def extract_shards(url):
     f = len(shards) - 1
     n = int(shards[1:])
     result = []
-    for i in xrange(n):
+    for i in range(n):
         result.append("%s%0*d%s" % (prefix, f, i, suffix))
     return result
 

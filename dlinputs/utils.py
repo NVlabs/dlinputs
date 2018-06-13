@@ -1,8 +1,15 @@
+from __future__ import division
+from __future__ import print_function
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import re
-import StringIO
+import io
 import functools as ft
 import collections
 
@@ -19,17 +26,17 @@ def print_sample(sample):
     """
     for k in sorted(sample.keys()):
         v = sample[k]
-        print k,
+        print(k, end=' ')
         if isinstance(v, np.ndarray):
-            print v.dtype, v.shape
-        elif isinstance(v, (str, unicode)):
-            print repr(v)[:60]
+            print(v.dtype, v.shape)
+        elif isinstance(v, str):
+            print(repr(v)[:60])
         elif isinstance(v, (int, float)):
-            print v
+            print(v)
         elif isinstance(v, buffer):
-            print type(v), len(v)
+            print(type(v), len(v))
         else:
-            print type(v), repr(v)[:60]
+            print(type(v), repr(v)[:60])
 
 def type_info(x, use_size=True):
     if isinstance(x, np.ndarray):
@@ -43,7 +50,7 @@ def type_info(x, use_size=True):
 def summarize_samples(source, use_size=True):
     counter = collections.Counter()
     for sample in source:
-        descriptor = [(k, type_info(v, use_size)) for k, v in sample.items()]
+        descriptor = [(k, type_info(v, use_size)) for k, v in list(sample.items())]
         descriptor = tuple(sorted(descriptor))
         counter.update([descriptor])
     return counter
@@ -118,7 +125,7 @@ def invert_mapping(kvp):
     :rtype: dictionary
 
     """
-    return {v: k for k, v in kvp.items()}
+    return {v: k for k, v in list(kvp.items())}
 
 def get_string_mapping(kvp):
     """Returns a dictionary mapping strings to strings.
@@ -132,10 +139,10 @@ def get_string_mapping(kvp):
     """
     if kvp is None:
         return {}
-    if isinstance(kvp, (str, unicode)):
+    if isinstance(kvp, str):
         return {k: v for k, v in [kv.split("=", 1) for kv in kvp.split(":")]}
     elif isinstance(kvp, dict):
-        for k, v in kvp.items():
+        for k, v in list(kvp.items()):
             assert isinstance(k, str)
             assert isinstance(v, str)
         return kvp
@@ -164,7 +171,7 @@ def pilread(stream, color="gray", asfloat=True):
     else:
         raise ValueError("{}: unknown color space".format(color))
     if asfloat:
-        result = result.astype("f") / 255.0
+        result = old_div(result.astype("f"), 255.0)
     return result
 
 def pilreads(data, color, asfloat=True):
@@ -176,7 +183,7 @@ def pilreads(data, color, asfloat=True):
 
     """
     assert color is not None
-    return pilread(StringIO.StringIO(data), color=color, asfloat=asfloat)
+    return pilread(io.StringIO(data), color=color, asfloat=asfloat)
 
 
 pilgray = ft.partial(pilreads, color="gray")
@@ -191,7 +198,7 @@ def pildumps(image, format="PNG"):
     :param format: compression format ("PNG" or "JPEG")
 
     """
-    result = StringIO.StringIO()
+    result = io.StringIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
         assert np.amin(image) > -0.001 and np.amax(image) < 1.001
         image = np.clip(image, 0.0, 1.0)
@@ -204,7 +211,7 @@ pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
 
 def autodecode1(data, tname):
-    if isinstance(data, (int, float, unicode)):
+    if isinstance(data, (int, float, str)):
         return data
     assert isinstance(data, (str, buffer)), type(data)
     extension = re.sub(r".*\.", "", tname).lower()
@@ -215,7 +222,7 @@ def autodecode1(data, tname):
             return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
-        stream = StringIO.StringIO(data)
+        stream = io.StringIO(data)
         result = None
         try:
             import imageio
@@ -227,7 +234,7 @@ def autodecode1(data, tname):
                 result = np.array(result, 'f')
             assert isinstance(result, np.ndarray), type(result)
             assert result.dtype in [np.dtype('f'), np.dtype('uint8')], result.dtype
-        except Exception, exn1:
+        except Exception as exn1:
             pass
         if result is None:
             result = (exn1, data)
@@ -250,7 +257,7 @@ def autodecode1(data, tname):
 
 def autodecode(sample):
     result = {}
-    for k, v in sample.items():
+    for k, v in list(sample.items()):
         if k[0] == "_":
             result[k] = v
             continue
@@ -275,7 +282,7 @@ def autoencode1(data, tname):
                 raise ValueError("{}: unknown image array dtype".format(data.dtype))
         else:
             raise ValueError("{}: unknown image type".format(type(data)))
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         imageio.imsave(stream, data, format=extension)
         result = stream.getvalue()
         del stream
@@ -292,7 +299,7 @@ def autoencode1(data, tname):
     return data
 
 def autoencode(sample):
-    return {k: autoencode1(v, k) for k, v in sample.items()}
+    return {k: autoencode1(v, k) for k, v in list(sample.items())}
 
 
 def samples_to_batch(samples, combine_tensors=True, expand=False):
@@ -309,12 +316,12 @@ def samples_to_batch(samples, combine_tensors=True, expand=False):
     """
     if expand:
         return samples_to_batch_expanded(samples)
-    result = {k: [] for k in samples[0].keys()}
+    result = {k: [] for k in list(samples[0].keys())}
     for i in range(len(samples)):
-        for k in result.keys():
+        for k in list(result.keys()):
             result[k].append(samples[i][k])
     if combine_tensors == True:
-        tensor_names = [x for x in result.keys()
+        tensor_names = [x for x in list(result.keys())
                         if isinstance(result[x][0], np.ndarray)]
         for k in tensor_names:
             sizes = {a.shape for a in result[k]}
@@ -330,11 +337,11 @@ def samples_to_batch_expanded(samples):
     :rtype: dict
 
     """
-    result = {k: [] for k in samples[0].keys()}
+    result = {k: [] for k in list(samples[0].keys())}
     for i in range(len(samples)):
-        for k in result.keys():
+        for k in list(result.keys()):
             result[k].append(samples[i][k])
-    tensor_names = [x for x in result.keys()
+    tensor_names = [x for x in list(result.keys())
                     if isinstance(result[x][0], np.ndarray)]
     for k in tensor_names:
         size = result[k][0].shape
@@ -348,6 +355,6 @@ def samples_to_batch_expanded(samples):
     return result
 
 def metadict(sample, data={}):
-    result = {k: v for k, v in sample.items() if k[0]=="_"}
+    result = {k: v for k, v in list(sample.items()) if k[0]=="_"}
     result.update(data)
     return result
