@@ -1,11 +1,12 @@
-from __future__ import print_function
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
-
+from __future__ import print_function
+from __future__ import unicode_literals
 from past.builtins import execfile
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
+
 import os
 import re
 import os.path
@@ -15,6 +16,7 @@ from collections import namedtuple
 
 from numpy import clip
 
+import six
 
 def split_sharded_path(path):
     """Split a path containing shard notation into prefix, format, suffix, and number."""

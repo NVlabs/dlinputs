@@ -5,8 +5,9 @@ standard_library.install_aliases()
 from builtins import range
 import os
 import random
-from urllib2 import urlparse
+from future.moves.urllib.parse import urlparse
 from subprocess import PIPE, Popen, check_call
+from io import open
 
 from . import paths
 from . import tarrecords
@@ -22,22 +23,22 @@ def test_curl_write(self, location):
 
 def gopen(url, mode="rb"):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed.scheme == "gs":
         if mode[0]=="r":
-            return os.popen("gsutil cat '%s'" % url, "rb")
+            return Popen("gsutil cat '%s'" % url, stdout=PIPE, stderr=PIPE, shell=True).stdout
         elif mode[0]=="w":
-            return os.popen("gsutil cp - '%s'" % url, "wb")
+            return Popen("gsutil cp - '%s'" % url, stdin=PIPE, stderr=PIPE, shell=True).stdin
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
             cmd = "curl --fail -s '%s'" % url
-            return os.popen(cmd, "rb")
+            return Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).stdout
         elif mode[0]=="w":
             test_curl_write(url)
             cmd = "curl --fail -s -T - '%s'" % url
-            return os.popen(cmd, "wb")
+            return Popen(cmd, stdin=PIPE, stderr=PIPE, shell=True).stdin
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in ["", "file"]:
@@ -100,7 +101,7 @@ def sharditerator_once(url, **kw):
     return sharditerator(url, epochs=1, shuffle=False, **kw)
 
 def open_source(url, decode=True):
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
         from . import zcom
         return list(zcom.Connection(url, codec=decode).items())
@@ -108,7 +109,7 @@ def open_source(url, decode=True):
         return sharditerator(url, decode=decode, source=url)
 
 def open_sink(url, encode=True):
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
         from . import zcom
         return zcom.Connection(url, codec=encode)
