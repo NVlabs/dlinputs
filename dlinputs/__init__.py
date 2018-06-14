@@ -1,17 +1,17 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-import filters
-import gopen
-import improc
-import loadable
-import localimport
-import paths
-import sequence
-import sources
-import sqlitedb
-import tarrecords
-import utils
+from . import filters
+from . import gopen
+from . import improc
+from . import loadable
+from . import localimport
+from . import paths
+from . import sequence
+from . import sources
+from . import sqlitedb
+from . import tarrecords
+from . import utils
 
 inputs = localimport.LocalImport(filters)
 __enter__ = inputs.__enter__
