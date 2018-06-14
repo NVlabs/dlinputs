@@ -65,7 +65,9 @@ def trivial_decode(sample):
 		    # If it is a unicode string, return utf-8 encoded version
             v = str(codecs.encode(v, "utf-8"))
         else:
-            assert isinstance(v, str)
+            if v is not None:
+                # It has to bytes string in Python 3. Or simple str which contains bytes in Python 2.                
+                assert isinstance(v, (bytes, str))
         result[k] = v
     return result
 
@@ -247,14 +249,21 @@ class TarWriter(object):
         assert "__key__" in obj, "object must contain a __key__"
         for k, v in list(obj.items()):
             if k[0]=="_": continue
-            assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
+            if sys.version_info[0]==2:
+                assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
+            else:
+                assert isinstance(v, bytes), "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
             if not self.keep_meta and k[0]=="_":
                 continue
             v = obj[k]
-            assert isinstance(v, (str, buffer)),  \
-                "converter didn't yield a string: %s" % ((k, type(v)),)
+            if sys.version_info[0]==2:
+                assert isinstance(v, (str, buffer)),  \
+                    "converter didn't yield a string: %s" % ((k, type(v)),)
+            else:             
+                assert isinstance(v, (bytes)),  \
+                    "converter didn't yield bytes: %s" % ((k, type(v)),)
             now = time.time()
             ti = tarfile.TarInfo(key + "." + k)
             ti.size = len(v)
