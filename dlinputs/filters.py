@@ -26,7 +26,7 @@ from . import utils
 from . import improc
 from . import sqlshelve
 
-from dlinputs.gopen import *
+from .gopen import *
 
 def curried(f):
     """A decorator for currying functions in the first argument."""
