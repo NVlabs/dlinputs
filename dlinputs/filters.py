@@ -24,7 +24,7 @@ import numpy as np
 
 from . import utils
 from . import improc
-import sqlshelve
+from . import sqlshelve
 
 
 def curried(f):
@@ -648,7 +648,7 @@ def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__k
     if not os.path.exists(path):
         temp_path = path+".temp"
         if os.path.exists(temp_path): os.unlink(temp_path)
-        if verbose: print "creating", temp_path
+        if verbose: print("creating", temp_path)
         cache = sqlshelve.open(temp_path)
 
         for sample in precache(data, cache, key=key, max_size=max_size):
@@ -657,11 +657,9 @@ def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__k
         start = 1
     else:
         assert os.path.exists(path) or os.path.exists(path+".dat")
-        if verbose: print "opening", path
+        if verbose: print("opening", path)
         cache = sqlshelve.open(path, protocol=-1)
         start = 0
     for sample in cacheserver(cache, start, nepochs):
         yield sample
     cache.close()
-
-from gopen import *
