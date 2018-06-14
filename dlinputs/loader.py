@@ -28,7 +28,7 @@ def loader(input, output, report=0, epochs=1000000000):
                 count += 1
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Display info about an input module.")
+    parser = argparse.ArgumentParser("Load and broadcast shards.")
     parser.add_argument("-o", "--output", default="zpush://localhost:10000")
     parser.add_argument("-r", "--report", type=int, default=1000)
     parser.add_argument("input")

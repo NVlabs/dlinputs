@@ -18,12 +18,13 @@ import random as pyr
 import logging
 import itertools
 from functools import wraps
+from functools import reduce
 
 import numpy as np
 
 from . import utils
 from . import improc
-from functools import reduce
+import sqlshelve
 
 
 def curried(f):
@@ -36,10 +37,17 @@ def curried(f):
     return wrapper
 
 def compose2(f, g):
+    """Compose two functions, g(f(x))"""
     return lambda x: g(f(x))
 
 def compose(*args):
+    """Compose a sequence of functions (left-to-right)"""
     return reduce(compose2, args)
+
+def pipeline(source, *args):
+    """Write an input pipeline; first argument is source, rest are filters."""
+    if len(args)==0: return source
+    return compose(*args)(source)
 
 def merge(sources, weights=None):
     """Merge samples from multiple sources into a single iterator.
@@ -601,6 +609,7 @@ def precache(data, cache, key="__key__", max_size=1000000):
         if total > max_size:
             raise Exception("cache size exceeded")
         yield sample
+    if hasattr(cache, "sync") and callable(cache.sync): cache.sync()
 
 def cacheserver(cache, start, stop):
     keys = list(cache.keys())
@@ -625,28 +634,34 @@ def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=
     try:
         if path is None:
             path = tempfile.mktemp()
-        cache = shelve.open(path, protocol=-1)
+        cache = sqlshelve.open(path)
         for sample in precache(data, cache, key=key, max_size=max_size):
             yield sample
         for sample in cacheserver(cache, 1, nepochs):
             yield sample
     finally:
-        if os.path.exists(path):
-            os.unlink(path)
+        if os.path.exists(path): os.unlink(path)
 
 @curried
 def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__key__", verbose=False):
-    if not os.path.exists(path) and not os.path.exists(path+".dat"):
-        if verbose: print("creating", path)
-        cache = shelve.open(path, protocol=-1)
+    assert nepochs >= 1
+    if not os.path.exists(path):
+        temp_path = path+".temp"
+        if os.path.exists(temp_path): os.unlink(temp_path)
+        if verbose: print "creating", temp_path
+        cache = sqlshelve.open(temp_path)
+
         for sample in precache(data, cache, key=key, max_size=max_size):
             yield sample
+        os.rename(temp_path, path)
         start = 1
     else:
         assert os.path.exists(path) or os.path.exists(path+".dat")
-        if verbose: print("opening", path)
-        cache = shelve.open(path, protocol=-1)
+        if verbose: print "opening", path
+        cache = sqlshelve.open(path, protocol=-1)
         start = 0
     for sample in cacheserver(cache, start, nepochs):
         yield sample
     cache.close()
+
+from gopen import *
