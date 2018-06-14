@@ -594,6 +594,7 @@ def precache(data, cache, key="__key__", max_size=1000000):
         if total > max_size:
             raise Exception("cache size exceeded")
         yield sample
+    if hasattr(cache, "sync") and callable(cache.sync): cache.sync()
 
 def cacheserver(cache, start, stop):
     keys = cache.keys()
@@ -628,24 +629,21 @@ def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=
 
 @curried
 def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__key__", verbose=False):
-    complete = True
-    try:
-        if not os.path.exists(path) and not os.path.exists(path+".dat"):
-            if verbose: print "creating", path
-            complete = False
-            cache = sqlshelve.open(path)
-            for sample in precache(data, cache, key=key, max_size=max_size):
-                yield sample
-            complete = True
-            start = 1
-        else:
-            assert os.path.exists(path) or os.path.exists(path+".dat")
-            if verbose: print "opening", path
-            cache = sqlshelve.open(path, protocol=-1)
-            start = 0
-    finally:
-        if not complete:
-            if os.path.exists(path): os.unlink(path)
+    assert nepochs >= 1
+    if not os.path.exists(path):
+        temp_path = path+".temp"
+        if os.path.exists(temp_path): os.unlink(temp_path)
+        if verbose: print "creating", temp_path
+        cache = sqlshelve.open(temp_path)
+        for sample in precache(data, cache, key=key, max_size=max_size):
+            yield sample
+        os.rename(temp_path, path)
+        start = 1
+    else:
+        assert os.path.exists(path) or os.path.exists(path+".dat")
+        if verbose: print "opening", path
+        cache = sqlshelve.open(path, protocol=-1)
+        start = 0
     for sample in cacheserver(cache, start, nepochs):
         yield sample
     cache.close()

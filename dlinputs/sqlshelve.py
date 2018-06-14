@@ -8,7 +8,7 @@ import pickle
 class SqlShelf(object):
     """A shelve-compatible persistent dictionary based on sqlite3"""
 
-    def __init__(self, fname, table="cache", protocol=2, synchronous=True):
+    def __init__(self, fname, table="cache", protocol=2, synchronous=False):
         self.fname = fname
         self.table = table
         self.protocol = protocol
