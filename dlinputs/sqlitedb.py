@@ -1,6 +1,11 @@
+from __future__ import print_function
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from builtins import str
+from builtins import zip
+from builtins import range
+from builtins import object
 import os
 import sqlite3
 
@@ -16,10 +21,10 @@ def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
     assert os.path.exists(dbfile)
     sql = "select %s from %s %s" % (cols, table, extra)
     if verbose:
-        print "#", sql
-    for epoch in xrange(epochs):
+        print("#", sql)
+    for epoch in range(epochs):
         if verbose:
-            print "# epoch", epoch, "dbfile", dbfile
+            print("# epoch", epoch, "dbfile", dbfile)
         db = sqlite3.connect(dbfile)
         c = db.cursor()
         for row in c.execute(sql):
@@ -43,7 +48,7 @@ class SqliteWriter(object):
     def __init__(self, fname, tname, **kw):
         self.db = db = sqlite3.connect(fname)
         self.c = c = db.cursor()
-        self.keys = keys = kw.keys()
+        self.keys = keys = list(kw.keys())
         decls = []
         cols = []
         vals = []
@@ -64,7 +69,7 @@ class SqliteWriter(object):
             tname=tname, cols=cols, vals=vals)
 
     def add_dict(self, d):
-        d = {k: self.converters[k](v) for k, v in d.items()}
+        d = {k: self.converters[k](v) for k, v in list(d.items())}
         self.c.execute(self.insert, d)
         self.db.commit()
 

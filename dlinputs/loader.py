@@ -1,15 +1,19 @@
 #!/usr/bin/python
 
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from past.utils import old_div
 import argparse
 
-import zcom
-import gopen
-import paths
+from . import zcom
+from . import gopen
+from . import paths
 
 
 def loader(input, output, report=0, epochs=1000000000):
     if report>0:
-        print "loader", input, "->", output
+        print("loader", input, "->", output)
     while True:
         outputs = zcom.Connection(output, encode=False)
         shards = paths.path_shards(input)
@@ -19,8 +23,8 @@ def loader(input, output, report=0, epochs=1000000000):
             for sample in inputs:
                 outputs.send(sample)
                 if report>0 and count%report==0:
-                    print "{:6d} {:6.1f} samples/s {:8.1f} MB/s".format(
-                        count, outputs.stats.recent_rate(), outputs.stats.recent_throughput() / 1e6)
+                    print("{:6d} {:6.1f} samples/s {:8.1f} MB/s".format(
+                        count, outputs.stats.recent_rate(), old_div(outputs.stats.recent_throughput(), 1e6)))
                 count += 1
 
 if __name__ == "__main__":

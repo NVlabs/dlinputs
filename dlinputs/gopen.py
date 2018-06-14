@@ -1,10 +1,16 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import os
 import random
-from urllib2 import urlparse
+from future.moves.urllib.parse import urlparse
 from subprocess import PIPE, Popen, check_call
+from io import open
 
-import paths
-import tarrecords
+from . import paths
+from . import tarrecords
 
 
 def test_curl_write(self, location):
@@ -17,22 +23,22 @@ def test_curl_write(self, location):
 
 def gopen(url, mode="rb"):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed.scheme == "gs":
         if mode[0]=="r":
-            return os.popen("gsutil cat '%s'" % url, "rb")
+            return Popen("gsutil cat '%s'" % url, stdout=PIPE, stderr=PIPE, shell=True).stdout
         elif mode[0]=="w":
-            return os.popen("gsutil cp - '%s'" % url, "wb")
+            return Popen("gsutil cp - '%s'" % url, stdin=PIPE, stderr=PIPE, shell=True).stdin
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
             cmd = "curl --fail -s '%s'" % url
-            return os.popen(cmd, "rb")
+            return Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).stdout
         elif mode[0]=="w":
             test_curl_write(url)
             cmd = "curl --fail -s -T - '%s'" % url
-            return os.popen(cmd, "wb")
+            return Popen(cmd, stdin=PIPE, stderr=PIPE, shell=True).stdin
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in ["", "file"]:
@@ -51,8 +57,8 @@ def test_url(url, size=17):
         if len(data) == size:
             return True
         return False
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         return False
 
 def test_shards(url, size=17, complete=False):
@@ -72,7 +78,7 @@ def find_shards(urls, size=17, complete=False):
 def sharditerator(url, epochs=1000000, shuffle=True, **kw):
     """Iterate over sharded tar records."""
     shards = list(paths.path_shards(url))
-    for epoch in xrange(epochs):
+    for epoch in range(epochs):
         if shuffle: random.shuffle(shards)
         for shard in shards:
             with gopen(shard) as stream:
@@ -83,7 +89,7 @@ def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
     """Iterate over sharded tar records, opening multiple shards in parallel."""
     assert multi==1, "multi>1 is unimplemented" # FIXME
     shards = list(paths.path_shards(url))
-    for epoch in xrange(epochs):
+    for epoch in range(epochs):
         if shuffle: random.shuffle(shards)
         for shard in shards:
             with gopen(shard) as stream:
@@ -95,17 +101,17 @@ def sharditerator_once(url, **kw):
     return sharditerator(url, epochs=1, shuffle=False, **kw)
 
 def open_source(url, decode=True):
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
-        import zcom
-        return zcom.Connection(url, codec=decode).items()
+        from . import zcom
+        return list(zcom.Connection(url, codec=decode).items())
     else:
         return sharditerator(url, decode=decode, source=url)
 
 def open_sink(url, encode=True):
-    parsed = urlparse.urlparse(url)
+    parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
-        import zcom
+        from . import zcom
         return zcom.Connection(url, codec=encode)
     else:
         stream = gopen(url, "wb")

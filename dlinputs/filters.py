@@ -1,6 +1,13 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import os
 import tempfile
 import shelve
@@ -11,12 +18,13 @@ import random as pyr
 import logging
 import itertools
 from functools import wraps
+from functools import reduce
 
 import numpy as np
 
-import utils
-import improc
-import sqlshelve
+from . import utils
+from . import improc
+from . import sqlshelve
 
 
 def curried(f):
@@ -53,7 +61,7 @@ def merge(sources, weights=None):
     while len(sources) > 0:
         index = pyr.randint(0, len(sources)-1)
         try:
-            sample = sources[index].next()
+            sample = next(sources[index])
             yield sample
         except StopIteration:
             del sources[index]
@@ -148,7 +156,7 @@ def info(data, every=0):
     count = 0
     for sample in data:
         if (count == 0 and every == 0) or (every > 0 and count % every == 0):
-            print "# itinfo", count
+            print("# itinfo", count)
             utils.print_sample(sample)
         count += 1
         yield sample
@@ -176,7 +184,7 @@ def grep(source, **kw):
     for item in source:
         for data in source:
             skip = False
-            for k, v in kw.items():
+            for k, v in list(kw.items()):
                 matching = not not re.search(v, data[k])
                 if matching == _not:
                     skip = True
@@ -199,7 +207,7 @@ def select(source, **kw):
     """
     for data in source:
         skip = False
-        for k, f in kw.items():
+        for k, f in list(kw.items()):
             matching = not not f(data[k])
             if not matching:
                 skip = True
@@ -241,16 +249,16 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_miss
             result = dict(sample)
         else:
             result = dict(__key__=sample.get("__key__"))
-        has_all_keys = all(has_key(sample, k) for k in kw.values())
+        has_all_keys = all(has_key(sample, k) for k in list(kw.values()))
         if error_missing and not has_all_keys:
-            raise ValueError("missing keys, got {}, want {}".format(sample.keys(), kw))
+            raise ValueError("missing keys, got {}, want {}".format(list(sample.keys()), kw))
         if skip_missing and not has_all_keys:
             continue
         if keep_meta:
-            for k, v in sample.items():
+            for k, v in list(sample.items()):
                 if k[0]=="_":
                     result[k] = v
-        for k, keys in kw.items():
+        for k, keys in list(kw.items()):
             key = find_key(sample, keys)
             if key is None: continue
             result[k] = sample[key]
@@ -276,18 +284,18 @@ def map(data, error_missing=True, errors_are_fatal=False, **kw):
     error = False
     for sample in data:
         sample = sample.copy()
-        for k, f in kw.items():
+        for k, f in list(kw.items()):
             if error_missing and k not in sample:
-                print "map", kw, "key", k, "missing from sample", sample.keys()
+                print("map", kw, "key", k, "missing from sample", list(sample.keys()))
                 error = True
                 break
             if error: break
             try:
                 sample[k] = f(sample[k])
-            except Exception, e:
+            except Exception as e:
                 logging.warn("itmap {}".format(repr(e)))
                 if errors_are_fatal:
-                    print e
+                    print(e)
                     error = True
                     break
                 sample = None
@@ -360,7 +368,7 @@ def shuffle(data, bufsize=1000, initial=100):
     startup = True
     for sample in data:
         if len(buf) < bufsize:
-            buf.append(data.next())
+            buf.append(next(data))
         k = pyr.randint(0, len(buf) - 1)
         sample, buf[k] = buf[k], sample
         if startup and len(buf) < initial:
@@ -436,10 +444,10 @@ def unbatch(data):
 
     """
     for sample in data:
-        keys = sample.keys()
+        keys = list(sample.keys())
         bs = len(sample[keys[0]])
-        for i in xrange(bs):
-            yield {k: maybe_index(v, i) for k, v in sample.items()}
+        for i in range(bs):
+            yield {k: maybe_index(v, i) for k, v in list(sample.items())}
 
 ###
 ### Image data augmentation
@@ -519,9 +527,9 @@ def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):
     for sample in data:
         seq = sample[seqkey]
         l = seq.shape[batchdim]
-        r = int(math.floor(math.log(l) / math.log(scale)))
+        r = int(math.floor(old_div(math.log(l), math.log(scale))))
         batched = buckets.get(r, {})
-        for k, v in sample.items():
+        for k, v in list(sample.items()):
             if k in batched:
                 batched[k].append(v)
             else:
@@ -531,7 +539,7 @@ def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):
             yield batched
             batched = {}
         buckets[r] = batched
-    for r, batched in buckets.items():
+    for r, batched in list(buckets.items()):
         if batched == {}: continue
         batched["_bucket"] = r
         yield batched
@@ -573,13 +581,13 @@ def batchinfo(data, n=1):
     for i, sample in enumerate(data):
         if i >= n:
             break
-        print type(sample)
-        for k, v in sample.items():
-            print k, type(v),
+        print(type(sample))
+        for k, v in list(sample.items()):
+            print(k, type(v), end=' ')
             if isinstance(v, np.ndarray):
-                print v.shape, np.amin(v), np.mean(v), np.amax(v),
-            print
-        print
+                print(v.shape, np.amin(v), np.mean(v), np.amax(v), end=' ')
+            print()
+        print()
 
 def precache(data, cache, key="__key__", max_size=1000000):
     total = 0
@@ -604,7 +612,7 @@ def precache(data, cache, key="__key__", max_size=1000000):
     if hasattr(cache, "sync") and callable(cache.sync): cache.sync()
 
 def cacheserver(cache, start, stop):
-    keys = cache.keys()
+    keys = list(cache.keys())
     for epoch in range(start, stop):
         pyr.shuffle(keys)
         for k in keys:
@@ -640,19 +648,18 @@ def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__k
     if not os.path.exists(path):
         temp_path = path+".temp"
         if os.path.exists(temp_path): os.unlink(temp_path)
-        if verbose: print "creating", temp_path
+        if verbose: print("creating", temp_path)
         cache = sqlshelve.open(temp_path)
+
         for sample in precache(data, cache, key=key, max_size=max_size):
             yield sample
         os.rename(temp_path, path)
         start = 1
     else:
         assert os.path.exists(path) or os.path.exists(path+".dat")
-        if verbose: print "opening", path
+        if verbose: print("opening", path)
         cache = sqlshelve.open(path, protocol=-1)
         start = 0
     for sample in cacheserver(cache, start, nepochs):
         yield sample
     cache.close()
-
-from gopen import *
