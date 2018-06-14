@@ -16,6 +16,7 @@ import numpy as np
 
 import utils
 import improc
+import sqlshelve
 
 
 def curried(f):
@@ -617,28 +618,34 @@ def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=
     try:
         if path is None:
             path = tempfile.mktemp()
-        cache = shelve.open(path, protocol=-1)
+        cache = sqlshelve.open(path)
         for sample in precache(data, cache, key=key, max_size=max_size):
             yield sample
         for sample in cacheserver(cache, 1, nepochs):
             yield sample
     finally:
-        if os.path.exists(path):
-            os.unlink(path)
+        if os.path.exists(path): os.unlink(path)
 
 @curried
 def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__key__", verbose=False):
-    if not os.path.exists(path) and not os.path.exists(path+".dat"):
-        if verbose: print "creating", path
-        cache = shelve.open(path, protocol=-1)
-        for sample in precache(data, cache, key=key, max_size=max_size):
-            yield sample
-        start = 1
-    else:
-        assert os.path.exists(path) or os.path.exists(path+".dat")
-        if verbose: print "opening", path
-        cache = shelve.open(path, protocol=-1)
-        start = 0
+    complete = True
+    try:
+        if not os.path.exists(path) and not os.path.exists(path+".dat"):
+            if verbose: print "creating", path
+            complete = False
+            cache = sqlshelve.open(path)
+            for sample in precache(data, cache, key=key, max_size=max_size):
+                yield sample
+            complete = True
+            start = 1
+        else:
+            assert os.path.exists(path) or os.path.exists(path+".dat")
+            if verbose: print "opening", path
+            cache = sqlshelve.open(path, protocol=-1)
+            start = 0
+    finally:
+        if not complete:
+            if os.path.exists(path): os.unlink(path)
     for sample in cacheserver(cache, start, nepochs):
         yield sample
     cache.close()
