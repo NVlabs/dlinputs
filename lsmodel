@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import re
 import glob
 import argparse
@@ -9,7 +9,6 @@ import pylab
 import torch
 import psutil
 import torch.optim as optim
-import editdistance
 from pylab import *
 from torch import nn
 from dlinputs import paths, utils
@@ -27,15 +26,7 @@ parser.add_argument("-t", "--tail", type=int, default=1000000)
 parser.add_argument("files", nargs="*")
 args = parser.parse_args()
 
-if args.files == []:
-    args.files = ["*"]
-elif args.files == ["-"]:
-    args.files = [x.strip() for x in sys.stdin.readlines()]
-
-while 1:
-    fnames = []
-    for arg in args.files:
-        fnames += glob.glob(arg)
+def plotfiles(fnames):
     graphs = {}
     for fname in fnames:
         match = re.search(r"^(.*)-([0-9]{6,})-([0-9]{6,}).pt", fname)
@@ -53,4 +44,19 @@ while 1:
         graph = [(x, y) for x, y in graph if x >= args.mintrain]
         handles += [plot(*zip(*graph), label=key)[0]]
     legend(handles=handles)
+
+if args.files == ["-"]:
+    args.files = [x.strip() for x in sys.stdin.readlines()]
+    plotfiles(args.files)
+    ginput(1, 1000000)
+    sys.exit(0)
+
+if args.files == []:
+    args.files = ["*"]
+
+while 1:
+    fnames = []
+    for arg in args.files:
+        fnames += glob.glob(arg)
+    plotfiles(fnames)
     ginput(1, args.reload)

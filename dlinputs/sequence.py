@@ -4,6 +4,7 @@
 from builtins import chr
 from builtins import object
 import numpy as np
+import scipy.ndimage as ndi
 from scipy.ndimage import measurements
 
 
@@ -29,7 +30,7 @@ def intlist_to_hotonelist(cs, nc, allow_bad_classes=True):
     result[-1,0] = 1.0
     return result
 
-def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
+def hotonelist_to_intlist0(outputs, threshold=0.7, pos=0):
     """Helper function for LSTM-based OCR: decode LSTM outputs.
 
     Translate back. Thresholds on class 0, then assigns the maximum class to
@@ -48,6 +49,35 @@ def hotonelist_to_intlist(outputs,threshold=0.7,pos=0):
     labels,n = measurements.label(outputs[:,0]<threshold)
     mask = np.tile(labels.reshape(-1,1),(1,outputs.shape[1]))
     maxima = measurements.maximum_position(outputs,mask,np.arange(1,np.amax(mask)+1))
+    if pos==1: return maxima # include character position
+    if pos==2: return [(r, c, outputs[r,c]) for (r,c) in maxima] # include character probabilities
+    return [c for (r,c) in maxima] # only recognized characters
+
+
+def hotonelist_to_intlist(outputs, threshold=0.7, pos=0, esigma=0.0, lmin=0, csigma=0.0):
+    """Helper function for LSTM-based OCR: decode LSTM outputs.
+
+    Translate back. Thresholds on class 0, then assigns the maximum class to
+    each region. ``pos`` determines the depth of character information returned:
+    - `pos=0`: Return list of recognized characters
+    - `pos=1`: Return list of position-character tuples
+    - `pos=2`: Return list of character-probability tuples
+
+
+    :param outputs: 2D array containing posterior probabilities
+    :param threshold: posterior probability threshold
+    :param pos: what to return
+    :returns: decoded hot one outputs
+
+    """
+    epsilons = outputs[:, 0]
+    epsilons = ndi.gaussian_filter(epsilons, esigma)
+    epsilons /= np.amax(epsilons)
+    epsilons = ndi.minimum_filter(epsilons, lmin)
+    labels, n = measurements.label(epsilons<threshold)
+    smoothed_outputs = ndi.gaussian_filter(outputs, csigma)
+    mask = np.tile(labels.reshape(-1,1), (1,outputs.shape[1]))
+    maxima = measurements.maximum_position(outputs, mask, np.arange(1,np.amax(mask)+1))
     if pos==1: return maxima # include character position
     if pos==2: return [(r, c, outputs[r,c]) for (r,c) in maxima] # include character probabilities
     return [c for (r,c) in maxima] # only recognized characters
@@ -83,11 +113,13 @@ def seq_makebatch(images, for_target=False):
         return ibatch
 
 class GenericCodec(object):
+    def __init__(self):
+        self.params = dict(threshold=0.7)
     def encode_tensor(self, s):
         codes = [self.encode_char(c) for c in s]
         return intlist_to_hotonelist(codes, self.size())
-    def decode_tensor(self, a, threshold=0.7, pos=0):
-        codes = hotonelist_to_intlist(a, threshold=threshold, pos=pos)
+    def decode_tensor(self, a, pos=0):
+        codes = hotonelist_to_intlist(a, pos=pos, **self.params)
         if pos==0:
             return "".join([self.decode_char(c) for c in codes])
         elif pos==1:
@@ -97,10 +129,12 @@ class GenericCodec(object):
     def encode_batch(self, batch):
         return seq_makebatch([self.encode_tensor(s) for s in batch], for_target=True)
     def decode_batch(self, a, threshold=0.7, pos=0):
-        return  [self.decode_tensor(x, threshold=threshold, pos=pos) for x in a]
+        return  [self.decode_tensor(x, pos=pos) for x in a]
 
 class AsciiCodec(GenericCodec):
     """An example of a codec, used for turning strings into tensors."""
+    def __init__(self):
+        GenericCodec.__init__(self)
     def encode_char(self, c):
         if c=="": return 0
         return max(1, ord(c) - ord(" ") + 1)
