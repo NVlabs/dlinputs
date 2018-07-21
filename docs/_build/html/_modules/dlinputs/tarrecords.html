@@ -1,0 +1,402 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dlinputs.tarrecords &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dlinputs.tarrecords</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="c1"># Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.</span>
+<span class="c1"># See the LICENSE file for licensing terms (BSD-style).</span>
+
+<span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="n">standard_library</span>
+<span class="n">standard_library</span><span class="o">.</span><span class="n">install_aliases</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">past.utils</span> <span class="k">import</span> <span class="n">old_div</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">codecs</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">unicode</span> <span class="o">=</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="splitallext"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.splitallext">[docs]</a><span class="k">def</span> <span class="nf">splitallext</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper method that splits off all extension.</span>
+
+<span class="sd">    Returns base, allext.</span>
+
+<span class="sd">    :param path: path with extensions</span>
+<span class="sd">    :returns: path with all extensions removed</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^((?:.*/|)[^.]+)[.]([^/]*)$&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="base_plus_ext"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.base_plus_ext">[docs]</a><span class="k">def</span> <span class="nf">base_plus_ext</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Splits pathnames into the file basename plus the extension.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">splitallext</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dir_plus_file"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.dir_plus_file">[docs]</a><span class="k">def</span> <span class="nf">dir_plus_file</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Splits pathnames into the dirname plus the filename.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="last_dir"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.last_dir">[docs]</a><span class="k">def</span> <span class="nf">last_dir</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Splits pathnames into the last dir plus the filename.&quot;&quot;&quot;</span>
+    <span class="n">dirname</span><span class="p">,</span> <span class="n">plain</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+    <span class="n">prefix</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dirname</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">last</span><span class="p">,</span> <span class="n">plain</span></div>
+
+<span class="k">def</span> <span class="nf">trivial_decode</span><span class="p">(</span><span class="n">sample</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">buffer</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">unicode</span><span class="p">):</span>
+		    <span class="c1"># If it is a unicode string, return utf-8 encoded version</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">codecs</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># It has to bytes string in Python 3. Or simple str which contains bytes in Python 2.                </span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="k">def</span> <span class="nf">valid_sample</span><span class="p">(</span><span class="n">sample</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+            <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span>
+            <span class="ow">not</span> <span class="n">sample</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;__bad__&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+
+<div class="viewcode-block" id="group_by_keys"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.group_by_keys">[docs]</a><span class="k">def</span> <span class="nf">group_by_keys</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">base_plus_ext</span><span class="p">,</span> <span class="n">lcase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Groups key, value pairs into samples.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">iterator</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="n">current_sample</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">fname</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">keys</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">current_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">prefix</span> <span class="o">==</span> <span class="n">current_sample</span><span class="p">[</span><span class="s2">&quot;__key__&quot;</span><span class="p">]:</span>
+                <span class="n">current_sample</span><span class="p">[</span><span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">valid_sample</span><span class="p">(</span><span class="n">current_sample</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">current_sample</span>
+            <span class="n">current_sample</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">__key__</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lcase</span><span class="p">:</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">current_sample</span><span class="p">[</span><span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">valid_sample</span><span class="p">(</span><span class="n">current_sample</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">current_sample</span>
+    <span class="k">return</span> <span class="n">iterator</span></div>
+
+<div class="viewcode-block" id="tardata"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.tardata">[docs]</a><span class="k">def</span> <span class="nf">tardata</span><span class="p">(</span><span class="n">fileobj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator yielding filename, content pairs for the given tar stream.&quot;&quot;&quot;</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">fileobj</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r|*&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tarinfo</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">isreg</span><span class="p">():</span> <span class="k">continue</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">fname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="k">continue</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">extractfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">fname</span><span class="p">,</span> <span class="n">data</span>
+    <span class="k">del</span> <span class="n">stream</span></div>
+
+<div class="viewcode-block" id="decoder"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.decoder">[docs]</a><span class="k">def</span> <span class="nf">decoder</span><span class="p">(</span><span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply tariterator-like decoding to the stream of samples.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">autodecode</span>
+    <span class="k">elif</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">trivial_decode</span>
+    <span class="k">def</span> <span class="nf">iterator</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">decode</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">iterator</span></div>
+
+<div class="viewcode-block" id="tariterator1"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.tariterator1">[docs]</a><span class="k">def</span> <span class="nf">tariterator1</span><span class="p">(</span><span class="n">fileobj</span><span class="p">,</span> <span class="n">check_sorted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">base_plus_ext</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Alternative (new) implementation of tariterator.&quot;&quot;&quot;</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">tardata</span><span class="p">(</span><span class="n">fileobj</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">group_by_keys</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)(</span><span class="n">content</span><span class="p">)</span>
+    <span class="n">decoded</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">(</span><span class="n">decode</span><span class="o">=</span><span class="n">decode</span><span class="p">)(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decoded</span></div>
+
+<div class="viewcode-block" id="zipdata"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.zipdata">[docs]</a><span class="k">def</span> <span class="nf">zipdata</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator yielding filename, content pairs for the given zip file.&quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">zipfile</span>
+    <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+    <span class="n">fnames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">fnames</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">fname</span><span class="p">,</span> <span class="n">data</span></div>
+
+<span class="k">def</span> <span class="nf">zipiterator</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">check_sorted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">base_plus_ext</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">zipdata</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">group_by_keys</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)(</span><span class="n">content</span><span class="p">)</span>
+    <span class="n">decoded</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">(</span><span class="n">decode</span><span class="o">=</span><span class="n">decode</span><span class="p">)(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decoded</span>
+
+<div class="viewcode-block" id="tariterator"><a class="viewcode-back" href="../../tarrecords.html#dlinputs.tarrecords.tariterator">[docs]</a><span class="k">def</span> <span class="nf">tariterator</span><span class="p">(</span><span class="n">fileobj</span><span class="p">,</span> <span class="n">check_sorted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">base_plus_ext</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lcase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over samples from a tar archive, either locally or given by URL.</span>
+
+<span class="sd">    Tar archives are assumed to be sorted by file name. For each basename,</span>
+<span class="sd">    reads all the files with different extensions and returns a dictionary</span>
+<span class="sd">    with the extension as key and the file contents as value.</span>
+
+<span class="sd">    :param str archive: tar archive with sorted file names (file name or URL)</span>
+<span class="sd">    :param bool check_sorted: verify that file names are sorted</span>
+<span class="sd">    :returns: iterator over samples</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">autodecode</span>
+    <span class="k">elif</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">trivial_decode</span>
+    <span class="n">current_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">current_prefix</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">current_sample</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">fileobj</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r|*&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tarinfo</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">isreg</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">fname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;tarinfo.name is None&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">prefix</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">keys</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;prefix is None for: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">,))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="o">!=</span> <span class="n">current_prefix</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">check_sorted</span> <span class="ow">and</span> <span class="n">prefix</span> <span class="o">&lt;=</span> <span class="n">current_prefix</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] -&gt; [</span><span class="si">%s</span><span class="s2">]: tar file does not contain sorted keys&quot;</span> <span class="o">%</span> \
+                                 <span class="p">(</span><span class="n">current_prefix</span><span class="p">,</span> <span class="n">prefix</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">valid_sample</span><span class="p">(</span><span class="n">current_sample</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">decode</span><span class="p">(</span><span class="n">current_sample</span><span class="p">)</span>
+            <span class="n">current_prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+            <span class="n">current_sample</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">__key__</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">__source__</span><span class="o">=</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">extractfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">ReadError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tarfile.ReadError at&quot;</span><span class="p">,</span> <span class="n">current_count</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;file:&quot;</span><span class="p">,</span> <span class="n">tarinfo</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">current_sample</span><span class="p">[</span><span class="s2">&quot;__bad__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lcase</span><span class="p">:</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">current_sample</span><span class="p">[</span><span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="n">current_count</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">valid_sample</span><span class="p">(</span><span class="n">current_sample</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">decode</span><span class="p">(</span><span class="n">current_sample</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span> <span class="k">del</span> <span class="n">stream</span>
+    <span class="k">except</span><span class="p">:</span> <span class="k">pass</span></div>
+
+<span class="k">class</span> <span class="nc">TarWriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fileobj</span><span class="p">,</span> <span class="n">keep_meta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">encode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A class for writing dictionaries to tar files.</span>
+
+<span class="sd">        :param fileobj fileobj: file name for tar file (.tgz)</span>
+<span class="sd">        :param bool keep_meta: keep fields starting with &quot;_&quot;</span>
+<span class="sd">        :param function encoder: encoding of samples prior to writing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fileobj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">fileobj</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fileobj</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">encode</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">encode</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">autoencode</span>
+        <span class="k">elif</span> <span class="n">encode</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">encode</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep_meta</span> <span class="o">=</span> <span class="n">keep_meta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">encode</span> <span class="o">=</span> <span class="n">encode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">fileobj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">fileobj</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w:gz&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span> <span class="ow">or</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getuser</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group</span> <span class="o">=</span> <span class="n">group</span> <span class="ow">or</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Context manager.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Context manager.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Close the tar file.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Close the tar file.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write a dictionary to the tar file.</span>
+
+<span class="sd">        :param str obj: dictionary of objects to be stored</span>
+<span class="sd">        :returns: size of the entry</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s2">&quot;__key__&quot;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;object must contain a __key__&quot;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;_&quot;</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> doesn&#39;t map to a string after encoding (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> doesn&#39;t map to a bytes after encoding (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;__key__&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_meta</span> <span class="ow">and</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;_&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)),</span>  \
+                    <span class="s2">&quot;converter didn&#39;t yield a string: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)),)</span>
+            <span class="k">else</span><span class="p">:</span>             
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">)),</span>  \
+                    <span class="s2">&quot;converter didn&#39;t yield bytes: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)),)</span>
+            <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">ti</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>
+            <span class="n">ti</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">ti</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">now</span>
+            <span class="n">ti</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="mo">0o666</span>
+            <span class="n">ti</span><span class="o">.</span><span class="n">uname</span> <span class="o">=</span> <span class="s2">&quot;bigdata&quot;</span>
+            <span class="n">ti</span><span class="o">.</span><span class="n">gname</span> <span class="o">=</span> <span class="s2">&quot;bigdata&quot;</span>
+            <span class="c1"># Since, you are writing to file, it should be of type bytes</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">stream</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">ti</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">ti</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">return</span> <span class="n">total</span>
+
+<span class="k">class</span> <span class="nc">ShardWriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">maxcount</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">maxsize</span><span class="o">=</span><span class="mf">3e9</span><span class="p">,</span> <span class="n">keep_meta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">encode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">keep_meta</span><span class="o">=</span><span class="n">keep_meta</span><span class="p">,</span> <span class="n">encode</span><span class="o">=</span><span class="n">encode</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxcount</span> <span class="o">=</span> <span class="n">maxcount</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxsize</span> <span class="o">=</span> <span class="n">maxsize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shard</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span> <span class="o">=</span> <span class="n">pattern</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_stream</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">next_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">shard</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;# writing&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> GB&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">old_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span><span class="mf">1e9</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shard</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span> <span class="o">=</span> <span class="n">TarWriter</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">maxcount</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">maxsize</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">next_stream</span><span class="p">()</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">+=</span> <span class="n">size</span>
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">tarstream</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">shard</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

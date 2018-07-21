@@ -1,0 +1,253 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>sources &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="filters" href="filters.html" />
+    <link rel="prev" title="utils" href="utils.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sources">
+<span id="id1"></span><h1>sources<a class="headerlink" href="#sources" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-dlinputs.sources"></span><dl class="function">
+<dt id="dlinputs.sources.basenames">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">basenames</code><span class="sig-paren">(</span><em>basenamefile</em>, <em>extensions</em>, <em>split=True</em>, <em>epochs=1</em>, <em>shuffle=True</em>, <em>verbose=True</em>, <em>size=(100</em>, <em>1000000000.0)</em>, <em>decode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#basenames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.basenames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over training samples given as basenames and extensions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>basenamefile</strong> – file containing one basename per line</li>
+<li><strong>extensions</strong> – list of expected extensions for each basename</li>
+<li><strong>split</strong> – remove any extension from files in basenamefile</li>
+<li><strong>epochs</strong> – number of times to iterate</li>
+<li><strong>shuffle</strong> – shuffle before training</li>
+<li><strong>verbose</strong> – verbose output</li>
+<li><strong>size</strong> – expected dataset size</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.sources.bookdir">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">bookdir</code><span class="sig-paren">(</span><em>bookdir</em>, <em>epochs=1</em>, <em>shuffle=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#bookdir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.bookdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a dataset from an OCRopus-style book directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bookdir</strong> – top level directory in OCRopus bookdir format</li>
+<li><strong>epochs</strong> – number of epochs to iterate for</li>
+<li><strong>shuffle</strong> – shuffle the samples prior to reading</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.sources.check_ds_size">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">check_ds_size</code><span class="sig-paren">(</span><em>ds</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#check_ds_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.check_ds_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to check the size of a dataset.</p>
+<p>This is mostly just a nice error message</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – dataset size</li>
+<li><strong>size</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><em>tuple</em></a>) – lower and upper bounds of dataset size</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.sources.dirtree">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">dirtree</code><span class="sig-paren">(</span><em>top</em>, <em>extensions</em>, <em>epochs=1</em>, <em>shuffle=True</em>, <em>verbose=True</em>, <em>size=(100</em>, <em>1000000000.0)</em>, <em>decode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#dirtree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.dirtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate of training samples in a directory tree.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>top</strong> – top of the directory tree</li>
+<li><strong>extensions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a><em>,</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – list/comma separated string of extensions</li>
+<li><strong>epochs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – number of epochs to iterate over the data</li>
+<li><strong>shuffle</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – whether to shuffle the data</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – whether to output info about the interator</li>
+<li><strong>size</strong> – expected dataset size</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator over samples</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.sources.generator">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">generator</code><span class="sig-paren">(</span><em>source</em>, <em>nrepeats=1000000000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Repeat data from a source (returned by a callable function).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> – callable function yielding an iterator</li>
+<li><strong>nrepeats</strong> – number of times to repeat</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator over <cite>nrepeats</cite> repeats of <cite>source</cite></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.sources.infinite">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">infinite</code><span class="sig-paren">(</span><em>sample</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#infinite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.infinite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Repeat the same sample over and over again (for testing).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sample</strong> – sample to be repeated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">iterator yielding sample</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.sources.tabular">
+<code class="descclassname">dlinputs.sources.</code><code class="descname">tabular</code><span class="sig-paren">(</span><em>table</em>, <em>colnames</em>, <em>separator='\t'</em>, <em>maxerrors=100</em>, <em>encoding='utf-8'</em>, <em>epochs=1</em>, <em>shuffle=True</em>, <em>verbose=True</em>, <em>size=(100</em>, <em>1000000000.0)</em>, <em>decode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/sources.html#tabular"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.sources.tabular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over training samples given by a tabular input.</p>
+<p>Columns whose names start with “_” are passed on directly as strings, all other
+columns are interpreted as file names and read.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>table</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – tabular input file separated by <cite>separator</cite></li>
+<li><strong>colnames</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a><em>,</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – column names (keys in sample), list or comman separated</li>
+<li><strong>separator</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – separator for columns in input file</li>
+<li><strong>maxerrors</strong> – maximum number of read errors</li>
+<li><strong>encoding</strong> – text file encoding</li>
+<li><strong>epochs</strong> – number of epochs to iterate</li>
+<li><strong>shuffle</strong> – shuffle data prior to training</li>
+<li><strong>verbose</strong> – verbose output</li>
+<li><strong>size</strong> – expected dataset size</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="api.html">dlinputs API Documentation:</a><ul>
+      <li>Previous: <a href="utils.html" title="previous chapter">utils</a></li>
+      <li>Next: <a href="filters.html" title="next chapter">filters</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/sources.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

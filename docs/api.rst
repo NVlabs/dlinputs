@@ -1,10 +1,14 @@
 .. _api:
 
-***********
-DLinputs API
-***********
+dlinputs API Documentation:
+====================================
 
-..  module:: dlinputs
+.. toctree::
+   :maxdepth: 2
 
-..  automodule:: dlinputs.gopen
-    :members:
+   gopen
+   tarrecords
+   utils
+   sources
+   filters
+   paths

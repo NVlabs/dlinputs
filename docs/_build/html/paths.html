@@ -1,0 +1,427 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>paths &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="filters" href="filters.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="paths">
+<span id="id1"></span><h1>paths<a class="headerlink" href="#paths" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-dlinputs.paths"></span><dl class="class">
+<dt id="dlinputs.paths.ShardEntry">
+<em class="property">class </em><code class="descclassname">dlinputs.paths.</code><code class="descname">ShardEntry</code><span class="sig-paren">(</span><em>name</em>, <em>prefix</em>, <em>index</em>, <em>suffix</em><span class="sig-paren">)</span><a class="headerlink" href="#dlinputs.paths.ShardEntry" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="dlinputs.paths.ShardEntry.index">
+<code class="descname">index</code><a class="headerlink" href="#dlinputs.paths.ShardEntry.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dlinputs.paths.ShardEntry.name">
+<code class="descname">name</code><a class="headerlink" href="#dlinputs.paths.ShardEntry.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dlinputs.paths.ShardEntry.prefix">
+<code class="descname">prefix</code><a class="headerlink" href="#dlinputs.paths.ShardEntry.prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dlinputs.paths.ShardEntry.suffix">
+<code class="descname">suffix</code><a class="headerlink" href="#dlinputs.paths.ShardEntry.suffix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.extract_shards">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">extract_shards</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#extract_shards"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.extract_shards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract a shard list from a shard URL.</p>
+<p>Shard URLs are URLs containing a string of the form <cite>&#64;000123</cite>.
+This denotes that the shards are given by a six digit string and
+that there are 123 shards.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> – shard url</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of URLs for shard</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.find_basenames">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">find_basenames</code><span class="sig-paren">(</span><em>top</em>, <em>extensions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#find_basenames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.find_basenames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds all basenames that have all the given extensions inside a tree.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>top</strong> – root of directory tree</li>
+<li><strong>extensions</strong> – required extensions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator over basenames</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.find_directory">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">find_directory</code><span class="sig-paren">(</span><em>path</em>, <em>target=''</em>, <em>tests=[]</em>, <em>verbose=False</em>, <em>error=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#find_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.find_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the first instance of target on a path.</p>
+<p>If <cite>tests</cite> is supplied, requires those targets to be present as well.
+This only works if the target is a directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – colon separated path along which to search or list</li>
+<li><strong>target</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – target to search for (if empty, finds first path element that exists)</li>
+<li><strong>tests</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – list of functions of additional predicates</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – output information about tests performed</li>
+<li><strong>error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – not finding the target is an error</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">path to target</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.find_file">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">find_file</code><span class="sig-paren">(</span><em>path</em>, <em>target</em>, <em>tests=[]</em>, <em>verbose=False</em>, <em>error=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#find_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.find_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the first instance of file on a path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – colon separated path along which to search or list</li>
+<li><strong>target</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – target to search for (if empty, finds first path element that exists)</li>
+<li><strong>tests</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – list of functions of additional predicates</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – output information about tests performed</li>
+<li><strong>error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – not finding the target is an error</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">path to target</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.find_url">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">find_url</code><span class="sig-paren">(</span><em>paths</em>, <em>extra=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#find_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.find_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of url paths, find the first one that matches.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>paths</strong> – list of base urls</li>
+<li><strong>extra</strong> – extra relative URL to be joined before testing</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">first path that succeeds</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.findurl">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">findurl</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#findurl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.findurl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a URL using environment variables for helpers.</p>
+<p>If DLP_URLREWRITER is set in the environment, it is loaded.
+If dlinputs. url_rewriter is not None, it is applied to the url.
+If DLP_URLBASE is not None, it is joined to the url as a base url.</p>
+<p>FIXME: make DLP_URLBASE a path</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> – url to locate</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">located URL</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.iterate_shards">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">iterate_shards</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#iterate_shards"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.iterate_shards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over shards.</p>
+<p>Given a string of the form “<a class="reference external" href="mailto:prefix-&#37;&#52;&#48;000123-suffix">prefix-<span>&#64;</span>000123-suffix</a>”, yields
+objects containing:</p>
+<ul class="simple">
+<li>obj.name: expanded name</li>
+<li>obj.prefix: prefix value</li>
+<li>obj.index: index value (as zero-padded string)</li>
+<li>obj.suffix: suffix value</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> – shard url</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">iterator over shards</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.openurl">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">openurl</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#openurl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.openurl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a URL with findurl followed by urlopen.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> – url to be opened</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">result of urlopen</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">stream</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.path_shards">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">path_shards</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#path_shards"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.path_shards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a path shard spec, return an iterator over the shards.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.read_shards">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">read_shards</code><span class="sig-paren">(</span><em>url</em>, <em>shardtype='application/x-tgz'</em>, <em>urlpath=None</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#read_shards"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.read_shards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a shards description file from a URL and convert relative URLs in shard file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>url</strong> – url to read shard file from (JSON format)</li>
+<li><strong>shardtype</strong> – default shard type</li>
+<li><strong>urlpath</strong> – path on which to search for the shard file</li>
+<li><strong>verbose</strong> – output progress</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of URLs for shard</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.read_url_path">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">read_url_path</code><span class="sig-paren">(</span><em>url</em>, <em>urlpath</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#read_url_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.read_url_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempts to find <cite>url</cite> on the <cite>urlpath</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>url</strong> – relative URL</li>
+<li><strong>urlpath</strong> – list or space separated string of base URLs</li>
+<li><strong>verbose</strong> – inform user about trials</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">contents first URL that can be opened, base url</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.readfile">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">readfile</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#readfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.readfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to read a file (binary).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fname</strong> – file name to be read</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">contents of file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.split_sharded_path">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">split_sharded_path</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#split_sharded_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.split_sharded_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a path containing shard notation into prefix, format, suffix, and number.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.splitallext">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">splitallext</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#splitallext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.splitallext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper method that splits off all extension.</p>
+<p>Returns base, allext.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> – path with extensions</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">path with all extensions removed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.spliturl">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">spliturl</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#spliturl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.spliturl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a URL into its extension and base.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> – input url</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">tuple of basename and extension</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.paths.writefile">
+<code class="descclassname">dlinputs.paths.</code><code class="descname">writefile</code><span class="sig-paren">(</span><em>fname</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/paths.html#writefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.paths.writefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to read a file (binary).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fname</strong> – file name to be read</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">contents of file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="api.html">dlinputs API Documentation:</a><ul>
+      <li>Previous: <a href="filters.html" title="previous chapter">filters</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/paths.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

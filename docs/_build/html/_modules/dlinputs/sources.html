@@ -1,0 +1,316 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dlinputs.sources &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dlinputs.sources</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="c1"># Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.</span>
+<span class="c1"># See the LICENSE file for licensing terms (BSD-style).</span>
+
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">codecs</span>
+<span class="kn">import</span> <span class="nn">random</span> <span class="k">as</span> <span class="nn">pyr</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">paths</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span>
+
+
+<div class="viewcode-block" id="infinite"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.infinite">[docs]</a><span class="k">def</span> <span class="nf">infinite</span><span class="p">(</span><span class="n">sample</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repeat the same sample over and over again (for testing).</span>
+
+<span class="sd">    :param sample: sample to be repeated</span>
+<span class="sd">    :returns: iterator yielding sample</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">sample</span></div>
+
+<div class="viewcode-block" id="generator"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.generator">[docs]</a><span class="k">def</span> <span class="nf">generator</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">nrepeats</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e9</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot;Repeat data from a source (returned by a callable function).</span>
+
+<span class="sd">    :param source: callable function yielding an iterator</span>
+<span class="sd">    :param nrepeats: number of times to repeat</span>
+<span class="sd">    :returns: iterator over `nrepeats` repeats of `source`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrepeats</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">source</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">sample</span></div>
+
+<div class="viewcode-block" id="check_ds_size"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.check_ds_size">[docs]</a><span class="k">def</span> <span class="nf">check_ds_size</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function to check the size of a dataset.</span>
+
+<span class="sd">    This is mostly just a nice error message</span>
+
+<span class="sd">    :param int ds: dataset size</span>
+<span class="sd">    :param tuple size: lower and upper bounds of dataset size</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span> <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span> <span class="n">ds</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ds</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dataset size is </span><span class="si">{}</span><span class="s2">, should be in range </span><span class="si">{}</span><span class="s2">; use size= in dataset iterator&quot;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">ds</span> <span class="o">&gt;</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dataset size is </span><span class="si">{}</span><span class="s2">, should be in range </span><span class="si">{}</span><span class="s2">; use size= in dataset iterator&quot;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="dirtree"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.dirtree">[docs]</a><span class="k">def</span> <span class="nf">dirtree</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">extensions</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">1e9</span><span class="p">),</span>
+                <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate of training samples in a directory tree.</span>
+
+<span class="sd">    :param top: top of the directory tree</span>
+<span class="sd">    :param list,str extensions: list/comma separated string of extensions</span>
+<span class="sd">    :param int epochs: number of epochs to iterate over the data</span>
+<span class="sd">    :param bool shuffle: whether to shuffle the data</span>
+<span class="sd">    :param bool verbose: whether to output info about the interator</span>
+<span class="sd">    :param size: expected dataset size</span>
+<span class="sd">    :returns: iterator over samples</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">autodecode</span>
+    <span class="k">elif</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extensions</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="n">extensions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">top</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">paths</span><span class="o">.</span><span class="n">find_basenames</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">extensions</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got </span><span class="si">{}</span><span class="s2"> samples&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)))</span>
+    <span class="n">check_ds_size</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n">pyr</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;__path__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;__epoch__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+            <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">extension</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">readfile</span><span class="p">(</span><span class="n">fname</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">extension</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">decode</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="basenames"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.basenames">[docs]</a><span class="k">def</span> <span class="nf">basenames</span><span class="p">(</span><span class="n">basenamefile</span><span class="p">,</span> <span class="n">extensions</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">1e9</span><span class="p">),</span>
+                <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over training samples given as basenames and extensions.</span>
+
+<span class="sd">    :param basenamefile: file containing one basename per line</span>
+<span class="sd">    :param extensions: list of expected extensions for each basename</span>
+<span class="sd">    :param split: remove any extension from files in basenamefile</span>
+<span class="sd">    :param epochs: number of times to iterate</span>
+<span class="sd">    :param shuffle: shuffle before training</span>
+<span class="sd">    :param verbose: verbose output</span>
+<span class="sd">    :param size: expected dataset size</span>
+<span class="sd">    :returns: iterator</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">autodecode</span>
+    <span class="k">elif</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extensions</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="n">extensions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">basenamefile</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">basenamefile</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got </span><span class="si">{}</span><span class="s2"> samples&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)))</span>
+    <span class="n">check_ds_size</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n">pyr</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">split</span><span class="p">:</span>
+                <span class="n">fname</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;__path__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;__epoch__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+            <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">extension</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">readfile</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">extension</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">decode</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="tabular"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.tabular">[docs]</a><span class="k">def</span> <span class="nf">tabular</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">colnames</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">maxerrors</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+              <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">1e9</span><span class="p">),</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over training samples given by a tabular input.</span>
+
+<span class="sd">    Columns whose names start with &quot;_&quot; are passed on directly as strings, all other</span>
+<span class="sd">    columns are interpreted as file names and read.</span>
+
+<span class="sd">    :param str table: tabular input file separated by `separator`</span>
+<span class="sd">    :param list,str colnames: column names (keys in sample), list or comman separated</span>
+<span class="sd">    :param str separator: separator for columns in input file</span>
+<span class="sd">    :param maxerrors: maximum number of read errors</span>
+<span class="sd">    :param encoding: text file encoding</span>
+<span class="sd">    :param epochs: number of epochs to iterate</span>
+<span class="sd">    :param shuffle: shuffle data prior to training</span>
+<span class="sd">    :param verbose: verbose output</span>
+<span class="sd">    :param size: expected dataset size</span>
+<span class="sd">    :returns: iterator</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">autodecode</span>
+    <span class="k">elif</span> <span class="n">decode</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">decode</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">colnames</span> <span class="o">=</span> <span class="n">colnames</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">codecs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got </span><span class="si">{}</span><span class="s2"> samples&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)))</span>
+    <span class="n">check_ds_size</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">nerrors</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n">pyr</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;#&quot;</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">fnames</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">separator</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fnames</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">colnames</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;bad input: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">nerrors</span> <span class="o">&gt;</span> <span class="n">maxerrors</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad input&quot;</span><span class="p">)</span>
+                <span class="n">nerrors</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;__epoch__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">colnames</span><span class="p">,</span> <span class="n">fnames</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;_&quot;</span><span class="p">:</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">nerrors</span> <span class="o">&gt;</span> <span class="n">maxerrors</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;not found&quot;</span><span class="p">)</span>
+                        <span class="n">nerrors</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">continue</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">readfile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;__path__&quot;</span><span class="o">+</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">decode</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="bookdir"><a class="viewcode-back" href="../../sources.html#dlinputs.sources.bookdir">[docs]</a><span class="k">def</span> <span class="nf">bookdir</span><span class="p">(</span><span class="n">bookdir</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a dataset from an OCRopus-style book directory.</span>
+
+<span class="sd">    :param bookdir: top level directory in OCRopus bookdir format</span>
+<span class="sd">    :param epochs: number of epochs to iterate for</span>
+<span class="sd">    :param shuffle: shuffle the samples prior to reading</span>
+<span class="sd">    :returns: iterator</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">bookdir</span><span class="p">),</span> <span class="n">bookdir</span>
+    <span class="n">fnames</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">bookdir</span> <span class="o">+</span> <span class="s2">&quot;/????/??????.gt.txt&quot;</span><span class="p">)</span>
+    <span class="n">fnames</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n">pyr</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">fnames</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">fnames</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;.gt.txt$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">&quot;.dew.png&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">pylab</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">&quot;.dew.png&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">image</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+            <span class="n">image</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">image</span>
+            <span class="k">with</span> <span class="n">codecs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+                <span class="n">transcript</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">image</span><span class="p">,</span> <span class="n">transcript</span><span class="o">=</span><span class="n">transcript</span><span class="p">,</span> <span class="n">__epoch__</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

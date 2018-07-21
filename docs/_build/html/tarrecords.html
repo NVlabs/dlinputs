@@ -1,0 +1,183 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>tarrecords &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="utils" href="utils.html" />
+    <link rel="prev" title="gopen" href="gopen.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tarrecords">
+<span id="id1"></span><h1>tarrecords<a class="headerlink" href="#tarrecords" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-dlinputs.tarrecords"></span><dl class="function">
+<dt id="dlinputs.tarrecords.base_plus_ext">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">base_plus_ext</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#base_plus_ext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.base_plus_ext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits pathnames into the file basename plus the extension.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.decoder">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">decoder</code><span class="sig-paren">(</span><em>decode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#decoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.decoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply tariterator-like decoding to the stream of samples.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.dir_plus_file">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">dir_plus_file</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#dir_plus_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.dir_plus_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits pathnames into the dirname plus the filename.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.group_by_keys">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">group_by_keys</code><span class="sig-paren">(</span><em>keys=&lt;function base_plus_ext&gt;</em>, <em>lcase=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#group_by_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.group_by_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Groups key, value pairs into samples.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.last_dir">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">last_dir</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#last_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.last_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits pathnames into the last dir plus the filename.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.splitallext">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">splitallext</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#splitallext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.splitallext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper method that splits off all extension.</p>
+<p>Returns base, allext.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> – path with extensions</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">path with all extensions removed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.tardata">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">tardata</code><span class="sig-paren">(</span><em>fileobj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#tardata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.tardata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterator yielding filename, content pairs for the given tar stream.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.tariterator">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">tariterator</code><span class="sig-paren">(</span><em>fileobj</em>, <em>check_sorted=False</em>, <em>keys=&lt;function base_plus_ext&gt;</em>, <em>decode=True</em>, <em>source=None</em>, <em>lcase=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#tariterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.tariterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over samples from a tar archive, either locally or given by URL.</p>
+<p>Tar archives are assumed to be sorted by file name. For each basename,
+reads all the files with different extensions and returns a dictionary
+with the extension as key and the file contents as value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>archive</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – tar archive with sorted file names (file name or URL)</li>
+<li><strong>check_sorted</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – verify that file names are sorted</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator over samples</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.tariterator1">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">tariterator1</code><span class="sig-paren">(</span><em>fileobj</em>, <em>check_sorted=False</em>, <em>keys=&lt;function base_plus_ext&gt;</em>, <em>decode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#tariterator1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.tariterator1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alternative (new) implementation of tariterator.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.tarrecords.zipdata">
+<code class="descclassname">dlinputs.tarrecords.</code><code class="descname">zipdata</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/tarrecords.html#zipdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.tarrecords.zipdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterator yielding filename, content pairs for the given zip file.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="api.html">dlinputs API Documentation:</a><ul>
+      <li>Previous: <a href="gopen.html" title="previous chapter">gopen</a></li>
+      <li>Next: <a href="utils.html" title="next chapter">utils</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/tarrecords.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
