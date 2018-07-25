@@ -100,11 +100,11 @@ def sharditerator_once(url, **kw):
     """Iterate over sharded tar records (no shuffling, one epoch only)."""
     return sharditerator(url, epochs=1, shuffle=False, **kw)
 
-def open_source(url, decode=True):
+def open_source(url, decode=True, unpack=True):
     parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
         from . import zcom
-        return list(zcom.Connection(url, codec=decode).items())
+        return list(zcom.Connection(url, codec=decode, pack=unpack).items())
     else:
         return sharditerator(url, decode=decode, source=url)
 
