@@ -108,11 +108,11 @@ def open_source(url, decode=True):
     else:
         return sharditerator(url, decode=decode, source=url)
 
-def open_sink(url, encode=True):
+def open_sink(url, encode=True, pack=True):
     parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
         from . import zcom
-        return zcom.Connection(url, codec=encode)
+        return zcom.Connection(url, codec=encode, pack=pack)
     else:
         stream = gopen(url, "wb")
         return tarrecords.TarWriter(stream, encode=encode)
