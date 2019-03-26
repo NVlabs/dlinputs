@@ -177,7 +177,16 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
                 raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" % \
                                  (current_prefix, prefix))
             if valid_sample(current_sample):
-                yield decode(current_sample)
+                try:
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("error")
+                        decoded = decode(current_sample)
+                        yield decoded
+                except Exception as exn:
+                    warnings.warn("decoding error at {} key {}".format(
+                        current_count,
+                        current_sample.get("__key__")))
+                    continue
             current_prefix = prefix
             current_sample = dict(__key__=prefix, __source__=source)
         try:
@@ -193,7 +202,15 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             current_sample[suffix] = data
             current_count += 1
     if valid_sample(current_sample):
-        yield decode(current_sample)
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
+                decoded = decode(current_sample)
+                yield decoded
+        except Exception as exn:
+            warnings.warn("decoding error at {} key {}".format(
+                current_count,
+                current_sample.get("__key__")))
     try: del stream
     except: pass
 
@@ -261,7 +278,7 @@ class TarWriter(object):
             if sys.version_info[0]==2:
                 assert isinstance(v, (str, buffer)),  \
                     "converter didn't yield a string: %s" % ((k, type(v)),)
-            else:             
+            else:
                 assert isinstance(v, (bytes)),  \
                     "converter didn't yield bytes: %s" % ((k, type(v)),)
             now = time.time()

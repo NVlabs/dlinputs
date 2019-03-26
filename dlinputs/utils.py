@@ -218,6 +218,7 @@ def pildumps(image, format="PNG"):
 
 pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
+format_table = {"png": "PNG-PIL", "jpg": "JPEG-PIL", "jpeg": "JPEG-PIL"}
 
 def autodecode1(data, tname):
     # Unicode change. If it is alread an unicode string, no decoding (Byte->Unicode req)
@@ -228,7 +229,8 @@ def autodecode1(data, tname):
         assert isinstance(data, (str, buffer)), type(data)
     else:
         # In Python 3, it has to be a bytes string at this point. You've checked if it is normal string above (unicode check)
-        assert isinstance(data, (bytes)), type(data)
+        assert isinstance(data, bytes), type(data)
+    assert isinstance(tname, str), tname
     extension = re.sub(r".*\.", "", tname).lower()
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:
@@ -237,24 +239,20 @@ def autodecode1(data, tname):
             return data
     if extension in ["png", "jpg", "jpeg"]:
         import numpy as np
+        from PIL import Image
         # BytesIO change. You are reading from file as Bytes
-        stream = six.BytesIO(data)
         result = None
-        try:
-            import imageio
-            result = imageio.imread(stream)
-            # FIXME: workaround for unpredictable imageio types
-            if result.dtype == np.dtype('float64') and np.amax(result) > 1.0:
-                result /= 255.0
-            if result.dtype == np.dtype('float64'):
-                result = np.array(result, 'f')
-            assert isinstance(result, np.ndarray), type(result)
-            assert result.dtype in [np.dtype('f'), np.dtype('uint8')], result.dtype
-        except Exception as exn1:
-            pass
-        if result is None:
-            result = (exn1, data)
-        elif result.dtype == np.dtype("uint8"):
+        stream = six.BytesIO(data)
+        img = Image.open(stream)
+        img.load()
+        result = np.asarray(img)
+        if result.dtype == np.dtype('float64') and np.amax(result) > 1.0:
+            result /= 255.0
+        if result.dtype == np.dtype('float64'):
+            result = np.array(result, 'f')
+        assert isinstance(result, np.ndarray), type(result)
+        assert result.dtype in [np.dtype('f'), np.dtype('uint8')], result.dtype
+        if result.dtype == np.dtype("uint8"):
             result = np.array(result, 'f')
             result /= 255.0
         return result
@@ -281,10 +279,17 @@ def autodecode(sample):
         result[k] = autodecode1(v, k)
     return result
 
+def bytestr(data):
+    if isinstance(data, bytes):
+        return data
+    if isinstance(data, str):
+        return data.encode("ascii")
+    return str(data).encode("ascii")
+
 def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
     if isinstance(data, (int, float)):
-        return str(data)
+        return bytestr(data)
     elif extension in ["png", "jpg", "jpeg"]:
         import imageio
         if isinstance(data, np.ndarray):
@@ -366,7 +371,7 @@ def samples_to_batch_expanded(samples):
             size = tuple(np.maximum(size, r.shape))
         output = np.zeros((len(result[k]),) + size)
         for i, t in enumerate(result[k]):
-            sub = [i] + [slice(0, x) for x in t.shape]
+            sub = tuple([i] + [slice(0, x) for x in t.shape])
             output[sub] = t
         result[k] = output
     return result

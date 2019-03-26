@@ -89,8 +89,7 @@ def concat(sources, maxepoch=1):
 
 def objhash(obj):
     import hashlib
-    if not isinstance(obj, (str, buffer)):
-        obj = pickle.dumps(obj, -1)
+    obj = pickle.dumps(obj, -1)
     m = hashlib.md5()
     m.update(obj)
     return m.hexdigest()

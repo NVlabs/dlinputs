@@ -149,6 +149,8 @@ def writefile(fname, data):
     :returns: contents of file
 
     """
+    if isinstance(data, str):
+        data = data.encode("ascii")
     with open(fname, "wb") as stream:
         return stream.write(data)
 

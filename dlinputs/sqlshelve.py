@@ -30,7 +30,6 @@ class SqlShelf(object):
         return pickle.dumps(value, self.protocol)
 
     def value_unmap(self, value):
-        value = str(value)
         return pickle.loads(value)
 
     def get(self, key, default=None):
@@ -85,7 +84,7 @@ class SqlShelf(object):
     def __setitem__(self, key, value):
         key = self.key_map(key)
         value = self.value_map(value)
-        self.c.execute("insert or replace into {table} values (?, ?)".format(table=self.table), (key, buffer(value)))
+        self.c.execute("insert or replace into {table} values (?, ?)".format(table=self.table), (key, memoryview(value)))
         if self.synchronous: self.sync()
 
     def __delitem__(self, key):

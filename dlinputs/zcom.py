@@ -7,7 +7,7 @@ from builtins import object
 from past.utils import old_div
 import time
 import collections
-from urllib2 import urlparse
+from urllib.parse import urlparse
 
 import zmq
 import msgpack
@@ -68,7 +68,7 @@ class Connection(object):
         self.stats = Statistics(stats_horizon)
         self.codec = codec
         self.pack = pack
-        self.addr = urlparse.urlparse(url)
+        self.addr = urlparse(url)
         kind, bind = schemes[self.addr.scheme]
         self.context = zmq.Context()
         self.socket = self.context.socket(kind)
@@ -98,6 +98,7 @@ class Connection(object):
         self.stats.add(len(data))
         if self.pack:
             data = msgpack.loads(data)
+            data = {k.decode("utf-8"): v for k, v in data.items()}
         if self.codec is True:
             data = utils.autodecode(data)
         else:

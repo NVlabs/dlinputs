@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
+from __future__ import print_function
 import imp
 import time
 import argparse
@@ -35,20 +36,20 @@ if args.source is not None:
 else:
     source = gopen.open_source(args.input)
 
-for i in xrange(args.skip):
-    source.next()
+for i in range(args.skip):
+    next(source)
 
-sample = source.next()
+sample = next(source)
 
 utils.print_sample(sample)
 
 if args.bench > 0:
     print
     start = time.time()
-    for i in xrange(args.bench):
-        source.next()
+    for i in range(args.bench):
+        next(source)
     total = time.time() - start
-    print "sec/sample", total/args.bench
+    print("sec/sample", total/args.bench)
 
 if args.display is not None:
     ion()
@@ -66,5 +67,5 @@ if args.display is not None:
             gca().set_title("Key: "+key)
             imshow(data)
         show()
-        raw_input()
-        sample = source.next()
+        input()
+        sample = next(source)
