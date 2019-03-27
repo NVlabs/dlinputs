@@ -62,11 +62,11 @@ def trivial_decode(sample):
         if isinstance(v, buffer):
             v = str(v)
         elif isinstance(v, unicode):
-		    # If it is a unicode string, return utf-8 encoded version
+            # If it is a unicode string, return utf-8 encoded version
             v = str(codecs.encode(v, "utf-8"))
         else:
             if v is not None:
-                # It has to bytes string in Python 3. Or simple str which contains bytes in Python 2.                
+                # It has to bytes string in Python 3. Or simple str which contains bytes in Python 2.
                 assert isinstance(v, (bytes, str))
         result[k] = v
     return result
@@ -141,6 +141,19 @@ def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
     decoded = decoder(decode=decode)(samples)
     return decoded
 
+def maybe_decode(current_sample, decode, current_count=None):
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
+            decoded = decode(current_sample)
+            return decoded
+    except Exception as exn:
+        warnings.warn("decoding error {} at {} key {}".format(
+            exn,
+            current_count,
+            current_sample.get("__key__")))
+        return None
+
 def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None, lcase=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
@@ -177,16 +190,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
                 raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" % \
                                  (current_prefix, prefix))
             if valid_sample(current_sample):
-                try:
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings("error")
-                        decoded = decode(current_sample)
-                        yield decoded
-                except Exception as exn:
-                    warnings.warn("decoding error at {} key {}".format(
-                        current_count,
-                        current_sample.get("__key__")))
-                    continue
+                decoded = maybe_decode(current_sample, decode, current_count)
+                if decoded is not None: yield decoded
             current_prefix = prefix
             current_sample = dict(__key__=prefix, __source__=source)
         try:
@@ -202,15 +207,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             current_sample[suffix] = data
             current_count += 1
     if valid_sample(current_sample):
-        try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("error")
-                decoded = decode(current_sample)
-                yield decoded
-        except Exception as exn:
-            warnings.warn("decoding error at {} key {}".format(
-                current_count,
-                current_sample.get("__key__")))
+        decoded = maybe_decode(current_sample, decode, current_count)
+        if decoded is not None: yield decoded
     try: del stream
     except: pass
 

@@ -83,6 +83,7 @@ def sharditerator(url, epochs=1000000, shuffle=True, **kw):
         for shard in shards:
             with gopen(shard) as stream:
                 for sample in tarrecords.tariterator(stream, **kw):
+                    sample["__source__"] = shard
                     yield sample
 
 def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
@@ -94,6 +95,7 @@ def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
         for shard in shards:
             with gopen(shard) as stream:
                 for sample in tarrecords.tariterator(stream, **kw):
+                    sample["__source__"] = shard
                     yield sample
 
 def sharditerator_once(url, **kw):

@@ -311,7 +311,7 @@ def autoencode1(data, tname):
         return result
     if extension in ["json", "jsn"]:
         import simplejson
-        return simplejson.dumps(data)
+        return bytestr(simplejson.dumps(data))
     if extension in ["pyd", "pickle"]:
         import pickle
         return pickle.dumps(data)
