@@ -75,10 +75,10 @@ def find_directory(path, target="", tests=[], verbose=False, error=True):
     :rtype: str
 
     """
-    if isinstance(path, six.text_type):
+    if isinstance(path, six.string_types):
         path = path.split(":")
     if verbose: print(path)
-    if isinstance(tests, six.text_type):
+    if isinstance(tests, six.string_types):
         tests = [tests]
     for root in path:
         if not os.path.isdir(root):
@@ -113,7 +113,7 @@ def find_file(path, target, tests=[], verbose=False, error=True):
     :rtype: str
 
     """
-    if isinstance(path, six.text_type):
+    if isinstance(path, six.string_types):
         path = path.split(":")
     for root in path:
         if not os.path.isdir(root):
