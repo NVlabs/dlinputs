@@ -1,0 +1,82 @@
+#!/usr/bin/python3
+
+from __future__ import print_function
+import imp
+import time
+import argparse
+import os
+import sys
+import shutil
+import atexit
+import glob
+
+import numpy as np
+import pylab
+import dlinputs as dli
+import matplotlib
+from pylab import *
+from dlinputs import zcom, gopen, utils, tarrecords
+import simplejson
+from itertools import groupby
+
+parser = argparse.ArgumentParser("Run a command line tool over all samples.")
+parser.add_argument("input")
+parser.add_argument("-f", "--fields", default=None)
+parser.add_argument("-c", "--command", default="sum *")
+parser.add_argument("-w", "--working_dir", default="__{pid}__")
+parser.add_argument("-b", "--base", default="sample")
+args = parser.parse_args()
+
+args.working_dir = args.working_dir.format(pid=str(os.getpid()))
+
+class ChDir(object):
+    def __init__(self, path):
+        self.old_dir = os.getcwd()
+        self.new_dir = path
+    def __enter__(self):
+        os.chdir(self.new_dir)
+    def __exit__(self, *args):
+        os.chdir(self.old_dir)
+
+def cleanup():
+    shutil.rmtree(args.working_dir)
+
+atexit.register(cleanup)
+
+inputs = gopen.sharditerator_once(args.input, decode=False)
+
+if args.fields is not None:
+    fields = args.fields.split(",")
+else:
+    fields = []
+
+def filebase(fname):
+    return re.sub(r"\.[^/]*$", "", fname)
+
+print(filebase("a/b/c.d"))
+
+def proc_sample(sample, dirname):
+    print("===", dirname)
+    os.mkdir(dirname)
+    with ChDir(dirname):
+        for k, v in sample.items():
+            fname = args.base + "." + k if k[0]!="_" else k
+            with open(fname, "wb") as stream:
+                if isinstance(v, str): v = v.encode("utf-8")
+                stream.write(v)
+        status = os.system(args.command)
+        assert status == 0, status
+        files = [fname for fname in glob.glob("*.*") if os.path.isfile(fname)]
+        bases = sorted(set(map(filebase, files)))
+        for base in bases:
+            matching = [fname for fname in files if fname.startswith(base+".")]
+            print(matching)
+    shutil.rmtree(dirname)
+    return []
+
+assert not os.path.exists(args.working_dir)
+os.mkdir(args.working_dir)
+
+for i, sample in enumerate(inputs):
+    dirname = os.path.join(args.working_dir, "_%08d" % i)
+    new_samples = proc_sample(sample, dirname)
