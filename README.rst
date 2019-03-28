@@ -176,7 +176,9 @@ Command Line Tools
 
 There are a few simple command line tools:
 
-- ``run-tests``: run tests
+- ``run-tests``: run tests in notebooks
+- ``pytest``: run Python 2 tests (in `./test`)
+- ``pytest-3``: run Python 3 tests (in `./test`)
 - ``show-input``: iterate over sharded tar files or network inputs and print/display
 - ``tarshards``: create tar shards from a list of files
 - ``transform-input``: simple utility for transforming sharded tar files
