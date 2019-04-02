@@ -5,14 +5,10 @@
 from __future__ import print_function
 
 import sys
+import glob
 from distutils.core import setup  # , Extension, Command
 
-scripts = """
-    tarshards
-    show-input
-    training-test-split
-    lsmodel
-""".split()
+scripts = glob.glob("dli-*[a-z]")
 
 setup(
     name='dlinputs',
