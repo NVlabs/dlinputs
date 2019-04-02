@@ -188,7 +188,7 @@ There are a few simple command line tools:
 - ``dli-testsplit``: split a tar file into training/test set data
 - ``dli-transform``: transform a sample with Python expressions
 
-E.g.:
+E.g.::
 
     $ source="http://storage.googleapis.com/lpr-ocr/uw3-dew-training.tgz"
     $ dli-index $source -e 'sshape(_["png"])'
