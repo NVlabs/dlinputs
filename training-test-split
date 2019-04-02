@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
+import argparse
+import hashlib
 import imp
 import pickle
-import hashlib
-import argparse
 
 import dlinputs as dli
-from dlinputs import gopen, utils, filters, tarrecords
+from dlinputs import filters, gopen, tarrecords, utils
 
 parser = argparse.ArgumentParser("Split a dataset into training and test sets.")
 parser.add_argument("-n", "--nohash", action="store_true")

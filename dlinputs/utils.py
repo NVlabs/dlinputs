@@ -1,22 +1,24 @@
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, print_function
+
+import collections
+import functools as ft
+import io
+import re
+import sys
+from builtins import range
+
+import numpy as np
+import PIL
+import PIL.Image
+import six
+from future import standard_library
+from past.utils import old_div
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from future import standard_library
 standard_library.install_aliases()
-from builtins import range
-from past.utils import old_div
-import re
-import io
-import six
-import sys
-import functools as ft
-import collections
 
-import PIL
-import numpy as np
-import PIL.Image
 
 if sys.version_info[0]==3:
     from builtins import str    

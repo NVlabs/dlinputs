@@ -1,18 +1,20 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import object
-from past.utils import old_div
-import time
+from __future__ import absolute_import, division, print_function
+
 import collections
+import time
+from builtins import object
 from urllib.parse import urlparse
 
-import zmq
 import msgpack
+import zmq
+from future import standard_library
+from past.utils import old_div
 
 from . import utils
+
+standard_library.install_aliases()
+
+
 
 schemes = dict(
     # (KIND, BIND)

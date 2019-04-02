@@ -1,17 +1,17 @@
 #!/usr/bin/python3
-import re
-import glob
 import argparse
+import glob
 import itertools
+import re
 
 import numpy as np
+import psutil
 import pylab
 import torch
-import psutil
 import torch.optim as optim
+from dlinputs import paths, utils
 from pylab import *
 from torch import nn
-from dlinputs import paths, utils
 from torch.autograd import Variable
 
 # matplotlib.use("GTK")

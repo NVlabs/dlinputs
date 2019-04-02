@@ -1,9 +1,12 @@
 from __future__ import unicode_literals
-from builtins import next
-from dlinputs import gopen
-from imp import reload
-import numpy as np
+
 import pdb
+from builtins import next
+from imp import reload
+
+import numpy as np
+from dlinputs import gopen
+
 
 def test_gopen():
 	assert gopen.gopen("/etc/passwd").read().decode()[:4] == "root"
@@ -49,4 +52,3 @@ def test_open_source():
 	data = gopen.open_source("testdata/sample.tgz", decode=False)
 	sample = next(data)
 	assert isinstance(sample["png"], (bytes, str)), sample["png"]
-

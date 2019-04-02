@@ -3,6 +3,7 @@
 
 import inspect
 
+
 class LocalImport(object):
 
   def __init__(self, names):

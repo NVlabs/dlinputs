@@ -1,14 +1,17 @@
 from __future__ import division
+
+from builtins import range
+
+import numpy as np
+import numpy.random as npr
+import pylab
+import scipy.ndimage as ndi
+from numpy import cos, sin
+from past.utils import old_div
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import range
-from past.utils import old_div
-import numpy as np
-import pylab
-import numpy.random as npr
-import scipy.ndimage as ndi
-from numpy import cos, sin
 
 
 def invert(image):

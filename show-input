@@ -1,16 +1,17 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
+
+import argparse
 import imp
 import time
-import argparse
 
-import numpy as np
-import pylab
 import dlinputs as dli
 import matplotlib
+import numpy as np
+import pylab
+from dlinputs import gopen, utils, zcom
 from pylab import *
-from dlinputs import zcom, gopen, utils
 
 # matplotlib.use("GTK")
 

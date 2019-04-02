@@ -1,14 +1,12 @@
 #!/usr/bin/python
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from past.utils import old_div
+from __future__ import absolute_import, division, print_function
+
 import argparse
 
-from . import zcom
-from . import gopen
-from . import paths
+from past.utils import old_div
+
+from . import gopen, paths, zcom
 
 
 def loader(input, output, report=0, epochs=1000000000):

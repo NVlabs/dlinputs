@@ -2,8 +2,9 @@
 # See the LICENSE file for licensing terms (BSD-style).
 
 import os
-import sqlite3
 import pickle
+import sqlite3
+
 
 class SqlShelf(object):
     """A shelve-compatible persistent dictionary based on sqlite3"""

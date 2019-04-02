@@ -1,11 +1,13 @@
 from __future__ import unicode_literals
-from builtins import str
-from builtins import range
-import dlinputs.filters as dlf
+
+from builtins import range, str
 from imp import reload
+
+import dlinputs.filters as dlf
+import numpy as np
+
 reload(dlf)
 
-import numpy as np
 
 def test_compose():
   def f(it):

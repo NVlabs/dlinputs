@@ -1,14 +1,16 @@
 from __future__ import unicode_literals
-from io import open
-from imp import reload
 
-from builtins import range
-from dlinputs import tarrecords
-reload(tarrecords)
-
-import numpy as np
 import glob
 import pdb
+from builtins import range
+from imp import reload
+from io import open
+
+import numpy as np
+from dlinputs import tarrecords
+
+reload(tarrecords)
+
 
 def test_tardata():
 	stream = open("testdata/imagenet-000000.tgz", mode='rb')
@@ -85,4 +87,3 @@ def test_TarWriter():
 	# assert samples[0]["__key__"].decode() == "10"
 	assert set(samples[3].keys()) == set("__key__ __source__ cls png xml wnid".split()), list(samples[3].keys())
 	assert samples[-1]["png"].shape == (400, 300, 3)
-

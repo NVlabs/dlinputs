@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-from future import standard_library
-standard_library.install_aliases()
 import urllib.parse
+
+from future import standard_library
+
+standard_library.install_aliases()
 
 def _convert(x):
     """Generically convert strings to numbers.
@@ -36,4 +38,3 @@ def get_params(fname, separator=":"):
     params = [p.split("=") for p in params]
     params = {k: _convert(v) for k, v in params}
     return fname, params
-

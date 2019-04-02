@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
-from dlinputs import utils
+
 import numpy as np
+from dlinputs import utils
+
 
 def test_gray():
 	assert utils.make_gray(np.zeros((400, 300, 3))).shape == (400, 300)

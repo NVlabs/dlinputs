@@ -1,13 +1,12 @@
 from __future__ import print_function
+
+import os
+import sqlite3
+from builtins import object, range, str, zip
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import str
-from builtins import zip
-from builtins import range
-from builtins import object
-import os
-import sqlite3
 
 
 def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False):

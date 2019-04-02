@@ -1,22 +1,23 @@
-from __future__ import print_function
-from __future__ import absolute_import
-# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
-# See the LICENSE file for licensing terms (BSD-style).
+from __future__ import absolute_import, print_function
 
-from builtins import zip
-from builtins import range
-import os
-import re
-import glob
 import codecs
-import random as pyr
+import glob
+import os
 import os.path
+import random as pyr
+import re
+from builtins import range, zip
 
 import numpy as np
 import pylab
 
-from . import paths
-from . import utils
+from . import paths, utils
+
+# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
+# See the LICENSE file for licensing terms (BSD-style).
+
+
+
 
 
 def infinite(sample):

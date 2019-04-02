@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from past.utils import old_div
-import time
+from __future__ import absolute_import, division, print_function
+
 import argparse
+import time
+
+from past.utils import old_div
 
 from . import zcom
 

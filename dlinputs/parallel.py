@@ -1,11 +1,14 @@
 from __future__ import absolute_import
+
+import multiprocessing as mp
+from builtins import range
+
+from . import loadable
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import range
-import multiprocessing as mp
 
-from . import loadable
 
 
 def _parallel_job(factory, args, queue, index):

@@ -1,16 +1,18 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
+from __future__ import absolute_import, print_function
+
 import os
 import random
-from future.moves.urllib.parse import urlparse
-from subprocess import PIPE, Popen, check_call
+from builtins import range
 from io import open
+from subprocess import PIPE, Popen, check_call
 
-from . import paths
-from . import tarrecords
+from future import standard_library
+from future.moves.urllib.parse import urlparse
+
+from . import paths, tarrecords
+
+standard_library.install_aliases()
+
 
 
 def test_curl_write(self, location):

@@ -1,27 +1,29 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+
+import codecs
+import getpass
+import io
+import os
+import os.path
+import re
+import socket
+import sys
+import tarfile
+import time
+import warnings
+from builtins import object
+
+import six
+from future import standard_library
+from past.utils import old_div
+
+from . import utils
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from future import standard_library
 standard_library.install_aliases()
-from past.utils import old_div
-from builtins import object
-import os
-import re
-import time
-import socket
-import getpass
-import os.path
-import tarfile
-import io
-import warnings
-import codecs
-import six
-import sys
 
-from . import utils
 
 if sys.version_info[0]==3:
     from builtins import str

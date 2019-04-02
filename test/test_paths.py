@@ -1,7 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from dlinputs import paths
+
 from imp import reload
+
+from dlinputs import paths
+
 
 def test_split_sharded_path():
 	assert paths.split_sharded_path("http://server/a-@010-b") == ('http://server/a-%03d-b', 10)
@@ -46,4 +49,3 @@ def test_parse_save_path():
 # read_shards
 # extract_shards
 # iterate_shards
-

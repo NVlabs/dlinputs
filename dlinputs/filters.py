@@ -1,32 +1,29 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+
+import itertools
+import logging
+import math
+import os
+import pickle
+import random as pyr
+import re
+import shelve
+import tempfile
+from builtins import range, str, zip
+from functools import reduce, wraps
+
+import numpy as np
+from past.utils import old_div
+
+from . import improc, sqlshelve, utils
+from .gopen import *
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import zip
-from builtins import str
-from builtins import range
-from past.utils import old_div
-import os
-import tempfile
-import shelve
-import re
-import math
-import pickle
-import random as pyr
-import logging
-import itertools
-from functools import wraps
-from functools import reduce
 
-import numpy as np
 
-from . import utils
-from . import improc
-from . import sqlshelve
 
-from .gopen import *
 
 def curried(f):
     """A decorator for currying functions in the first argument."""

@@ -1,17 +1,14 @@
 #!/usr/bin/python
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from past.utils import old_div
+from __future__ import absolute_import, division, print_function
+
 import argparse
 import os
 import sys
 
-from . import zcom
-from . import gopen
-from . import paths
-from . import filters
+from past.utils import old_div
+
+from . import filters, gopen, paths, zcom
 
 _big = 1<<60
 

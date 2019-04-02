@@ -1,24 +1,25 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
-import imp
-import time
+
 import argparse
-import os
-import sys
-import shutil
 import atexit
 import glob
-
-import numpy as np
-import pylab
-import dlinputs as dli
-import matplotlib
-from pylab import *
-from dlinputs import zcom, gopen, utils, tarrecords
-import simplejson
+import imp
+import os
+import shutil
+import sys
+import time
 from itertools import groupby
 from multiprocessing import Pool
+
+import dlinputs as dli
+import matplotlib
+import numpy as np
+import pylab
+import simplejson
+from dlinputs import gopen, tarrecords, utils, zcom
+from pylab import *
 
 parser = argparse.ArgumentParser("Run a command line tool over all samples.")
 parser.add_argument("input")
