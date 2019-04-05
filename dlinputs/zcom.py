@@ -72,16 +72,20 @@ class Connection(object):
         self.pack = pack
         self.addr = urlparse(url)
         kind, bind = schemes[self.addr.scheme]
-        self.context = zmq.Context()
-        self.socket = self.context.socket(kind)
-        location = "tcp://"+self.addr.netloc
-        self.socket.setsockopt(zmq.LINGER, 0)
-        if bind:
-            self.socket.bind(location)
-        else:
-            self.socket.connect(location)
-        if kind==zmq.SUB:
-            self.socket.setsockopt(zmq.SUBSCRIBE, '')
+        try:
+            self.context = zmq.Context()
+            self.socket = self.context.socket(kind)
+            location = "tcp://"+self.addr.netloc
+            self.socket.setsockopt(zmq.LINGER, 0)
+            if bind:
+                self.socket.bind(location)
+            else:
+                self.socket.connect(location)
+            if kind==zmq.SUB:
+                self.socket.setsockopt_string(zmq.SUBSCRIBE, '')
+        except Exception as e:
+            print("error: url {} location {} kind {}".format(url, location, kind))
+            raise e
     def close(self):
         self.socket.close()
         self.socket = None

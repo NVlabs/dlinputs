@@ -108,7 +108,7 @@ def open_source(url, decode=True, unpack=True):
     parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
         from . import zcom
-        return list(zcom.Connection(url, codec=decode, pack=unpack).items())
+        return zcom.Connection(url, codec=decode, pack=unpack).items()
     else:
         return sharditerator(url, decode=decode, source=url)
 

@@ -239,7 +239,7 @@ def autodecode1(data, tname):
             return int(data)
         except ValueError:
             return data
-    if extension in ["png", "jpg", "jpeg"]:
+    elif extension in ["png", "jpg", "jpeg"]:
         import numpy as np
         from PIL import Image
         # BytesIO change. You are reading from file as Bytes
@@ -258,16 +258,16 @@ def autodecode1(data, tname):
             result = np.array(result, 'f')
             result /= 255.0
         return result
-    if extension in ["json", "jsn"]:
+    elif extension in ["json", "jsn"]:
         import simplejson
         return simplejson.loads(data)
-    if extension in ["pyd", "pickle"]:
+    elif extension in ["pyd", "pickle"]:
         import pickle
         return pickle.loads(data)
-    if extension in ["mp", "msgpack", "msg"]:
+    elif extension in ["mp", "msgpack", "msg"]:
         import msgpack
         return msgpack.unpackb(data)
-    if extension in ["cls", "cls2", "index", "inx"]:
+    elif extension in ["cls", "cls2", "index", "inx"]:
         return int(str(data))
     return data
 
@@ -275,6 +275,8 @@ def autodecode(sample):
     result = {}
     for k, v in list(sample.items()):
         if k[0] == "_":
+            if isinstance(v, bytes):
+                v = v.decode('utf-8')
             result[k] = v
             continue
         assert v is not None, (k, sample)
