@@ -25,10 +25,11 @@ from . import utils
 standard_library.install_aliases()
 
 
-if sys.version_info[0]==3:
+if sys.version_info[0] == 3:
     from builtins import str
     buffer = str
     unicode = str
+
 
 def splitallext(path):
     """Helper method that splits off all extension.
@@ -44,19 +45,23 @@ def splitallext(path):
         return None, None
     return match.group(1), match.group(2)
 
+
 def base_plus_ext(fname):
     """Splits pathnames into the file basename plus the extension."""
     return splitallext(fname)
 
+
 def dir_plus_file(fname):
     """Splits pathnames into the dirname plus the filename."""
     return os.path.split(fname)
+
 
 def last_dir(fname):
     """Splits pathnames into the last dir plus the filename."""
     dirname, plain = os.path.split(fname)
     prefix, last = os.path.split(dirname)
     return last, plain
+
 
 def trivial_decode(sample):
     result = {}
@@ -73,10 +78,12 @@ def trivial_decode(sample):
         result[k] = v
     return result
 
+
 def valid_sample(sample):
     return (sample is not None and
             len(list(sample.keys())) > 0 and
             not sample.get("__bad__", False))
+
 
 def group_by_keys(keys=base_plus_ext, lcase=True):
     """Groups key, value pairs into samples."""
@@ -99,16 +106,22 @@ def group_by_keys(keys=base_plus_ext, lcase=True):
             yield current_sample
     return iterator
 
-def tardata(fileobj):
+
+def tardata(fileobj, skip_meta="^__.*__$"):
     """Iterator yielding filename, content pairs for the given tar stream."""
     stream = tarfile.open(fileobj=fileobj, mode="r|*")
     for tarinfo in stream:
-        if not tarinfo.isreg(): continue
+        if not tarinfo.isreg():
+            continue
         fname = tarinfo.name
-        if fname is None: continue
+        if fname is None:
+            continue
+        if skip_meta is not None and re.match(skip_meta):
+            continue
         data = stream.extractfile(tarinfo).read()
         yield fname, data
     del stream
+
 
 def decoder(decode=True):
     """Apply tariterator-like decoding to the stream of samples."""
@@ -116,10 +129,12 @@ def decoder(decode=True):
         decode = utils.autodecode
     elif decode is False:
         decode = trivial_decode
+
     def iterator(data):
         for sample in data:
             yield decode(sample)
     return iterator
+
 
 def tariterator1(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     """Alternative (new) implementation of tariterator."""
@@ -127,6 +142,7 @@ def tariterator1(fileobj, check_sorted=False, keys=base_plus_ext, decode=True):
     samples = group_by_keys(keys=keys)(content)
     decoded = decoder(decode=decode)(samples)
     return decoded
+
 
 def zipdata(fname):
     """Iterator yielding filename, content pairs for the given zip file."""
@@ -137,11 +153,13 @@ def zipdata(fname):
         data = zf.open(fname).read()
         yield fname, data
 
+
 def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
     content = zipdata(fname)
     samples = group_by_keys(keys=keys)(content)
     decoded = decoder(decode=decode)(samples)
     return decoded
+
 
 def maybe_decode(current_sample, decode, current_count=None):
     try:
@@ -155,6 +173,7 @@ def maybe_decode(current_sample, decode, current_count=None):
             current_count,
             current_sample.get("__key__")))
         return None
+
 
 def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None, lcase=True):
     """Iterate over samples from a tar archive, either locally or given by URL.
@@ -189,11 +208,12 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             continue
         if prefix != current_prefix:
             if check_sorted and prefix <= current_prefix:
-                raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" % \
+                raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" %
                                  (current_prefix, prefix))
             if valid_sample(current_sample):
                 decoded = maybe_decode(current_sample, decode, current_count)
-                if decoded is not None: yield decoded
+                if decoded is not None:
+                    yield decoded
             current_prefix = prefix
             current_sample = dict(__key__=prefix, __source__=source)
         try:
@@ -210,9 +230,13 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             current_count += 1
     if valid_sample(current_sample):
         decoded = maybe_decode(current_sample, decode, current_count)
-        if decoded is not None: yield decoded
-    try: del stream
-    except: pass
+        if decoded is not None:
+            yield decoded
+    try:
+        del stream
+    except:
+        pass
+
 
 class TarWriter(object):
     def __init__(self, fileobj, keep_meta=False, encode=True, user=None, group=None):
@@ -227,7 +251,7 @@ class TarWriter(object):
         if encode is True:
             encode = utils.autoencode
         elif encode is False:
-            encode = lambda x: x
+            def encode(x): return x
         self.keep_meta = keep_meta
         self.encode = encode
         self.stream = fileobj
@@ -265,17 +289,20 @@ class TarWriter(object):
         obj = self.encode(obj)
         assert "__key__" in obj, "object must contain a __key__"
         for k, v in list(obj.items()):
-            if k[0]=="_": continue
-            if sys.version_info[0]==2:
-                assert isinstance(v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
+            if k[0] == "_":
+                continue
+            if sys.version_info[0] == 2:
+                assert isinstance(
+                    v, str), "{} doesn't map to a string after encoding ({})".format(k, type(v))
             else:
-                assert isinstance(v, bytes), "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
+                assert isinstance(
+                    v, bytes), "{} doesn't map to a bytes after encoding ({})".format(k, type(v))
         key = obj["__key__"]
         for k in sorted(obj.keys()):
-            if not self.keep_meta and k[0]=="_":
+            if not self.keep_meta and k[0] == "_":
                 continue
             v = obj[k]
-            if sys.version_info[0]==2:
+            if sys.version_info[0] == 2:
                 assert isinstance(v, (str, buffer)),  \
                     "converter didn't yield a string: %s" % ((k, type(v)),)
             else:
@@ -295,10 +322,12 @@ class TarWriter(object):
             total += ti.size
         return total
 
+
 class ShardWriter(object):
     def __init__(self, pattern, maxcount=100000, maxsize=3e9, keep_meta=False, encode=True, user=None, group=None):
         self.verbose = 1
-        self.args = dict(keep_meta=keep_meta, encode=encode, user=user, group=group)
+        self.args = dict(keep_meta=keep_meta, encode=encode,
+                         user=user, group=group)
         self.maxcount = maxcount
         self.maxsize = maxsize
         self.tarstream = None
@@ -308,24 +337,28 @@ class ShardWriter(object):
         self.count = 0
         self.size = 0
         self.next_stream()
+
     def next_stream(self):
         if self.tarstream is not None:
             self.tarstream.close()
         self.fname = self.pattern % self.shard
         if self.verbose:
-            print("# writing", self.fname, self.count, "%.1f GB"%(old_div(self.size,1e9)), self.total)
+            print("# writing", self.fname, self.count, "%.1f GB" %
+                  (old_div(self.size, 1e9)), self.total)
         self.shard += 1
         stream = open(self.fname, "wb")
         self.tarstream = TarWriter(stream, **self.args)
         self.count = 0
         self.size = 0
+
     def write(self, obj):
-        if self.tarstream is None or self.count>=self.maxcount or self.size>=self.maxsize:
+        if self.tarstream is None or self.count >= self.maxcount or self.size >= self.maxsize:
             self.next_stream()
         size = self.tarstream.write(obj)
         self.count += 1
         self.total += 1
         self.size += size
+
     def close(self):
         self.tarstream.close()
         del self.tarstream

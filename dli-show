@@ -20,7 +20,7 @@ rc("image", cmap="gray")
 
 parser = argparse.ArgumentParser("Display info about an input module.")
 parser.add_argument("input")
-parser.add_argument("-t", "--table", default="training")
+parser.add_argument("-T", "--table", default="training")
 parser.add_argument("-s", "--skip", default=0, type=int)
 parser.add_argument("-b", "--bench", default=0, type=int)
 parser.add_argument("-B", "--batched", action="store_true")
@@ -29,6 +29,7 @@ parser.add_argument("--decoders", default=None)
 parser.add_argument("-O", "--order", default="BHWD")
 parser.add_argument("-a", "--autodecode", action="store_true")
 parser.add_argument("-D", "--source", default=None)
+parser.add_argument("-t", "--timeout", default=-1, type=float)
 args = parser.parse_args()
 
 if args.source is not None:
@@ -68,5 +69,7 @@ if args.display is not None:
             gca().set_title("Key: "+key)
             imshow(data)
         show()
-        input()
+        waitforbuttonpress(timeout=args.timeout)
+        if not fignum_exists(1):
+            sys.exit(0)
         sample = next(source)

@@ -6,6 +6,7 @@ from future import standard_library
 
 standard_library.install_aliases()
 
+
 def _convert(x):
     """Generically convert strings to numbers.
 
@@ -21,6 +22,7 @@ def _convert(x):
             return float(x)
         except ValueError:
             return x
+
 
 def get_params(fname, separator=":"):
     """Splits a file name into the actual file and optional parameters.

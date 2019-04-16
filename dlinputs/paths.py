@@ -19,8 +19,6 @@ from past.builtins import execfile
 standard_library.install_aliases()
 
 
-
-
 def split_sharded_path(path):
     """Split a path containing shard notation into prefix, format, suffix, and number."""
     match = re.search(r"^(.*)@([0-9]+)(.*)", path)
@@ -32,6 +30,7 @@ def split_sharded_path(path):
     fmt = "%%0%dd" % len(match.group(2))
     return prefix+fmt+suffix, num
 
+
 def path_shards(path):
     """Given a path shard spec, return an iterator over the shards."""
     fmt, n = split_sharded_path(path)
@@ -40,6 +39,7 @@ def path_shards(path):
     else:
         for i in range(n):
             yield (fmt % i)
+
 
 def iterate_shards(url):
     """Iterates over shards.
@@ -63,6 +63,7 @@ def iterate_shards(url):
         index = "%0*d" % (f, i)
         yield ShardEntry(prefix+index+suffix, prefix, index, suffix)
 
+
 def find_directory(path, target="", tests=[], verbose=False, error=True):
     """Finds the first instance of target on a path.
 
@@ -80,25 +81,30 @@ def find_directory(path, target="", tests=[], verbose=False, error=True):
     """
     if isinstance(path, six.string_types):
         path = path.split(":")
-    if verbose: print(path)
+    if verbose:
+        print(path)
     if isinstance(tests, six.string_types):
         tests = [tests]
     for root in path:
         if not os.path.isdir(root):
             continue
         candidate = os.path.join(root, target)
-        if verbose: print("trying", candidate)
+        if verbose:
+            print("trying", candidate)
         if not os.path.isdir(candidate):
             continue
         failed = False
         for extra in tests:
             testpath = os.path.join(candidate, extra)
-            if verbose: print("testing", testpath)
+            if verbose:
+                print("testing", testpath)
             if not os.path.exists(testpath):
-                if verbose: print("FAILED")
+                if verbose:
+                    print("FAILED")
                 failed = True
                 break
-        if failed: continue
+        if failed:
+            continue
         return candidate
     if error:
         raise ValueError("cannot find {} on path {}".format(target, path))
@@ -122,19 +128,23 @@ def find_file(path, target, tests=[], verbose=False, error=True):
         if not os.path.isdir(root):
             continue
         candidate = os.path.join(root, target)
-        if verbose: print("trying", candidate)
+        if verbose:
+            print("trying", candidate)
         if not os.path.isfile(candidate):
             continue
         failed = False
         for extra in tests:
             if not extra(candidate):
-                if verbose: print("FAILED")
+                if verbose:
+                    print("FAILED")
                 failed = True
                 break
-        if failed: continue
+        if failed:
+            continue
         return candidate
     if error:
         raise ValueError("cannot find {} on path {}".format(target, path))
+
 
 def readfile(fname):
     """Helper function to read a file (binary).
@@ -145,6 +155,7 @@ def readfile(fname):
     """
     with open(fname, "rb") as stream:
         return stream.read()
+
 
 def writefile(fname, data):
     """Helper function to read a file (binary).
@@ -174,7 +185,6 @@ def splitallext(path):
     return match.group(1), match.group(2)
 
 
-
 def find_basenames(top, extensions):
     """Finds all basenames that have all the given extensions inside a tree.
 
@@ -194,9 +204,9 @@ def find_basenames(top, extensions):
         prefixes = {splitallext(fname)[0] for fname in files}
         for prefix in prefixes:
             missing = [e for e in extensions if prefix+"."+e not in files]
-            if len(missing) > 0: continue
+            if len(missing) > 0:
+                continue
             yield os.path.join(root, prefix)
-
 
 
 def spliturl(url):
@@ -229,15 +239,19 @@ def read_url_path(url, urlpath, verbose=False):
         urlpath = [re.sub("[^/]+$", "", url)]
     for base in urlpath:
         trial = urllib.parse.urljoin(base, url)
-        if verbose: print("trying: {}".format(trial))
+        if verbose:
+            print("trying: {}".format(trial))
         try:
             return openurl(trial).read(), base
         except urllib.error.URLError:
-            if verbose: print(trial, ": FAILED")
+            if verbose:
+                print(trial, ": FAILED")
             continue
     return None
 
+
 url_rewriter = None
+
 
 def findurl(url):
     """Finds a URL using environment variables for helpers.
@@ -312,7 +326,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
     if verbose:
         print("# read_shards", url, "base", base)
     if data is None:
-        raise Exception("url not found") # FIXME
+        raise Exception("url not found")  # FIXME
     shards = simplejson.loads(data)
     if shards is None:
         raise Exception("cannot find {} on {}".format(url, urlpath))
@@ -323,6 +337,7 @@ def read_shards(url, shardtype="application/x-tgz", urlpath=None, verbose=True):
         for i in range(len(s)):
             s[i] = urllib.parse.urljoin(base, s[i])
     return shards
+
 
 def extract_shards(url):
     """Extract a shard list from a shard URL.
@@ -343,7 +358,9 @@ def extract_shards(url):
         result.append("%s%0*d%s" % (prefix, f, i, suffix))
     return result
 
+
 ShardEntry = namedtuple("ShardEntry", "name,prefix,index,suffix")
+
 
 def parse_save_path(path, extension="pt"):
     if extension is not None:
@@ -352,6 +369,7 @@ def parse_save_path(path, extension="pt"):
     if not match:
         return 0, None
     return int(match.group(1))*1000, int(match.group(2))*1e-6
+
 
 def make_save_path(prefix, ntrain, error, extension="pt"):
     assert isinstance(ntrain, int)

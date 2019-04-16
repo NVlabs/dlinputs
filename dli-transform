@@ -1,32 +1,79 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
+import sys
 import argparse
 import imp
+import os
 
 import dlinputs as dli
 import matplotlib
 import numpy as np
 import pylab
 from dlinputs import filters, gopen, utils, zcom
-from pylab import *
-
-# matplotlib.use("GTK")
-
-rc("image", cmap="hot")
+import multiprocessing
 
 parser = argparse.ArgumentParser("Display info about an input module.")
-parser.add_argument("-c", "--code", default="filters.shuffle()")
+parser.add_argument("-P", "--pipeline", default="info()")
+parser.add_argument("-C", "--precode", default=[], nargs="*")
+parser.add_argument("-c", "--code", default=None)
+parser.add_argument("-l", "--load", default=None)
 parser.add_argument("-e", "--every", type=int, default=1000)
+parser.add_argument("-p", "--parallel", type=int, default=0)
+parser.add_argument("-O", "--ordered", action="store_true")
 parser.add_argument("input")
-parser.add_argument("output")
+parser.add_argument("output", nargs="?")
 args = parser.parse_args()
 
+for c in args.precode:
+    exec(c)
+
 source = gopen.open_source(args.input)
-sink = gopen.open_sink(args.output)
 
-pipeline = eval("filters.compose({})".format(args.code))
-transformed = pipeline(source)
+sink = None
+if args.output is not None:
+    sink = gopen.open_sink(args.output)
 
-for i, sample in enumerate(transformed):
-    if i%1000==0: print i
-    sink.write(sample)
+mapper = None
+if args.load is not None:
+    fname = os.path.basename(args.load)
+    name, ext = os.path.splitext(fname)
+    with open(args.load) as stream:
+        mapper = imp.load_module("mapper", stream, args.load,
+                                 (ext, "r", imp.PY_SOURCE))
+
+with dli.inputs:
+    f = eval("compose({})".format(args.pipeline))
+transformed = f(source)
+
+def process_sample(sample, mapper=mapper, code=args.code):
+    i, sample = sample
+    if mapper is not None:
+        sample = mapper.transform(sample)
+    _ = sample
+    if code is not None:
+        exec(args.code)
+    return i, sample
+
+if args.parallel==0:
+    processed = (process_sample(x) for x in enumerate(transformed))
+else:
+    pool = multiprocessing.Pool(args.parallel)
+    if args.ordered:
+        processed = pool.imap(process_sample, enumerate(transformed))
+    else:
+        processed = pool.imap_unordered(process_sample, enumerate(transformed))
+
+for j, (i, sample) in enumerate(processed):
+    if isinstance(sample, dict):
+        sample = [sample]
+    elif isinstance(sample, list):
+        pass
+    else:
+        print("sample must be either dict or list, got:")
+        print(sample)
+        sys.exit(1)
+    if i%args.every==0:
+        print(i, j, sample[0].get("__key__"))
+    if sink is not None:
+        for s in sample:
+            sink.write(s)

@@ -10,7 +10,7 @@ from . import gopen, paths, zcom
 
 
 def loader(input, output, report=0, epochs=1000000000):
-    if report>0:
+    if report > 0:
         print("loader", input, "->", output)
     while True:
         outputs = zcom.Connection(output, encode=False)
@@ -20,10 +20,11 @@ def loader(input, output, report=0, epochs=1000000000):
             inputs = gopen.sharditerator(shard, epochs=epochs, decode=False)
             for sample in inputs:
                 outputs.send(sample)
-                if report>0 and count%report==0:
+                if report > 0 and count % report == 0:
                     print("{:6d} {:6.1f} samples/s {:8.1f} MB/s".format(
                         count, outputs.stats.recent_rate(), old_div(outputs.stats.recent_throughput(), 1e6)))
                 count += 1
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Load and broadcast shards.")

@@ -8,7 +8,6 @@ from builtins import object, range, str, zip
 # See the LICENSE file for licensing terms (BSD-style).
 
 
-
 def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False):
     """Read a dataset from an sqlite3 dbfile and the given table.
 
@@ -37,7 +36,8 @@ def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
         db.close()
 
 
-sqltypes = None # FIXME
+sqltypes = None  # FIXME
+
 
 class SqliteWriter(object):
     """A quick and simple way of writing datasets to sqlite3 files.
