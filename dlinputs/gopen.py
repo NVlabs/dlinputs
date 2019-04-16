@@ -24,21 +24,26 @@ def test_curl_write(self, location):
 def gopen(url, mode="rb"):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
     parsed = urlparse(url)
+    def pipe(cmd, mode):
+        if mode=="w":
+            stream = Popen(cmd, stdin=PIPE, shell=True).stdin
+        elif mode=="r":
+            stream = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).stdout
+        stream.pipe_cmd = cmd
+        return stream
     if parsed.scheme == "gs":
         if mode[0]=="r":
-            return Popen("gsutil cat '%s'" % url, stdout=PIPE, stderr=PIPE, shell=True).stdout
+            return pipe("gsutil cat '%s'" % url, "r")
         elif mode[0]=="w":
-            return Popen("gsutil cp - '%s'" % url, stdin=PIPE, stderr=PIPE, shell=True).stdin
+            return pipe("gsutil cp - '%s'" % url, "w")
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
-            cmd = "curl --fail -s '%s'" % url
-            return Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).stdout
+            return pipe("curl --fail -s '%s'" % url, "r")
         elif mode[0]=="w":
             test_curl_write(url)
-            cmd = "curl --fail -s -T - '%s'" % url
-            return Popen(cmd, stdin=PIPE, stderr=PIPE, shell=True).stdin
+            return pipe("curl --fail -s -T - '%s'" % url, "w")
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in ["", "file"]:

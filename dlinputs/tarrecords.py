@@ -141,7 +141,7 @@ def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
     decoded = decoder(decode=decode)(samples)
     return decoded
 
-def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None, lcase=True):
+def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None, lcase=True, filename=None):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -153,6 +153,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
     :returns: iterator over samples
 
     """
+    if filename is None:
+        filename = getattr(fileobj, "pipe_cmd", getattr(fileobj, "name", "?"))
     if decode is True:
         decode = utils.autodecode
     elif decode is False:
@@ -174,8 +176,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
             continue
         if prefix != current_prefix:
             if check_sorted and prefix <= current_prefix:
-                raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys" % \
-                                 (current_prefix, prefix))
+                raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys (%s)" % \
+                                 (current_prefix, prefix, filename))
             if valid_sample(current_sample):
                 yield decode(current_sample)
             current_prefix = prefix
@@ -185,6 +187,7 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
         except tarfile.ReadError as e:
             print("tarfile.ReadError at", current_count)
             print("file:", tarinfo.name)
+            print("source:", filename)
             print(e)
             current_sample["__bad__"] = True
         else:
