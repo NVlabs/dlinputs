@@ -1,0 +1,446 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dlinputs.paths &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dlinputs.paths</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.</span>
+<span class="c1"># See the LICENSE file for licensing terms (BSD-style).</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">past.builtins</span> <span class="k">import</span> <span class="n">execfile</span>
+<span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="n">standard_library</span>
+<span class="n">standard_library</span><span class="o">.</span><span class="n">install_aliases</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span><span class="o">,</span> <span class="nn">urllib.error</span><span class="o">,</span> <span class="nn">urllib.parse</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="k">import</span> <span class="n">clip</span>
+
+<span class="kn">import</span> <span class="nn">six</span>
+
+<div class="viewcode-block" id="split_sharded_path"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.split_sharded_path">[docs]</a><span class="k">def</span> <span class="nf">split_sharded_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Split a path containing shard notation into prefix, format, suffix, and number.&quot;&quot;&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(.*)@([0-9]+)(.*)&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">path</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%%</span><span class="s2">0</span><span class="si">%d</span><span class="s2">d&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">prefix</span><span class="o">+</span><span class="n">fmt</span><span class="o">+</span><span class="n">suffix</span><span class="p">,</span> <span class="n">num</span></div>
+
+<div class="viewcode-block" id="path_shards"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.path_shards">[docs]</a><span class="k">def</span> <span class="nf">path_shards</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a path shard spec, return an iterator over the shards.&quot;&quot;&quot;</span>
+    <span class="n">fmt</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">split_sharded_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">fmt</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">fmt</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="iterate_shards"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.iterate_shards">[docs]</a><span class="k">def</span> <span class="nf">iterate_shards</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterates over shards.</span>
+
+<span class="sd">    Given a string of the form &quot;prefix-@000123-suffix&quot;, yields</span>
+<span class="sd">    objects containing:</span>
+
+<span class="sd">    - obj.name: expanded name</span>
+<span class="sd">    - obj.prefix: prefix value</span>
+<span class="sd">    - obj.index: index value (as zero-padded string)</span>
+<span class="sd">    - obj.suffix: suffix value</span>
+
+<span class="sd">    :param url: shard url</span>
+<span class="sd">    :returns: iterator over shards</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prefix</span><span class="p">,</span> <span class="n">shards</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(.*)(@[0-9]+)(.*)$&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shards</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">shards</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%0*d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">ShardEntry</span><span class="p">(</span><span class="n">prefix</span><span class="o">+</span><span class="n">index</span><span class="o">+</span><span class="n">suffix</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="find_directory"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.find_directory">[docs]</a><span class="k">def</span> <span class="nf">find_directory</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="p">[],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Finds the first instance of target on a path.</span>
+
+<span class="sd">    If `tests` is supplied, requires those targets to be present as well.</span>
+<span class="sd">    This only works if the target is a directory.</span>
+
+<span class="sd">    :param list path: colon separated path along which to search or list</span>
+<span class="sd">    :param str target: target to search for (if empty, finds first path element that exists)</span>
+<span class="sd">    :param list tests: list of functions of additional predicates</span>
+<span class="sd">    :param bool verbose: output information about tests performed</span>
+<span class="sd">    :param bool error: not finding the target is an error</span>
+<span class="sd">    :returns: path to target</span>
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tests</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">tests</span> <span class="o">=</span> <span class="p">[</span><span class="n">tests</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trying&quot;</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">extra</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
+            <span class="n">testpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">extra</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;testing&quot;</span><span class="p">,</span> <span class="n">testpath</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">testpath</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;FAILED&quot;</span><span class="p">)</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">failed</span><span class="p">:</span> <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot find </span><span class="si">{}</span><span class="s2"> on path </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="find_file"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.find_file">[docs]</a><span class="k">def</span> <span class="nf">find_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="p">[],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Finds the first instance of file on a path.</span>
+
+<span class="sd">    :param list path: colon separated path along which to search or list</span>
+<span class="sd">    :param str target: target to search for (if empty, finds first path element that exists)</span>
+<span class="sd">    :param list tests: list of functions of additional predicates</span>
+<span class="sd">    :param bool verbose: output information about tests performed</span>
+<span class="sd">    :param bool error: not finding the target is an error</span>
+<span class="sd">    :returns: path to target</span>
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trying&quot;</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">extra</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">extra</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;FAILED&quot;</span><span class="p">)</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">failed</span><span class="p">:</span> <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot find </span><span class="si">{}</span><span class="s2"> on path </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="readfile"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.readfile">[docs]</a><span class="k">def</span> <span class="nf">readfile</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function to read a file (binary).</span>
+
+<span class="sd">    :param fname: file name to be read</span>
+<span class="sd">    :returns: contents of file</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="writefile"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.writefile">[docs]</a><span class="k">def</span> <span class="nf">writefile</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function to read a file (binary).</span>
+
+<span class="sd">    :param fname: file name to be read</span>
+<span class="sd">    :returns: contents of file</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="splitallext"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.splitallext">[docs]</a><span class="k">def</span> <span class="nf">splitallext</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper method that splits off all extension.</span>
+
+<span class="sd">    Returns base, allext.</span>
+
+<span class="sd">    :param path: path with extensions</span>
+<span class="sd">    :returns: path with all extensions removed</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^((?:.*/|)[^.]+)[.]([^/]*)$&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_basenames"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.find_basenames">[docs]</a><span class="k">def</span> <span class="nf">find_basenames</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">extensions</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Finds all basenames that have all the given extensions inside a tree.</span>
+
+<span class="sd">    :param top: root of directory tree</span>
+<span class="sd">    :param extensions: required extensions</span>
+<span class="sd">    :returns: iterator over basenames</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">top</span><span class="p">),</span> <span class="n">top</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extensions</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="n">extensions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">extensions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">extensions</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">top</span><span class="p">):</span>
+        <span class="n">dirs</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">prefixes</span> <span class="o">=</span> <span class="p">{</span><span class="n">splitallext</span><span class="p">(</span><span class="n">fname</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">files</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span> <span class="k">if</span> <span class="n">prefix</span><span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span><span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="k">yield</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="spliturl"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.spliturl">[docs]</a><span class="k">def</span> <span class="nf">spliturl</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Split a URL into its extension and base.</span>
+
+<span class="sd">    :param url: input url</span>
+<span class="sd">    :returns: tuple of basename and extension</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(.+)\.([^:/]+)$&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="s2">&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="read_url_path"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.read_url_path">[docs]</a><span class="k">def</span> <span class="nf">read_url_path</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">urlpath</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Attempts to find `url` on the `urlpath`.</span>
+
+<span class="sd">    :param url: relative URL</span>
+<span class="sd">    :param urlpath: list or space separated string of base URLs</span>
+<span class="sd">    :param verbose: inform user about trials</span>
+<span class="sd">    :returns: contents first URL that can be opened, base url</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">urlpath</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">urlpath</span> <span class="o">=</span> <span class="n">urlpath</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">urlpath</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">urlpath</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;[^/]+$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">urlpath</span><span class="p">:</span>
+        <span class="n">trial</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trying: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">trial</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">openurl</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">base</span>
+        <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="s2">&quot;: FAILED&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="n">url_rewriter</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="findurl"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.findurl">[docs]</a><span class="k">def</span> <span class="nf">findurl</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Finds a URL using environment variables for helpers.</span>
+
+<span class="sd">    If DLP_URLREWRITER is set in the environment, it is loaded.</span>
+<span class="sd">    If dlinputs. url_rewriter is not None, it is applied to the url.</span>
+<span class="sd">    If DLP_URLBASE is not None, it is joined to the url as a base url.</span>
+
+<span class="sd">    FIXME: make DLP_URLBASE a path</span>
+
+<span class="sd">    :param url: url to locate</span>
+<span class="sd">    :return: located URL</span>
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rewriter</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DLP_URLREWRITER&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rewriter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">execfile</span><span class="p">(</span><span class="n">rewriter</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">url_rewriter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">url_rewriter</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DLP_URLBASE&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">url</span></div>
+
+
+<div class="viewcode-block" id="openurl"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.openurl">[docs]</a><span class="k">def</span> <span class="nf">openurl</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Open a URL with findurl followed by urlopen.</span>
+
+<span class="sd">    :param url: url to be opened</span>
+<span class="sd">    :returns: result of urlopen</span>
+<span class="sd">    :rtype: stream</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">findurl</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="find_url"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.find_url">[docs]</a><span class="k">def</span> <span class="nf">find_url</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a list of url paths, find the first one that matches.</span>
+
+<span class="sd">    :param paths: list of base urls</span>
+<span class="sd">    :param extra: extra relative URL to be joined before testing</span>
+<span class="sd">    :returns: first path that succeeds</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">if</span> <span class="n">extra</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">test</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">extra</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">path</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="read_shards"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.read_shards">[docs]</a><span class="k">def</span> <span class="nf">read_shards</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">shardtype</span><span class="o">=</span><span class="s2">&quot;application/x-tgz&quot;</span><span class="p">,</span> <span class="n">urlpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a shards description file from a URL and convert relative URLs in shard file.</span>
+
+<span class="sd">    :param url: url to read shard file from (JSON format)</span>
+<span class="sd">    :param shardtype: default shard type</span>
+<span class="sd">    :param urlpath: path on which to search for the shard file</span>
+<span class="sd">    :param verbose: output progress</span>
+<span class="sd">    :returns: list of URLs for shard</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">base</span> <span class="o">=</span> <span class="n">read_url_path</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">urlpath</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;# read_shards&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;url not found&quot;</span><span class="p">)</span> <span class="c1"># FIXME</span>
+    <span class="n">shards</span> <span class="o">=</span> <span class="n">simplejson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shards</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;cannot find </span><span class="si">{}</span><span class="s2"> on </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">urlpath</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">shardtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;shardtype&quot;</span> <span class="ow">in</span> <span class="n">shards</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">shards</span><span class="p">[</span><span class="s2">&quot;shardtype&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;application/x-tgz&quot;</span><span class="p">,</span> <span class="n">shards</span><span class="p">[</span><span class="s2">&quot;shardtype&quot;</span><span class="p">]</span>
+    <span class="n">shards</span> <span class="o">=</span> <span class="n">shards</span><span class="p">[</span><span class="s2">&quot;shards&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shards</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)):</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">shards</span></div>
+
+<div class="viewcode-block" id="extract_shards"><a class="viewcode-back" href="../../paths.html#dlinputs.paths.extract_shards">[docs]</a><span class="k">def</span> <span class="nf">extract_shards</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Extract a shard list from a shard URL.</span>
+
+<span class="sd">    Shard URLs are URLs containing a string of the form `@000123`.</span>
+<span class="sd">    This denotes that the shards are given by a six digit string and</span>
+<span class="sd">    that there are 123 shards.</span>
+
+<span class="sd">    :param url: shard url</span>
+<span class="sd">    :returns: list of URLs for shard</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prefix</span><span class="p">,</span> <span class="n">shards</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(.*)(@[0-9]+)(.*)$&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shards</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">shards</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s%0*d%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">suffix</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+<span class="n">ShardEntry</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;ShardEntry&quot;</span><span class="p">,</span> <span class="s2">&quot;name,prefix,index,suffix&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">parse_save_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">extension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">.&quot;</span> <span class="o">+</span> <span class="n">extension</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^.*-([0-9]{6,})-([0-9]{6,})&quot;</span><span class="o">+</span><span class="n">extension</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">*</span><span class="mi">1000</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="mf">1e-6</span>
+
+<span class="k">def</span> <span class="nf">make_save_path</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">ntrain</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ntrain</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">ntrain</span> <span class="o">&lt;</span> <span class="mf">1e12</span>
+    <span class="k">assert</span> <span class="n">error</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1e-6</span>
+    <span class="k">assert</span> <span class="n">error</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="o">+</span><span class="mf">1e-6</span>
+    <span class="k">if</span> <span class="n">extension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">extension</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">clip</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">kilos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ntrain</span> <span class="o">//</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">micros</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">error</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;-</span><span class="si">{:09d}</span><span class="s2">-</span><span class="si">{:06d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kilos</span><span class="p">,</span> <span class="n">micros</span><span class="p">)</span> <span class="o">+</span> <span class="n">extension</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

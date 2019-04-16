@@ -1,32 +1,26 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+
+import itertools
+import logging
+import math
+import os
+import pickle
+import random as pyr
+import re
+import shelve
+import tempfile
+from builtins import range, str, zip
+from functools import reduce, wraps
+
+import numpy as np
+from past.utils import old_div
+
+from . import improc, sqlshelve, utils
+from .gopen import *
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import zip
-from builtins import str
-from builtins import range
-from past.utils import old_div
-import os
-import tempfile
-import shelve
-import re
-import math
-import pickle
-import random as pyr
-import logging
-import itertools
-from functools import wraps
-from functools import reduce
-
-import numpy as np
-
-from . import utils
-from . import improc
-from . import sqlshelve
-
-from .gopen import *
 
 def curried(f):
     """A decorator for currying functions in the first argument."""
@@ -37,18 +31,23 @@ def curried(f):
         return g
     return wrapper
 
+
 def compose2(f, g):
     """Compose two functions, g(f(x))"""
     return lambda x: g(f(x))
+
 
 def compose(*args):
     """Compose a sequence of functions (left-to-right)"""
     return reduce(compose2, args)
 
+
 def pipeline(source, *args):
     """Write an input pipeline; first argument is source, rest are filters."""
-    if len(args)==0: return source
+    if len(args) == 0:
+        return source
     return compose(*args)(source)
+
 
 def merge(sources, weights=None):
     """Merge samples from multiple sources into a single iterator.
@@ -67,6 +66,7 @@ def merge(sources, weights=None):
         except StopIteration:
             del sources[index]
     raise StopIteration()
+
 
 def concat(sources, maxepoch=1):
     """Concatenate multiple sources, usually for test sets.
@@ -87,13 +87,14 @@ def concat(sources, maxepoch=1):
             yield sample
             count += 1
 
+
 def objhash(obj):
     import hashlib
-    if not isinstance(obj, (str, buffer)):
-        obj = pickle.dumps(obj, -1)
+    obj = pickle.dumps(obj, -1)
     m = hashlib.md5()
     m.update(obj)
     return m.hexdigest()
+
 
 @curried
 def unique(data, key, rekey=False, skip_missing=False, error=True):
@@ -116,6 +117,7 @@ def unique(data, key, rekey=False, skip_missing=False, error=True):
             sample["__key__"] = ident
         yield sample
 
+
 @curried
 def patched(data, patches, maxpatches=10000):
     """Patch a dataset with another dataset.
@@ -137,10 +139,12 @@ def patched(data, patches, maxpatches=10000):
         key = sample["__key__"]
         return patchdict.get(key, sample)
 
+
 @curried
 def identity(data):
     for sample in data:
         yield sample
+
 
 @curried
 def info(data, every=0):
@@ -161,6 +165,7 @@ def info(data, every=0):
             utils.print_sample(sample)
         count += 1
         yield sample
+
 
 @curried
 def sliced(data, *args):
@@ -217,13 +222,17 @@ def select(source, **kw):
             continue
         yield data
 
+
 def find_key(sample, keys):
     for k in keys.split():
-        if k in sample: return k
+        if k in sample:
+            return k
     return None
+
 
 def has_key(sample, keys):
     return find_key(sample, keys) is not None
+
 
 @curried
 def with_keys(data, *args):
@@ -232,6 +241,7 @@ def with_keys(data, *args):
         if not has_all_keys:
             continue
         yield sample
+
 
 @curried
 def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True):
@@ -252,24 +262,52 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_miss
             result = dict(__key__=sample.get("__key__"))
         has_all_keys = all(has_key(sample, k) for k in list(kw.values()))
         if error_missing and not has_all_keys:
-            raise ValueError("missing keys, got {}, want {}".format(list(sample.keys()), kw))
+            raise ValueError("missing keys, got {}, want {}".format(
+                list(sample.keys()), kw))
         if skip_missing and not has_all_keys:
             continue
         if keep_meta:
             for k, v in list(sample.items()):
-                if k[0]=="_":
+                if k[0] == "_":
                     result[k] = v
         for k, keys in list(kw.items()):
             key = find_key(sample, keys)
-            if key is None: continue
+            if key is None:
+                continue
             result[k] = sample[key]
         yield result
+
 
 def rename(keep_all=False, keep_meta=True, skip_missing=False, error_missing=True, **kw):
     return ren(kw, keep_all=keep_all, keep_meta=keep_meta, skip_missing=skip_missing, error_missing=error_missing)
 
+
 def copy(keep_meta=True, skip_missing=False, error_missing=True, **kw):
     return ren(kw, keep_all=True, keep_meta=keep_meta, skip_missing=skip_missing, error_missing=error_missing)
+
+
+@curried
+def extract(data, *fields, **kw):
+    """Extract the given fields and return a tuple.
+    """
+    error = False
+    for sample in data:
+        if kw.get("error_missing", True):
+            result = [sample[f] for f in fields]
+        else:
+            result = [sample.get(f) for f in fields]
+        yield tuple(result)
+
+@curried
+def annotate(data, table, key="__key__"):
+    """Annotate samples with data from another table.
+    """
+    for sample in data:
+        result = dict(sample)
+        k = sample[key]
+        extra = table.get(k, {})
+        result.update(extra)
+        yield result
 
 @curried
 def map(data, error_missing=True, errors_are_fatal=False, **kw):
@@ -287,14 +325,16 @@ def map(data, error_missing=True, errors_are_fatal=False, **kw):
         sample = sample.copy()
         for k, f in list(kw.items()):
             if error_missing and k not in sample:
-                print("map", kw, "key", k, "missing from sample", list(sample.keys()))
+                print("map", kw, "key", k,
+                      "missing from sample", list(sample.keys()))
                 error = True
                 break
-            if error: break
+            if error:
+                break
             try:
                 sample[k] = f(sample[k])
             except Exception as e:
-                logging.warn("itmap {}".format(repr(e)))
+                logging.warn("map {}".format(repr(e)))
                 if errors_are_fatal:
                     print(e)
                     error = True
@@ -304,6 +344,16 @@ def map(data, error_missing=True, errors_are_fatal=False, **kw):
         if sample is not None:
             yield sample
 
+
+@curried
+def check(data, **kw):
+    """Apply all the check given in the keywords.
+    """
+    error = False
+    for sample in data:
+        for k, f in list(kw.items()):
+            assert f(sample[k]), sample
+        yield sample
 
 @curried
 def encode(data):
@@ -318,6 +368,7 @@ def encode(data):
     for sample in data:
         yield utils.autoencode(data)
 
+
 @curried
 def decode(data):
     """Automatically decode data items based on key extension.
@@ -331,6 +382,7 @@ def decode(data):
     for sample in data:
         yield utils.autodecode(sample)
 
+
 @curried
 def transform(data, f=None):
     """Map entire samples using the given function.
@@ -341,15 +393,17 @@ def transform(data, f=None):
 
     """
 
-    if f is None: f = lambda x: x
+    if f is None:
+        def f(x): return x
     for sample in data:
         result = f(sample)
         result["__key__"] = sample.get("__key__")
         yield result
 
 ###
-### Shuffling
+# Shuffling
 ###
+
 
 @curried
 def shuffle(data, bufsize=1000, initial=100):
@@ -380,6 +434,7 @@ def shuffle(data, bufsize=1000, initial=100):
     for sample in buf:
         yield sample
 
+
 @curried
 def diskshuffle(data, bufsize=1000, initial=100, fname=None):
     """Shuffle the data in the stream.
@@ -394,14 +449,15 @@ def diskshuffle(data, bufsize=1000, initial=100, fname=None):
     :returns: iterator
 
     """
-    raise Exception("unimplemented") # FIXME
+    raise Exception("unimplemented")  # FIXME
 
 ###
-### Batching
+# Batching
 ###
+
 
 @curried
-def batched(data, batchsize=20, combine_tensors=True, partial=True, expand=False):
+def batched(data, batchsize=20, combine_tensors=True, combine_scalars=True, partial=True, expand=False):
     """Create batches of the given size.
 
     :param data: iterator
@@ -414,13 +470,19 @@ def batched(data, batchsize=20, combine_tensors=True, partial=True, expand=False
     batch = []
     for sample in data:
         if len(batch) >= batchsize:
-            yield utils.samples_to_batch(batch, combine_tensors=combine_tensors, expand=expand)
+            yield utils.samples_to_batch(batch,
+                                         combine_tensors=combine_tensors,
+                                         combine_scalars=combine_scalars,
+                                         expand=expand)
             batch = []
         batch.append(sample)
     if len(batch) == 0:
         return
     elif len(batch) == batchsize or partial:
-        yield utils.samples_to_batch(batch, combine_tensors=combine_tensors, expand=expand)
+        yield utils.samples_to_batch(batch,
+                                     combine_tensors=combine_tensors,
+                                     combine_scalars=combine_scalars,
+                                     expand=expand)
 
 
 def maybe_index(v, i):
@@ -435,6 +497,7 @@ def maybe_index(v, i):
         return v[i]
     except:
         return v
+
 
 @curried
 def unbatch(data):
@@ -451,8 +514,9 @@ def unbatch(data):
             yield {k: maybe_index(v, i) for k, v in list(sample.items())}
 
 ###
-### Image data augmentation
+# Image data augmentation
 ###
+
 
 @curried
 def distort(sample, distortions=[(5.0, 5)], keys=["image"]):
@@ -467,50 +531,32 @@ def distort(sample, distortions=[(5.0, 5)], keys=["image"]):
     images = [sample[k] for k in keys]
     distorted = improc.random_distortions(images, distortions)
     result = dict(sample)
-    for k, v in zip(keys, distorted): result[k] = v
+    for k, v in zip(keys, distorted):
+        result[k] = v
     return result
 
-def standardize(sample, size, keys=["png"], crop=0, mode="nearest",
-                  ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)),
-                  rgamma=None, cgamma=(0.8, 1.2)):
+
+@curried
+def standardized(data, size, keys=["image"], crop=0, mode="nearest"):
     """Standardize images in a sample.
 
-    :param sample: sample
+    :param sample: iterator over samples
     :param size: target size
     :param keys: keys for images to be distorted
-    :param crop: whether to crop
+    :param crop: whether to crop (1) or extend (0)
     :param mode: boundary mode
-    :param ralpha: random rotation range (no affine if None)
-    :param rscale: random scale range
-    :param rgamma: random gamma range (no color distortion if None)
-    :param cgamma: random color gamma range
-    :returns: standardized szmple
+    :returns: iterator over standardized samples
 
     """
     if isinstance(keys, str):
         keys = keys.split(",")
-    if ralpha is True: ralpha = (-0.2, 0.2)
-    if rgamma is True: rgamma = (0.5, 2.0)
-    if ralpha is not None:
-        affine = improc.random_affine(ralpha=ralpha, rscale=rscale)
-    else:
-        affine = np.eye(2)
-    for key in keys:
-        sample[key] = improc.standardize(
-            sample[key], size, crop=crop, mode=mode, affine=affine)
-    if rgamma is not None:
-        for key in keys:
-            sample[key] = improc.random_gamma(sample[key],
-                                        rgamma=rgamma,
-                                        cgamma=cgamma)
-    return sample
-
-@curried
-def standardized(data, *args, **kw):
     for sample in data:
-        result = standardize(sample, *args, **kw)
-        assert isinstance(result, dict), result
+        result = dict(sample)
+        for key in keys:
+            result[key] = improc.standardize(
+                sample[key], size, crop=crop, mode=mode)
         yield result
+
 
 @curried
 def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):
@@ -541,13 +587,14 @@ def batchedbuckets(data, batchsize=5, scale=1.8, seqkey="image", batchdim=1):
             batched = {}
         buckets[r] = batched
     for r, batched in list(buckets.items()):
-        if batched == {}: continue
+        if batched == {}:
+            continue
         batched["_bucket"] = r
         yield batched
 
 
 ###
-### various data sinks
+# various data sinks
 ###
 
 @curried
@@ -590,6 +637,7 @@ def batchinfo(data, n=1):
             print()
         print()
 
+
 def precache(data, cache, key="__key__", max_size=1000000):
     total = 0
     start = None
@@ -601,7 +649,8 @@ def precache(data, cache, key="__key__", max_size=1000000):
         else:
             if start == value:
                 cache_full = True
-        if cache_full: break
+        if cache_full:
+            break
         sample["__index__"] = total
         cache[str(total)] = sample
         sample = dict(sample)
@@ -610,7 +659,9 @@ def precache(data, cache, key="__key__", max_size=1000000):
         if total > max_size:
             raise Exception("cache size exceeded")
         yield sample
-    if hasattr(cache, "sync") and callable(cache.sync): cache.sync()
+    if hasattr(cache, "sync") and callable(cache.sync):
+        cache.sync()
+
 
 def cacheserver(cache, start, stop):
     keys = list(cache.keys())
@@ -622,6 +673,7 @@ def cacheserver(cache, start, stop):
             sample["__epoch__"] = epoch
             yield sample
 
+
 @curried
 def cached(data, nepochs=1000000, max_size=1000000000, key="__key__"):
     cache = {}
@@ -629,6 +681,7 @@ def cached(data, nepochs=1000000, max_size=1000000000, key="__key__"):
         yield sample
     for sample in cacheserver(cache, 1, nepochs):
         yield sample
+
 
 @curried
 def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=None):
@@ -641,15 +694,19 @@ def disk_cached(data, nepochs=1000000, max_size=1000000000, key="__key__", path=
         for sample in cacheserver(cache, 1, nepochs):
             yield sample
     finally:
-        if os.path.exists(path): os.unlink(path)
+        if os.path.exists(path):
+            os.unlink(path)
+
 
 @curried
 def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__key__", verbose=False):
     assert nepochs >= 1
     if not os.path.exists(path):
         temp_path = path+".temp"
-        if os.path.exists(temp_path): os.unlink(temp_path)
-        if verbose: print("creating", temp_path)
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+        if verbose:
+            print("creating", temp_path)
         cache = sqlshelve.open(temp_path)
 
         for sample in precache(data, cache, key=key, max_size=max_size):
@@ -658,7 +715,8 @@ def persistent_cached(data, path, nepochs=1000000, max_size=1000000000, key="__k
         start = 1
     else:
         assert os.path.exists(path) or os.path.exists(path+".dat")
-        if verbose: print("opening", path)
+        if verbose:
+            print("opening", path)
         cache = sqlshelve.open(path, protocol=-1)
         start = 0
     for sample in cacheserver(cache, start, nepochs):

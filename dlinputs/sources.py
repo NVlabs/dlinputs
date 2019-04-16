@@ -1,22 +1,20 @@
-from __future__ import print_function
-from __future__ import absolute_import
-# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
-# See the LICENSE file for licensing terms (BSD-style).
+from __future__ import absolute_import, print_function
 
-from builtins import zip
-from builtins import range
-import os
-import re
-import glob
 import codecs
-import random as pyr
+import glob
+import os
 import os.path
+import random as pyr
+import re
+from builtins import range, zip
 
 import numpy as np
-import pylab
+#import pylab
 
-from . import paths
-from . import utils
+from . import paths, utils
+
+# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
+# See the LICENSE file for licensing terms (BSD-style).
 
 
 def infinite(sample):
@@ -28,6 +26,7 @@ def infinite(sample):
     """
     while True:
         yield sample
+
 
 def generator(source, nrepeats=int(1e9)):
     """Repeat data from a source (returned by a callable function).
@@ -42,6 +41,7 @@ def generator(source, nrepeats=int(1e9)):
         for sample in data:
             yield sample
 
+
 def check_ds_size(ds, size):
     """Helper function to check the size of a dataset.
 
@@ -51,8 +51,10 @@ def check_ds_size(ds, size):
     :param tuple size: lower and upper bounds of dataset size
 
     """
-    if isinstance(size, int): size = (size, size)
-    if not isinstance(ds, int): ds = len(ds)
+    if isinstance(size, int):
+        size = (size, size)
+    if not isinstance(ds, int):
+        ds = len(ds)
     if ds < size[0]:
         raise ValueError("dataset size is {}, should be in range {}; use size= in dataset iterator"
                          .format(ds, size))
@@ -60,9 +62,10 @@ def check_ds_size(ds, size):
         raise ValueError("dataset size is {}, should be in range {}; use size= in dataset iterator"
                          .format(ds, size))
 
+
 def dirtree(top, extensions, epochs=1,
-                shuffle=True, verbose=True, size=(100,1e9),
-                decode=True):
+            shuffle=True, verbose=True, size=(100, 1e9),
+            decode=True):
     """Iterate of training samples in a directory tree.
 
     :param top: top of the directory tree
@@ -77,15 +80,17 @@ def dirtree(top, extensions, epochs=1,
     if decode is True:
         decode = utils.autodecode
     elif decode is False:
-        decode = lambda x: x
+        def decode(x): return x
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     assert os.path.isdir(top)
     lines = list(paths.find_basenames(top, extensions))
-    if verbose: print("got {} samples".format(len(lines)))
+    if verbose:
+        print("got {} samples".format(len(lines)))
     check_ds_size(lines, size)
     for epoch in range(epochs):
-        if shuffle: pyr.shuffle(lines)
+        if shuffle:
+            pyr.shuffle(lines)
         for fname in lines:
             result = {}
             result["__path__"] = fname
@@ -97,8 +102,8 @@ def dirtree(top, extensions, epochs=1,
 
 
 def basenames(basenamefile, extensions, split=True, epochs=1,
-                shuffle=True, verbose=True, size=(100,1e9),
-                decode=True):
+              shuffle=True, verbose=True, size=(100, 1e9),
+              decode=True):
     """Iterate over training samples given as basenames and extensions.
 
     :param basenamefile: file containing one basename per line
@@ -114,17 +119,19 @@ def basenames(basenamefile, extensions, split=True, epochs=1,
     if decode is True:
         decode = utils.autodecode
     elif decode is False:
-        decode = lambda x: x
+        def decode(x): return x
     if isinstance(extensions, str):
         extensions = extensions.split(",")
     root = os.path.abspath(basenamefile)
     root = os.path.dirname(root)
     with open(basenamefile, "r") as stream:
         lines = [line.strip() for line in stream]
-    if verbose: print("got {} samples".format(len(lines)))
+    if verbose:
+        print("got {} samples".format(len(lines)))
     check_ds_size(lines, size)
     for epoch in range(epochs):
-        if shuffle: pyr.shuffle(lines)
+        if shuffle:
+            pyr.shuffle(lines)
         for fname in lines:
             if split:
                 fname, _ = os.path.splitext(fname)
@@ -137,8 +144,9 @@ def basenames(basenamefile, extensions, split=True, epochs=1,
             result = decode(result)
             yield result
 
+
 def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
-              epochs=1, shuffle=True, verbose=True, size=(100,1e9), decode=True):
+            epochs=1, shuffle=True, verbose=True, size=(100, 1e9), decode=True):
     """Iterate over training samples given by a tabular input.
 
     Columns whose names start with "_" are passed on directly as strings, all other
@@ -159,7 +167,7 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
     if decode is True:
         decode = utils.autodecode
     elif decode is False:
-        decode = lambda x: x
+        def decode(x): return x
     if isinstance(size, int):
         size = (size, size)
     if isinstance(colnames, str):
@@ -168,14 +176,17 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
     root = os.path.dirname(root)
     with codecs.open(table, "r", encoding) as stream:
         lines = stream.readlines()
-    if verbose: print("got {} samples".format(len(lines)))
+    if verbose:
+        print("got {} samples".format(len(lines)))
     check_ds_size(lines, size)
     nerrors = 0
     for epoch in range(epochs):
-        if shuffle: pyr.shuffle(lines)
+        if shuffle:
+            pyr.shuffle(lines)
         for line in lines:
             line = line.strip()
-            if line[0] == "#": continue
+            if line[0] == "#":
+                continue
             fnames = line.split(separator)
             if len(fnames) != len(colnames):
                 print("bad input: {}".format(line))
@@ -186,7 +197,7 @@ def tabular(table, colnames, separator="\t", maxerrors=100, encoding="utf-8",
             result = {}
             result["__epoch__"] = epoch
             for name, value in zip(colnames, fnames):
-                if name[0]=="_":
+                if name[0] == "_":
                     result[name] = value
                 else:
                     path = os.path.join(root, value)
@@ -211,11 +222,13 @@ def bookdir(bookdir, epochs=1, shuffle=True):
     :returns: iterator
 
     """
+    import pylab
     assert os.path.isdir(bookdir), bookdir
     fnames = glob.glob(bookdir + "/????/??????.gt.txt")
     fnames.sort()
     for epoch in range(epochs):
-        if shuffle: pyr.shuffle(fnames)
+        if shuffle:
+            pyr.shuffle(fnames)
         for fname in fnames:
             base = re.sub(".gt.txt$", "", fname)
             if not os.path.exists(base + ".dew.png"):

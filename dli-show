@@ -1,0 +1,75 @@
+#!/usr/bin/python3
+
+from __future__ import print_function
+
+import argparse
+import imp
+import time
+
+import dlinputs as dli
+import matplotlib
+import numpy as np
+import pylab
+from dlinputs import gopen, utils, zcom
+from pylab import *
+
+# matplotlib.use("GTK")
+
+rc("figure", figsize="12,6")
+rc("image", cmap="gray")
+
+parser = argparse.ArgumentParser("Display info about an input module.")
+parser.add_argument("input")
+parser.add_argument("-T", "--table", default="training")
+parser.add_argument("-s", "--skip", default=0, type=int)
+parser.add_argument("-b", "--bench", default=0, type=int)
+parser.add_argument("-B", "--batched", action="store_true")
+parser.add_argument("-d", "--display", default=None)
+parser.add_argument("--decoders", default=None)
+parser.add_argument("-O", "--order", default="BHWD")
+parser.add_argument("-a", "--autodecode", action="store_true")
+parser.add_argument("-D", "--source", default=None)
+parser.add_argument("-t", "--timeout", default=-1, type=float)
+args = parser.parse_args()
+
+if args.source is not None:
+    execfile(args.source)
+    source = make_source()
+else:
+    source = gopen.open_source(args.input)
+
+for i in range(args.skip):
+    next(source)
+
+sample = next(source)
+
+utils.print_sample(sample)
+
+if args.bench > 0:
+    print
+    start = time.time()
+    for i in range(args.bench):
+        next(source)
+    total = time.time() - start
+    print("sec/sample", total/args.bench)
+
+if args.display is not None:
+    ion()
+    keys = args.display.split(",")
+    for i in range(1000):
+        utils.print_sample(sample)
+        clf()
+        for j,key in enumerate(keys):
+            subplot(1, len(keys), j+1)
+            data = sample[key]
+            if data.ndim==3 and data.shape[2]==1:
+                data = data[:,:,0]
+            if args.batched:
+                data = data[0]
+            gca().set_title("Key: "+key)
+            imshow(data)
+        show()
+        waitforbuttonpress(timeout=args.timeout)
+        if not fignum_exists(1):
+            sys.exit(0)
+        sample = next(source)

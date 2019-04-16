@@ -1,11 +1,12 @@
 from __future__ import absolute_import
-# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
-# See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import range
 import multiprocessing as mp
+from builtins import range
 
 from . import loadable
+
+# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
+# See the LICENSE file for licensing terms (BSD-style).
 
 
 def _parallel_job(factory, args, queue, index):
@@ -34,11 +35,13 @@ def parallelize_input(factory, args=(), nthreads=4, maxsize=256):
         sample["__queue_size__"] = queue.qsize()
         yield sample
 
+
 def _factory(fname, method):
     """Helper function for parallel_load."""
     inputs = loadable.load_input(fname)
     f = getattr(inputs, method)
     return f()
+
 
 def parallel_load(fname, method="training_data", nthreads=4, maxsize=256):
     """Load the input pipeline and execute it in parallel.

@@ -1,0 +1,320 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>utils &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="sources" href="sources.html" />
+    <link rel="prev" title="tarrecords" href="tarrecords.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="utils">
+<span id="id1"></span><h1>utils<a class="headerlink" href="#utils" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-dlinputs.utils"></span><dl class="function">
+<dt id="dlinputs.utils.get_string_mapping">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">get_string_mapping</code><span class="sig-paren">(</span><em>kvp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#get_string_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.get_string_mapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary mapping strings to strings.</p>
+<p>This can take either a string of the form “name=value:name2=value2”
+or a dictionary containing all string keys and values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kvp</strong> – dictionary or string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.invert_mapping">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">invert_mapping</code><span class="sig-paren">(</span><em>kvp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#invert_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.invert_mapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inverts the mapping given by a dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kvp</strong> – mapping to be inverted</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">inverted mapping</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.make_gray">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">make_gray</code><span class="sig-paren">(</span><em>image</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#make_gray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.make_gray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts any image to a grayscale image by averaging.</p>
+<p>Knows about alpha channels etc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>image</strong> – rank 2 or 3 ndarray</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">rank 2 ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.make_rgb">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">make_rgb</code><span class="sig-paren">(</span><em>image</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#make_rgb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.make_rgb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts any image to an RGB image.</p>
+<p>Knows about alpha channels etc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>image</strong> – rank 2 or 3 ndarray</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">rank 3 ndarray of shape :,:,3</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.make_rgba">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">make_rgba</code><span class="sig-paren">(</span><em>image</em>, <em>alpha=255</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#make_rgba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.make_rgba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts any image to an RGBA image.</p>
+<p>Knows about alpha channels etc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> – rank 2 or 3 ndarray</li>
+<li><strong>alpha</strong> – default alpha value</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">rank 3 ndarray with shape :,:,4</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.pildumps">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">pildumps</code><span class="sig-paren">(</span><em>image</em>, <em>format='PNG'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#pildumps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.pildumps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compress an image using PIL and return it as a string.</p>
+<p>Can handle float or uint8 images.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>image</strong> – ndarray representing an image</li>
+<li><strong>format</strong> – compression format (“PNG” or “JPEG”)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.pilpng">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">pilpng</code><span class="sig-paren">(</span><em>image</em>, <em>format='PNG'</em><span class="sig-paren">)</span><a class="headerlink" href="#dlinputs.utils.pilpng" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compress an image using PIL and return it as a string.</p>
+<p>Can handle float or uint8 images.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>image</strong> – ndarray representing an image</li>
+<li><strong>format</strong> – compression format (“PNG” or “JPEG”)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.pilread">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">pilread</code><span class="sig-paren">(</span><em>stream</em>, <em>color='gray'</em>, <em>asfloat=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#pilread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.pilread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read an image from a stream using PIL.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>stream</strong> – stream to read the image from</li>
+<li><strong>color</strong> – “gray”, “rgb” or “rgba”.</li>
+<li><strong>asfloat</strong> – return float image instead of uint8 image</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.pilreads">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">pilreads</code><span class="sig-paren">(</span><em>data</em>, <em>color</em>, <em>asfloat=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#pilreads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.pilreads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read an image from a string or buffer using PIL.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> – data to be decoded</li>
+<li><strong>color</strong> – “gray”, “rgb” or “rgba”.</li>
+<li><strong>asfloat</strong> – return float instead of uint8</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.print_sample">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">print_sample</code><span class="sig-paren">(</span><em>sample</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#print_sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.print_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pretty print a standard sample.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sample</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – key value pairs used for training</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.samples_to_batch">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">samples_to_batch</code><span class="sig-paren">(</span><em>samples</em>, <em>combine_tensors=True</em>, <em>expand=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#samples_to_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.samples_to_batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a collection of samples (dictionaries) and create a batch.</p>
+<p>If <cite>tensors</cite> is True, <cite>ndarray</cite> objects are combined into
+tensor batches.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – list of samples</li>
+<li><strong>tensors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – whether to turn lists of ndarrays into a single ndarray</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">single sample consisting of a batch</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.utils.samples_to_batch_expanded">
+<code class="descclassname">dlinputs.utils.</code><code class="descname">samples_to_batch_expanded</code><span class="sig-paren">(</span><em>samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/utils.html#samples_to_batch_expanded"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.utils.samples_to_batch_expanded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a collection of samples (dictionaries) and create a batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – list of samples</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">single sample consisting of a batch</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="api.html">dlinputs API Documentation:</a><ul>
+      <li>Previous: <a href="tarrecords.html" title="previous chapter">tarrecords</a></li>
+      <li>Next: <a href="sources.html" title="next chapter">sources</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

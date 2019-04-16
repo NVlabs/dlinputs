@@ -176,11 +176,23 @@ Command Line Tools
 
 There are a few simple command line tools:
 
-- ``run-tests``: run tests
-- ``show-input``: iterate over sharded tar files or network inputs and print/display
-- ``tarshards``: create tar shards from a list of files
-- ``transform-input``: simple utility for transforming sharded tar files
-- ``training-test-split``: split data into training/test samples
+- ``run-tests``: run tests in notebooks
+- ``pytest``: run Python 2 tests (in `./test`)
+- ``pytest-3``: run Python 3 tests (in `./test`)
+- ``dli-index``: output keys (and possibly other fields) from shard
+- ``dli-lsmodel``: plot training graphs for models stored in <ntrain>-<error>.pyd convention
+- ``dli-map``: run command line programs over each sample
+- ``dli-mkshards``: split an on-disk dataset into a set of tar shards
+- ``dli-shardindex``: generate a shard index in JSON format
+- ``dli-show``: show the contents of shards/inputs
+- ``dli-testsplit``: split a tar file into training/test set data
+- ``dli-transform``: transform a sample with Python expressions
+
+E.g.::
+
+    $ source="http://storage.googleapis.com/lpr-ocr/uw3-dew-training.tgz"
+    $ dli-index $source -e 'sshape(_["png"])'
+    $ dli-show $source -d png
 
 Planned Additions
 =================

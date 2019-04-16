@@ -1,13 +1,11 @@
 from __future__ import print_function
-# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
-# See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import str
-from builtins import zip
-from builtins import range
-from builtins import object
 import os
 import sqlite3
+from builtins import object, range, str, zip
+
+# Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
+# See the LICENSE file for licensing terms (BSD-style).
 
 
 def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False):
@@ -29,7 +27,8 @@ def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
         c = db.cursor()
         for row in c.execute(sql):
             cols = [x[0] for x in c.description]
-            row = [str(x) for x in row]
+            row = [x for x in row]
+            print(row)
             sample = {k: v for k, v in zip(cols, row)}
             sample["__epoch__"] = epoch
             yield sample
@@ -37,7 +36,8 @@ def sqlitedb(dbfile, table="train", epochs=1, cols="*", extra="", verbose=False)
         db.close()
 
 
-sqltypes = None # FIXME
+sqltypes = None  # FIXME
+
 
 class SqliteWriter(object):
     """A quick and simple way of writing datasets to sqlite3 files.

@@ -1,0 +1,6 @@
+future
+jupyter
+numpy
+matplotlib
+scipy
+msgpack

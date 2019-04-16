@@ -1,27 +1,30 @@
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, print_function
+
+import collections
+import functools as ft
+import io
+import re
+import sys
+from builtins import range
+
+import numpy as np
+import PIL
+import PIL.Image
+import six
+from future import standard_library
+from past.utils import old_div
+
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from future import standard_library
 standard_library.install_aliases()
-from builtins import range
-from past.utils import old_div
-import re
-import io
-import six
-import sys
-import functools as ft
-import collections
 
-import PIL
-import numpy as np
-import PIL.Image
 
-if sys.version_info[0]==3:
-    from builtins import str    
+if sys.version_info[0] == 3:
+    from builtins import str
     unicode = str
     buffer = str
+
 
 def print_sample(sample):
     """Pretty print a standard sample.
@@ -44,6 +47,7 @@ def print_sample(sample):
         else:
             print(type(v), repr(v)[:60])
 
+
 def type_info(x, use_size=True):
     if isinstance(x, np.ndarray):
         if use_size:
@@ -53,13 +57,16 @@ def type_info(x, use_size=True):
     else:
         return repr(type(x))
 
+
 def summarize_samples(source, use_size=True):
     counter = collections.Counter()
     for sample in source:
-        descriptor = [(k, type_info(v, use_size)) for k, v in list(sample.items())]
+        descriptor = [(k, type_info(v, use_size))
+                      for k, v in list(sample.items())]
         descriptor = tuple(sorted(descriptor))
         counter.update([descriptor])
     return counter
+
 
 def make_gray(image):
     """Converts any image to a grayscale image by averaging.
@@ -70,6 +77,7 @@ def make_gray(image):
     :returns: rank 2 ndarray
 
     """
+    assert isinstance(image, np.ndarray), type(image)
     if image.ndim == 2:
         return image
     assert image.ndim == 3
@@ -86,6 +94,7 @@ def make_rgb(image):
     :returns: rank 3 ndarray of shape :,:,3
 
     """
+    assert isinstance(image, np.ndarray), type(image)
     if image.ndim == 2:
         image = image.reshape(image.shape + (1,))
     assert image.ndim == 3
@@ -107,6 +116,7 @@ def make_rgba(image, alpha=255):
     :returns: rank 3 ndarray with shape :,:,4
 
     """
+    assert isinstance(image, np.ndarray), type(image)
     if image.ndim == 2:
         image = image.reshape(image.shape + (1,))
     assert image.ndim == 3
@@ -123,6 +133,7 @@ def make_rgba(image, alpha=255):
     elif image.shape[2] == 4:
         return image
 
+
 def invert_mapping(kvp):
     """Inverts the mapping given by a dictionary.
 
@@ -132,6 +143,7 @@ def invert_mapping(kvp):
 
     """
     return {v: k for k, v in list(kvp.items())}
+
 
 def get_string_mapping(kvp):
     """Returns a dictionary mapping strings to strings.
@@ -165,8 +177,12 @@ def pilread(stream, color="gray", asfloat=True):
     :param asfloat: return float image instead of uint8 image
 
     """
+    if color[-1] == "8":
+        asfloat = False
+        color = color[:-1]
     image = PIL.Image.open(stream)
-    result = np.array(image, 'uint8')
+    result = np.asarray(image)
+    assert result.dtype == np.uint8, image
     if color is None:
         pass
     elif color == "gray":
@@ -178,8 +194,9 @@ def pilread(stream, color="gray", asfloat=True):
     else:
         raise ValueError("{}: unknown color space".format(color))
     if asfloat:
-        result = old_div(result.astype("f"), 255.0)
+        result = result.astype("f") / 255.0
     return result
+
 
 def pilreads(data, color, asfloat=True):
     """Read an image from a string or buffer using PIL.
@@ -196,6 +213,7 @@ def pilreads(data, color, asfloat=True):
 pilgray = ft.partial(pilreads, color="gray")
 pilrgb = ft.partial(pilreads, color="rgb")
 
+
 def pildumps(image, format="PNG"):
     """Compress an image using PIL and return it as a string.
 
@@ -205,7 +223,7 @@ def pildumps(image, format="PNG"):
     :param format: compression format ("PNG" or "JPEG")
 
     """
-    # BytesIO change very simple. You are creating an image, saving it as bytes to resut which you'll 
+    # BytesIO change very simple. You are creating an image, saving it as bytes to resut which you'll
     # write to disk as Bytes.
     result = six.BytesIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
@@ -218,73 +236,77 @@ def pildumps(image, format="PNG"):
 
 pilpng = pildumps
 piljpg = ft.partial(pildumps, format="JPEG")
+format_table = {"png": "PNG-PIL", "jpg": "JPEG-PIL", "jpeg": "JPEG-PIL"}
 
-def autodecode1(data, tname):
+
+def autodecode1(data, tname, imagetype="rgb"):
     # Unicode change. If it is alread an unicode string, no decoding (Byte->Unicode req)
     if isinstance(data, (int, float, unicode)):
         return data
-    if sys.version_info[0]==2:
+    if sys.version_info[0] == 2:
         # Then, it has to be byte string, which is also of type str
         assert isinstance(data, (str, buffer)), type(data)
     else:
         # In Python 3, it has to be a bytes string at this point. You've checked if it is normal string above (unicode check)
-        assert isinstance(data, (bytes)), type(data)
+        assert isinstance(data, bytes), type(data)
+    assert isinstance(tname, str), tname
     extension = re.sub(r".*\.", "", tname).lower()
     if extension in ["cls", "cls2", "class", "count", "index", "inx", "id"]:
         try:
             return int(data)
         except ValueError:
             return data
-    if extension in ["png", "jpg", "jpeg"]:
-        import numpy as np
-        # BytesIO change. You are reading from file as Bytes
-        stream = six.BytesIO(data)
-        result = None
-        try:
-            import imageio
-            result = imageio.imread(stream)
-            # FIXME: workaround for unpredictable imageio types
-            if result.dtype == np.dtype('float64') and np.amax(result) > 1.0:
-                result /= 255.0
-            if result.dtype == np.dtype('float64'):
-                result = np.array(result, 'f')
-            assert isinstance(result, np.ndarray), type(result)
-            assert result.dtype in [np.dtype('f'), np.dtype('uint8')], result.dtype
-        except Exception as exn1:
-            pass
-        if result is None:
-            result = (exn1, data)
-        elif result.dtype == np.dtype("uint8"):
-            result = np.array(result, 'f')
-            result /= 255.0
-        return result
-    if extension in ["json", "jsn"]:
+    elif extension in ["png", "jpg", "jpeg", "img", "image"]:
+        if imagetype == "PIL":
+            img = PIL.Image.open(six.BytesIO(data))
+            img.load()
+            return img
+        else:
+            return pilreads(data, color=imagetype)
+    elif extension in ["json", "jsn"]:
         import simplejson
         return simplejson.loads(data)
-    if extension in ["pyd", "pickle"]:
+    elif extension in ["pyd", "pickle"]:
         import pickle
         return pickle.loads(data)
-    if extension in ["mp", "msgpack", "msg"]:
+    elif extension in ["mp", "msgpack", "msg"]:
         import msgpack
         return msgpack.unpackb(data)
-    if extension in ["cls", "cls2", "index", "inx"]:
+    elif extension in ["cls", "cls2", "index", "inx"]:
         return int(str(data))
     return data
 
-def autodecode(sample):
+
+def autodecode(sample, imagetype="rgb"):
+    """Autodecode a sample, using extensions as guide for how to decode.
+
+    :param sample: dictionary representing sample
+    :param imagetype: format for images (gray, rgb, rgba, PIL; rgb8=8 bit)
+    """
     result = {}
     for k, v in list(sample.items()):
         if k[0] == "_":
+            if isinstance(v, bytes):
+                v = v.decode('utf-8')
             result[k] = v
             continue
         assert v is not None, (k, sample)
-        result[k] = autodecode1(v, k)
+        result[k] = autodecode1(v, k, imagetype=imagetype)
     return result
+
+
+def bytestr(data):
+    if isinstance(data, bytes):
+        return data
+    if isinstance(data, str):
+        return data.encode("ascii")
+    return str(data).encode("ascii")
+
 
 def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
     if isinstance(data, (int, float)):
-        return str(data)
+        return bytestr(data)
     elif extension in ["png", "jpg", "jpeg"]:
         import imageio
         if isinstance(data, np.ndarray):
@@ -295,7 +317,8 @@ def autoencode1(data, tname):
             elif data.dtype in [np.dtype("uint8")]:
                 pass
             else:
-                raise ValueError("{}: unknown image array dtype".format(data.dtype))
+                raise ValueError(
+                    "{}: unknown image array dtype".format(data.dtype))
         else:
             raise ValueError("{}: unknown image type".format(type(data)))
         # BytesIO change, very simple. You are encoding. So, if unicode string, you want to convert it to Bytes string.
@@ -306,20 +329,24 @@ def autoencode1(data, tname):
         return result
     if extension in ["json", "jsn"]:
         import simplejson
-        return simplejson.dumps(data)
+        return bytestr(simplejson.dumps(data))
     if extension in ["pyd", "pickle"]:
         import pickle
         return pickle.dumps(data)
     if extension in ["mp", "msgpack", "msg"]:
         import msgpack
         return msgpack.packb(data)
+    if False and sys.version_info[0] == 3:
+        if isinstance(data, str):
+            data = data.encode("utf-8")
     return data
+
 
 def autoencode(sample):
     return {k: autoencode1(v, k) for k, v in list(sample.items())}
 
 
-def samples_to_batch(samples, combine_tensors=True, expand=False):
+def samples_to_batch(samples, combine_tensors=True, combine_scalars=True, expand=False):
     """Take a collection of samples (dictionaries) and create a batch.
 
     If `tensors` is True, `ndarray` objects are combined into
@@ -344,7 +371,13 @@ def samples_to_batch(samples, combine_tensors=True, expand=False):
             sizes = {a.shape for a in result[k]}
             assert len(sizes) == 1, sizes
             result[k] = np.array(result[k])
+    if combine_scalars == True:
+        scalar_names = [x for x in list(result.keys())
+                        if isinstance(result[x][0], (int, float))]
+        for k in scalar_names:
+            result[k] = np.array(result[k])
     return result
+
 
 def samples_to_batch_expanded(samples):
     """Take a collection of samples (dictionaries) and create a batch.
@@ -366,12 +399,13 @@ def samples_to_batch_expanded(samples):
             size = tuple(np.maximum(size, r.shape))
         output = np.zeros((len(result[k]),) + size)
         for i, t in enumerate(result[k]):
-            sub = [i] + [slice(0, x) for x in t.shape]
+            sub = tuple([i] + [slice(0, x) for x in t.shape])
             output[sub] = t
         result[k] = output
     return result
 
+
 def metadict(sample, data={}):
-    result = {k: v for k, v in list(sample.items()) if k[0]=="_"}
+    result = {k: v for k, v in list(sample.items()) if k[0] == "_"}
     result.update(data)
     return result

@@ -12,6 +12,7 @@ from . import sources
 from . import sqlitedb
 from . import tarrecords
 from . import utils
+from . import dataset
 
 inputs = localimport.LocalImport(filters)
 __enter__ = inputs.__enter__

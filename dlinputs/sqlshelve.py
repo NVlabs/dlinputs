@@ -2,8 +2,9 @@
 # See the LICENSE file for licensing terms (BSD-style).
 
 import os
-import sqlite3
 import pickle
+import sqlite3
+
 
 class SqlShelf(object):
     """A shelve-compatible persistent dictionary based on sqlite3"""
@@ -30,12 +31,12 @@ class SqlShelf(object):
         return pickle.dumps(value, self.protocol)
 
     def value_unmap(self, value):
-        value = str(value)
         return pickle.loads(value)
 
     def get(self, key, default=None):
         key = self.key_map(key)
-        self.c.execute("select value from {table} where key=?".format(table=self.table), (key,))
+        self.c.execute("select value from {table} where key=?".format(
+            table=self.table), (key,))
         for result in self.c:
             return self.value_unmap(result[0])
         return default
@@ -51,7 +52,8 @@ class SqlShelf(object):
 
     def itkeys(self):
         it = self.db.cursor()
-        it.execute("select key from {table} order by rowid".format(table=self.table))
+        it.execute("select key from {table} order by rowid".format(
+            table=self.table))
         for row in it:
             yield row[0]
         del it
@@ -61,7 +63,8 @@ class SqlShelf(object):
 
     def itvalues(self):
         it = self.db.cursor()
-        it.execute("select value from {table} order by rowid".format(table=self.table))
+        it.execute("select value from {table} order by rowid".format(
+            table=self.table))
         for row in it:
             yield self.value_unmap(row[0])
         del it
@@ -71,7 +74,8 @@ class SqlShelf(object):
 
     def items(self):
         it = self.db.cursor()
-        it.execute("select key, value from {table} order by rowid".format(table=self.table))
+        it.execute("select key, value from {table} order by rowid".format(
+            table=self.table))
         for row in it:
             yield row[0], self.value_unmap(row[1])
         del it
@@ -79,24 +83,30 @@ class SqlShelf(object):
     def __getitem__(self, key):
         key = self.key_map(key)
         result = self.get(key, self)
-        if result==self: raise KeyError(key)
+        if result == self:
+            raise KeyError(key)
         return result
 
     def __setitem__(self, key, value):
         key = self.key_map(key)
         value = self.value_map(value)
-        self.c.execute("insert or replace into {table} values (?, ?)".format(table=self.table), (key, buffer(value)))
-        if self.synchronous: self.sync()
+        self.c.execute("insert or replace into {table} values (?, ?)".format(
+            table=self.table), (key, memoryview(value)))
+        if self.synchronous:
+            self.sync()
 
     def __delitem__(self, key):
         key = self.key_map(key)
-        self.c.execute("delete from {table} where key=?".format(table=self.table), (key,))
-        if self.synchronous: self.sync()
+        self.c.execute("delete from {table} where key=?".format(
+            table=self.table), (key,))
+        if self.synchronous:
+            self.sync()
 
     def __contains__(self, key):
         key = self.key_map(key)
         result = self.get(key, self)
         return result != self
+
 
 def open(*args, **kw):
     return SqlShelf(*args, **kw)

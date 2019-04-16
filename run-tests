@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
-for nbtest in test-*.ipynb; do
+(cd notebooks && (test -L testdata || ln -s ../testdata .))
+for nbtest in notebooks/test-*.ipynb; do
     jupyter nbconvert --execute --to markdown $nbtest
 done

@@ -1,17 +1,17 @@
 #!/usr/bin/python
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-from past.utils import old_div
-import time
+from __future__ import absolute_import, division, print_function
+
 import argparse
+import time
+
+from past.utils import old_div
 
 from . import zcom
 
 
 def aggregator(input, output, report=0):
-    if report>0:
+    if report > 0:
         print("aggregator", input, "->", output)
     while True:
         try:
@@ -19,7 +19,7 @@ def aggregator(input, output, report=0):
             outputs = zcom.Connection(output, pack=False, encode=False)
             count = 0
             while True:
-                if report>0 and count%report==0:
+                if report > 0 and count % report == 0:
                     print("{:6d} {:6.1f} samples/s {:8.1f} MB/s".format(
                         count, outputs.stats.recent_rate(), old_div(outputs.stats.recent_throughput(), 1e6)))
                 sample = inputs.recv()
@@ -29,6 +29,7 @@ def aggregator(input, output, report=0):
             print(e)
             time.sleep(1.0)
             continue
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Display info about an input module.")

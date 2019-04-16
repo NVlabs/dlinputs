@@ -1,8 +1,8 @@
 # Copyright (c) 2017 NVIDIA CORPORATION. All rights reserved.
 # See the LICENSE file for licensing terms (BSD-style).
 
-from builtins import chr
-from builtins import object
+from builtins import chr, object
+
 import numpy as np
 import scipy.ndimage as ndi
 from scipy.ndimage import measurements
@@ -21,14 +21,15 @@ def intlist_to_hotonelist(cs, nc, allow_bad_classes=True):
     :returns: ndarray representing a hotone encoding
 
     """
-    result = np.zeros((2*len(cs)+1,nc))
-    for i,j in enumerate(cs):
-        result[2*i,0] = 1.0
+    result = np.zeros((2*len(cs)+1, nc))
+    for i, j in enumerate(cs):
+        result[2*i, 0] = 1.0
         if allow_bad_classes:
-            j = min(j, nc-1) # FIX for bad inputs
-        result[2*i+1,j] = 1.0
-    result[-1,0] = 1.0
+            j = min(j, nc-1)  # FIX for bad inputs
+        result[2*i+1, j] = 1.0
+    result[-1, 0] = 1.0
     return result
+
 
 def hotonelist_to_intlist0(outputs, threshold=0.7, pos=0):
     """Helper function for LSTM-based OCR: decode LSTM outputs.
@@ -46,12 +47,16 @@ def hotonelist_to_intlist0(outputs, threshold=0.7, pos=0):
     :returns: decoded hot one outputs
 
     """
-    labels,n = measurements.label(outputs[:,0]<threshold)
-    mask = np.tile(labels.reshape(-1,1),(1,outputs.shape[1]))
-    maxima = measurements.maximum_position(outputs,mask,np.arange(1,np.amax(mask)+1))
-    if pos==1: return maxima # include character position
-    if pos==2: return [(r, c, outputs[r,c]) for (r,c) in maxima] # include character probabilities
-    return [c for (r,c) in maxima] # only recognized characters
+    labels, n = measurements.label(outputs[:, 0] < threshold)
+    mask = np.tile(labels.reshape(-1, 1), (1, outputs.shape[1]))
+    maxima = measurements.maximum_position(
+        outputs, mask, np.arange(1, np.amax(mask)+1))
+    if pos == 1:
+        return maxima  # include character position
+    if pos == 2:
+        # include character probabilities
+        return [(r, c, outputs[r, c]) for (r, c) in maxima]
+    return [c for (r, c) in maxima]  # only recognized characters
 
 
 def hotonelist_to_intlist(outputs, threshold=0.7, pos=0, esigma=0.0, lmin=0, csigma=0.0):
@@ -74,13 +79,18 @@ def hotonelist_to_intlist(outputs, threshold=0.7, pos=0, esigma=0.0, lmin=0, csi
     epsilons = ndi.gaussian_filter(epsilons, esigma)
     epsilons /= np.amax(epsilons)
     epsilons = ndi.minimum_filter(epsilons, lmin)
-    labels, n = measurements.label(epsilons<threshold)
+    labels, n = measurements.label(epsilons < threshold)
     smoothed_outputs = ndi.gaussian_filter(outputs, csigma)
-    mask = np.tile(labels.reshape(-1,1), (1,outputs.shape[1]))
-    maxima = measurements.maximum_position(outputs, mask, np.arange(1,np.amax(mask)+1))
-    if pos==1: return maxima # include character position
-    if pos==2: return [(r, c, outputs[r,c]) for (r,c) in maxima] # include character probabilities
-    return [c for (r,c) in maxima] # only recognized characters
+    mask = np.tile(labels.reshape(-1, 1), (1, outputs.shape[1]))
+    maxima = measurements.maximum_position(
+        outputs, mask, np.arange(1, np.amax(mask)+1))
+    if pos == 1:
+        return maxima  # include character position
+    if pos == 2:
+        # include character probabilities
+        return [(r, c, outputs[r, c]) for (r, c) in maxima]
+    return [c for (r, c) in maxima]  # only recognized characters
+
 
 def seq_makebatch(images, for_target=False):
     """Given a list of LD sequences, make a BLD batch tensor.
@@ -94,7 +104,7 @@ def seq_makebatch(images, for_target=False):
     """
     assert isinstance(images, list), type(images)
     assert isinstance(images[0], np.ndarray), images
-    if images[0].ndim==2:
+    if images[0].ndim == 2:
         l, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
         ibatch = np.zeros([len(images), int(l), int(d)])
         if for_target:
@@ -103,7 +113,7 @@ def seq_makebatch(images, for_target=False):
             l, d = image.shape
             ibatch[i, :l, :d] = image
         return ibatch
-    elif images[0].ndim==3:
+    elif images[0].ndim == 3:
         assert not for_target
         h, w, d = np.amax(np.array([img.shape for img in images], 'i'), axis=0)
         ibatch = np.zeros([len(images), h, w, d])
@@ -112,38 +122,51 @@ def seq_makebatch(images, for_target=False):
             ibatch[i, :h, :w, :d] = image
         return ibatch
 
+
 class GenericCodec(object):
     def __init__(self):
         self.params = dict(threshold=0.7)
+
     def encode_tensor(self, s):
         codes = [self.encode_char(c) for c in s]
         return intlist_to_hotonelist(codes, self.size())
+
     def decode_tensor(self, a, pos=0):
         codes = hotonelist_to_intlist(a, pos=pos, **self.params)
-        if pos==0:
+        if pos == 0:
             return "".join([self.decode_char(c) for c in codes])
-        elif pos==1:
+        elif pos == 1:
             return [(r, self.decode_char(c)) for r, c in codes]
-        elif pos==2:
+        elif pos == 2:
             return [(r, self.decode_char(c), p) for r, c, p in codes]
+
     def encode_batch(self, batch):
         return seq_makebatch([self.encode_tensor(s) for s in batch], for_target=True)
+
     def decode_batch(self, a, threshold=0.7, pos=0):
-        return  [self.decode_tensor(x, pos=pos) for x in a]
+        return [self.decode_tensor(x, pos=pos) for x in a]
+
 
 class AsciiCodec(GenericCodec):
     """An example of a codec, used for turning strings into tensors."""
+
     def __init__(self):
         GenericCodec.__init__(self)
+
     def encode_char(self, c):
-        if c=="": return 0
+        if c == "":
+            return 0
         return max(1, ord(c) - ord(" ") + 1)
+
     def decode_char(self, c):
-        if c==0: return ""
+        if c == 0:
+            return ""
         return chr(ord(" ") + c - 1)
+
     def size(self):
         """The number of classes. Zero is always reserved for the empty class.
         """
         return 97
+
 
 ascii_codec = AsciiCodec()

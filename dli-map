@@ -1,0 +1,146 @@
+#!/usr/bin/python3
+
+from __future__ import print_function
+
+import argparse
+import atexit
+import glob
+import imp
+import os
+import shutil
+import sys
+import time
+from itertools import groupby
+from multiprocessing import Pool
+
+import dlinputs as dli
+import matplotlib
+import numpy as np
+import pylab
+import simplejson
+from dlinputs import gopen, tarrecords, utils, zcom
+from pylab import *
+
+parser = argparse.ArgumentParser("Run a command line tool over all samples.")
+parser.add_argument("input")
+parser.add_argument("-v", "--verbose", action="store_true")
+parser.add_argument("-c", "--command", default="sum *")
+parser.add_argument("-w", "--working_dir", default="__{pid}__")
+parser.add_argument("-b", "--base", default="sample")
+parser.add_argument("-o", "--output", default=None)
+parser.add_argument("-f", "--fields", default=None)
+parser.add_argument("-F", "--fieldmode", default="ignore")
+parser.add_argument("-p", "--parallel", default=0, type=int)
+parser.add_argument("--separator", default="")
+args = parser.parse_args()
+
+args.working_dir = args.working_dir.format(pid=str(os.getpid()))
+
+if args.fields is not None:
+    fields = set(f for f in args.fields.split(","))
+else:
+    fields = None
+
+class ChDir(object):
+    def __init__(self, path):
+        self.old_dir = os.getcwd()
+        self.new_dir = path
+    def __enter__(self):
+        os.chdir(self.new_dir)
+    def __exit__(self, *args):
+        os.chdir(self.old_dir)
+
+def cleanup():
+    shutil.rmtree(args.working_dir)
+
+atexit.register(cleanup)
+
+inputs = gopen.sharditerator_once(args.input, decode=False)
+
+def filebase(fname):
+    return re.sub(r"\.[^/]*$", "", fname)
+
+def fullext(fname):
+    return re.sub(r"(.*/)*.*?\.", "", fname)
+
+def regquote(s):
+   return re.sub(r'([][.^$*+])', r'\\\1', s)
+
+def read_binary(fname):
+    with open(fname, "rb") as stream:
+        return stream.read()
+
+def write_binary(fname, data):
+    with open(fname, "wb") as stream:
+        if isinstance(data, str): data = data.encode("utf-8")
+        stream.write(data)
+
+def proc_sample(sample, index=0, fields=None, separator="", fieldmode="ignore"):
+    if fields is not None:
+        if fieldmode == "ignore":
+            sample = {k: v for k, v in sample.items() if k in fields or k[0]=="_"}
+        elif fieldmode == "error":
+            sample = {k: sample[v] for k in fields}
+    old_sample = sample
+    dirname = os.path.join(args.working_dir, "_%08d" % index)
+    os.mkdir(dirname)
+    with ChDir(dirname):
+        for k, v in sample.items():
+            fname = args.base + "." + k if k[0]!="_" else k
+            write_binary(fname, v)
+        status = os.system(args.command)
+        assert status == 0, status
+        files = sorted([fname for fname in glob.glob("*.*") if os.path.isfile(fname)])
+        bases = sorted(set(map(filebase, files)))
+        samples = []
+        for base in bases:
+            matching = [fname for fname in files if fname.startswith(base+".")]
+            extra_key = base
+            if extra_key.startswith(args.base):
+                extra_key = extra_key[len(args.base):]
+            sample = {}
+            if extra_key != "":
+                sample["__key__"] = old_sample["__key__"] + args.separator + extra_key
+            else:
+                sample["__key__"] = old_sample["__key__"]
+            for fname in matching:
+                assert fname.startswith(base)
+                key = fullext(fname)
+                value = read_binary(fname)
+                sample[key] = value
+            samples.append(sample)
+    shutil.rmtree(dirname)
+    return samples
+
+def proc_sample1(arg):
+    i, sample = arg
+    return proc_sample(sample, separator=args.separator, index=i, fields=fields, fieldmode=args.fieldmode)
+
+assert not os.path.exists(args.working_dir)
+os.mkdir(args.working_dir)
+
+sink = None
+if args.output is not None:
+    sink = gopen.open_sink(args.output, encode=False)
+
+def handle_result(new_samples):
+    global sink
+    if args.verbose:
+        for s in new_samples:
+            keyinfo = [k for k in s.keys() if k[0]!="_"]
+            print(s.get("__key__"), " ".join(keyinfo))
+    if sink is not None:
+        for s in new_samples:
+            sink.write(s)
+
+if args.parallel==0:
+    for i, sample in enumerate(inputs):
+        new_samples = proc_sample1((i, sample))
+        handle_result(new_samples)
+elif args.parallel>0:
+    with Pool(processes=args.parallel) as pool:
+        for new_samples in pool.imap_unordered(proc_sample1, enumerate(inputs)):
+            handle_result(new_samples)
+
+if sink is not None:
+    sink.close()

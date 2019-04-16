@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
-from future import standard_library
-standard_library.install_aliases()
 import urllib.parse
+
+from future import standard_library
+
+standard_library.install_aliases()
+
 
 def _convert(x):
     """Generically convert strings to numbers.
@@ -20,6 +23,7 @@ def _convert(x):
         except ValueError:
             return x
 
+
 def get_params(fname, separator=":"):
     """Splits a file name into the actual file and optional parameters.
 
@@ -36,4 +40,3 @@ def get_params(fname, separator=":"):
     params = [p.split("=") for p in params]
     params = {k: _convert(v) for k, v in params}
     return fname, params
-

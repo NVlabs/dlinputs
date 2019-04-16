@@ -1,0 +1,566 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>filters &#8212; dlinputs 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="paths" href="paths.html" />
+    <link rel="prev" title="sources" href="sources.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="filters">
+<span id="id1"></span><h1>filters<a class="headerlink" href="#filters" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-dlinputs.filters"></span><dl class="function">
+<dt id="dlinputs.filters.batched">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">batched</code><span class="sig-paren">(</span><em>data</em>, <em>batchsize=20</em>, <em>combine_tensors=True</em>, <em>partial=True</em>, <em>expand=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#batched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.batched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create batches of the given size.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>batchsize</strong> – target batch size</li>
+<li><strong>tensors</strong> – automatically batch lists of ndarrays into ndarrays</li>
+<li><strong>partial</strong> – return partial batches</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.batchedbuckets">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">batchedbuckets</code><span class="sig-paren">(</span><em>data</em>, <em>batchsize=5</em>, <em>scale=1.8</em>, <em>seqkey='image'</em>, <em>batchdim=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#batchedbuckets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.batchedbuckets" title="Permalink to this definition">¶</a></dt>
+<dd><p>List-batch input samples into similar sized batches.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator of samples</li>
+<li><strong>batchsize</strong> – target batch size</li>
+<li><strong>scale</strong> – spacing of bucket sizes</li>
+<li><strong>seqkey</strong> – input key to use for batching</li>
+<li><strong>batchdim</strong> – input dimension to use for bucketing</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">batches consisting of lists of similar sequence lengths</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.batchinfo">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">batchinfo</code><span class="sig-paren">(</span><em>data</em>, <em>n=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#batchinfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.batchinfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sink that provides info about samples/batches.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>n</strong> – number of samples to print info for</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.compose">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">compose</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#compose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.compose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compose a sequence of functions (left-to-right)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.compose2">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">compose2</code><span class="sig-paren">(</span><em>f</em>, <em>g</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#compose2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.compose2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compose two functions, g(f(x))</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.concat">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">concat</code><span class="sig-paren">(</span><em>sources</em>, <em>maxepoch=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.concat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate multiple sources, usually for test sets.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sources</strong> – list of iterators</li>
+<li><strong>maxepochs</strong> – number of epochs (default=1)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.curried">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">curried</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#curried"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.curried" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator for currying functions in the first argument.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.decode">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">decode</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automatically decode data items based on key extension.</p>
+<p>Known extensions:
+- png, jpg, jpeg: images
+- json: JSON
+- pyd, pickle: Python pickles
+- mp: Messagepack</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.diskshuffle">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">diskshuffle</code><span class="sig-paren">(</span><em>data</em>, <em>bufsize=1000</em>, <em>initial=100</em>, <em>fname=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#diskshuffle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.diskshuffle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shuffle the data in the stream.</p>
+<p>This uses a buffer of size <cite>bufsize</cite>. Shuffling at
+startup is less random; this is traded off against
+yielding samples quickly. Data is buffered on disk
+in a dbm-style database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>bufsize</strong> – buffer size for shuffling</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.distort">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">distort</code><span class="sig-paren">(</span><em>sample, distortions=[(5.0, 5)], keys=['image']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#distort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.distort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply distortions to images in sample.</p>
+<p>:param sample
+:param distortions: distortion parameters
+:param keys: fields to distort
+:returns: distorted sample</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.encode">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">encode</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automatically encode data items based on key extension.</p>
+<p>Known extensions:
+- png, jpg, jpeg: images
+- json: JSON
+- pyd, pickle: Python pickles
+- mp: Messagepack</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.grep">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">grep</code><span class="sig-paren">(</span><em>source</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#grep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.grep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select samples from the source that match given patterns.</p>
+<p>Arguments are of the form <cite>fieldname=”regex”</cite>.
+If <cite>_not=True</cite>, samples matching the pattern are rejected.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> – iterator</li>
+<li><strong>kw</strong> – fieldname=”regex” entries</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.info">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">info</code><span class="sig-paren">(</span><em>data</em>, <em>every=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print info about samples.</p>
+<p>By default only prints the first sample, but with
+<cite>every&gt;0</cite>, prints <cite>every</cite> samples.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – sample iterator</li>
+<li><strong>every</strong> – how often to print information</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.map">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">map</code><span class="sig-paren">(</span><em>data</em>, <em>error_missing=True</em>, <em>errors_are_fatal=False</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map the fields in each sample using name=function arguments.</p>
+<p>Unmentioned fields are left alone.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>kw</strong> – name=function pairs, applying function to each sample field</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.maybe_index">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">maybe_index</code><span class="sig-paren">(</span><em>v</em>, <em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#maybe_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.maybe_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index if indexable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>v</strong> – object to be indexed</li>
+<li><strong>i</strong> – index</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">v[i] if that succeeds, otherwise v</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.merge">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">merge</code><span class="sig-paren">(</span><em>sources</em>, <em>weights=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge samples from multiple sources into a single iterator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sources</strong> – list of iterators</li>
+<li><strong>weights</strong> – weights for sampling</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.patched">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">patched</code><span class="sig-paren">(</span><em>data</em>, <em>patches</em>, <em>maxpatches=10000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#patched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.patched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch a dataset with another dataset.</p>
+<p>Patches are stored in memory; for larger patch sizes, use diskpatched.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patches</strong> – iterator yielding patch samples</li>
+<li><strong>maxpatches</strong> – maximum number of patches to load</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.pipeline">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">pipeline</code><span class="sig-paren">(</span><em>source</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write an input pipeline; first argument is source, rest are filters.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.ren">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">ren</code><span class="sig-paren">(</span><em>data</em>, <em>kw</em>, <em>keep_all=False</em>, <em>keep_meta=True</em>, <em>skip_missing=False</em>, <em>error_missing=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#ren"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.ren" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rename and select fields using new_name=”old_name” keyword arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>keep_all</strong> – keep all fields, even those that haven’t been renamed</li>
+<li><strong>keep_meta</strong> – keep metadata (fields starting with “_”)</li>
+<li><strong>skip_missing</strong> – skip records where not all fields are present</li>
+<li><strong>kw</strong> – new_name=”old_name” rename rules</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.select">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">select</code><span class="sig-paren">(</span><em>source</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#select"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select samples from the source that match given predicates.</p>
+<p>Arguments are of the form <cite>fieldname=predicate</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> – iterator</li>
+<li><strong>kw</strong> – fieldname=predicate selectors</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.showgrid">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">showgrid</code><span class="sig-paren">(</span><em>data</em>, <em>key='input'</em>, <em>label=None</em>, <em>grid=(4</em>, <em>8)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#showgrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.showgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sink that shows a grid of images.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>key</strong> – key to be displayed</li>
+<li><strong>label</strong> – label field to be displayed</li>
+<li><strong>grid</strong> – grid size for display</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.shuffle">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">shuffle</code><span class="sig-paren">(</span><em>data</em>, <em>bufsize=1000</em>, <em>initial=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#shuffle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.shuffle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shuffle the data in the stream.</p>
+<p>This uses a buffer of size <cite>bufsize</cite>. Shuffling at
+startup is less random; this is traded off against
+yielding samples quickly.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>bufsize</strong> – buffer size for shuffling</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.standardize">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">standardize</code><span class="sig-paren">(</span><em>sample, size, keys=['png'], crop=0, mode='nearest', ralpha=None, rscale=((0.8, 1.0), (0.8, 1.0)), rgamma=None, cgamma=(0.8, 1.2)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#standardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.standardize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize images in a sample.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sample</strong> – sample</li>
+<li><strong>size</strong> – target size</li>
+<li><strong>keys</strong> – keys for images to be distorted</li>
+<li><strong>crop</strong> – whether to crop</li>
+<li><strong>mode</strong> – boundary mode</li>
+<li><strong>ralpha</strong> – random rotation range (no affine if None)</li>
+<li><strong>rscale</strong> – random scale range</li>
+<li><strong>rgamma</strong> – random gamma range (no color distortion if None)</li>
+<li><strong>cgamma</strong> – random color gamma range</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">standardized szmple</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.transform">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">transform</code><span class="sig-paren">(</span><em>data</em>, <em>f=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map entire samples using the given function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – iterator</li>
+<li><strong>f</strong> – function from samples to samples</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">iterator over transformed samples</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.unbatch">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">unbatch</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#unbatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.unbatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unbatch data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> – iterator over batches</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">iterator over samples</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dlinputs.filters.unique">
+<code class="descclassname">dlinputs.filters.</code><code class="descname">unique</code><span class="sig-paren">(</span><em>data</em>, <em>key</em>, <em>rekey=False</em>, <em>skip_missing=False</em>, <em>error=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dlinputs/filters.html#unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dlinputs.filters.unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure that data is unique in the given key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key</strong> – sample key to be made unique</li>
+<li><strong>rekey</strong> – if True, use the hash value as the new key</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="api.html">dlinputs API Documentation:</a><ul>
+      <li>Previous: <a href="sources.html" title="previous chapter">sources</a></li>
+      <li>Next: <a href="paths.html" title="next chapter">paths</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Tom Breuel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/filters.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

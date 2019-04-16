@@ -1,16 +1,17 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
+from __future__ import absolute_import, print_function
+
 import os
 import random
-from future.moves.urllib.parse import urlparse
-from subprocess import PIPE, Popen, check_call
+from builtins import range
 from io import open
+from subprocess import PIPE, Popen, check_call
 
-from . import paths
-from . import tarrecords
+from future import standard_library
+from future.moves.urllib.parse import urlparse
+
+from . import paths, tarrecords
+
+standard_library.install_aliases()
 
 
 def test_curl_write(self, location):
@@ -21,6 +22,7 @@ def test_curl_write(self, location):
         raise Exception("{}: cannot write location".format(location))
     check_call(["curl", "--fail", "-X", "DELETE", location])
 
+
 def gopen(url, mode="rb"):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
     parsed = urlparse(url)
@@ -29,7 +31,8 @@ def gopen(url, mode="rb"):
             stream = Popen(cmd, stdin=PIPE, shell=True).stdin
         elif mode=="r":
             stream = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).stdout
-        stream.pipe_cmd = cmd
+        try: stream.pipe_cmd = cmd
+        except: pass
         return stream
     if parsed.scheme == "gs":
         if mode[0]=="r":
@@ -47,12 +50,13 @@ def gopen(url, mode="rb"):
         else:
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in ["", "file"]:
-        if mode[0]=="r":
+        if mode[0] == "r":
             return open(parsed.path, "rb")
-        elif mode[0]=="w":
+        elif mode[0] == "w":
             return open(parsed.path, "wb")
         else:
             raise ValueError("{}: unknown mode".format(mode))
+
 
 def test_url(url, size=17):
     """Test whether the given URL is accessible."""
@@ -66,6 +70,7 @@ def test_url(url, size=17):
         print(e)
         return False
 
+
 def test_shards(url, size=17, complete=False):
     """Test whether the shard spec is accessible."""
     shards = list(paths.path_shards(url))
@@ -74,50 +79,60 @@ def test_shards(url, size=17, complete=False):
     else:
         return test_url(shards[0], size=size)
 
+
 def find_shards(urls, size=17, complete=False):
     """Given a list of shard URLs, find the first one that exists."""
     for url in urls:
         if test_shards(url, size=size, complete=False):
             return url
 
+
 def sharditerator(url, epochs=1000000, shuffle=True, **kw):
     """Iterate over sharded tar records."""
     shards = list(paths.path_shards(url))
     for epoch in range(epochs):
-        if shuffle: random.shuffle(shards)
+        if shuffle:
+            random.shuffle(shards)
         for shard in shards:
             with gopen(shard) as stream:
                 for sample in tarrecords.tariterator(stream, **kw):
+                    sample["__source__"] = shard
                     yield sample
+
 
 def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
     """Iterate over sharded tar records, opening multiple shards in parallel."""
-    assert multi==1, "multi>1 is unimplemented" # FIXME
+    assert multi == 1, "multi>1 is unimplemented"  # FIXME
     shards = list(paths.path_shards(url))
     for epoch in range(epochs):
-        if shuffle: random.shuffle(shards)
+        if shuffle:
+            random.shuffle(shards)
         for shard in shards:
             with gopen(shard) as stream:
                 for sample in tarrecords.tariterator(stream, **kw):
+                    sample["__source__"] = shard
                     yield sample
+
 
 def sharditerator_once(url, **kw):
     """Iterate over sharded tar records (no shuffling, one epoch only)."""
     return sharditerator(url, epochs=1, shuffle=False, **kw)
 
-def open_source(url, decode=True):
+
+def open_source(url, decode=True, unpack=True):
     parsed = urlparse(url)
-    if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
+    if parsed.scheme and len(parsed.scheme) > 0 and parsed.scheme[0] == "z":
         from . import zcom
-        return list(zcom.Connection(url, codec=decode).items())
+        return zcom.Connection(url, codec=decode, pack=unpack).items()
     else:
         return sharditerator(url, decode=decode, source=url)
 
-def open_sink(url, encode=True):
+
+def open_sink(url, encode=True, pack=True):
     parsed = urlparse(url)
-    if parsed.scheme and len(parsed.scheme)>0 and parsed.scheme[0] == "z":
+    if parsed.scheme and len(parsed.scheme) > 0 and parsed.scheme[0] == "z":
         from . import zcom
-        return zcom.Connection(url, codec=encode)
+        return zcom.Connection(url, codec=encode, pack=pack)
     else:
         stream = gopen(url, "wb")
         return tarrecords.TarWriter(stream, encode=encode)
