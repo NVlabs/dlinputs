@@ -223,8 +223,8 @@ def select(source, **kw):
         yield data
 
 
-def find_key(sample, keys):
-    for k in keys.split():
+def find_key(sample, keys, sep=";"):
+    for k in keys.split(sep):
         if k in sample:
             return k
     return None
@@ -244,7 +244,7 @@ def with_keys(data, *args):
 
 
 @curried
-def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True):
+def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_missing=True, sep=";"):
     """Rename and select fields using new_name="old_name" keyword arguments.
 
     :param data: iterator
@@ -260,7 +260,7 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_miss
             result = dict(sample)
         else:
             result = dict(__key__=sample.get("__key__"))
-        has_all_keys = all(has_key(sample, k) for k in list(kw.values()))
+        has_all_keys = all(find_key(sample, k, sep=sep) for k in kw.values())
         if error_missing and not has_all_keys:
             raise ValueError("missing keys, got {}, want {}".format(
                 list(sample.keys()), kw))
@@ -271,7 +271,7 @@ def ren(data, kw, keep_all=False, keep_meta=True, skip_missing=False, error_miss
                 if k[0] == "_":
                     result[k] = v
         for k, keys in list(kw.items()):
-            key = find_key(sample, keys)
+            key = find_key(sample, keys, sep=sep)
             if key is None:
                 continue
             result[k] = sample[key]
