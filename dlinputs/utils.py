@@ -295,6 +295,10 @@ def autodecode(sample, imagetype="rgb"):
     return result
 
 
+def autodecoder(imagetype):
+    return lambda sample: autodecode(sample, imagetype=imagetype)
+
+
 def bytestr(data):
     if isinstance(data, bytes):
         return data

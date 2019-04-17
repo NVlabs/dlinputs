@@ -119,6 +119,46 @@ def sharditerator_once(url, **kw):
     return sharditerator(url, epochs=1, shuffle=False, **kw)
 
 
+def _take(rdict, key, default=None):
+    """Look up and remove from dictionary.
+
+    Needed for **kw compatibility with Python2
+    """
+    if key in rdict:
+        result = rdict[key]
+        del rdict[key]
+        return result
+    else:
+        return default
+
+class WebLoader(object):
+    def __init__(self, url, **kw):
+        self.url = url
+        self.keys = _take(kw, "keys")
+        self.fake_length = _take(kw, "length", 100000)
+        self.pipeline = _take(kw, "pipeline", None)
+        self.transform = _take(kw, "transform", None)
+        self.target_transform = _take(kw, "target_transform", None)
+        self.kw = kw
+    def __iter__(self):
+        source = sharditerator(self.url, **self.kw)
+        if self.pipeline is not None:
+            source = self.pipeline(source)
+        for sample in source:
+            if self.keys is not None:
+                if not all(k in sample for k in self.keys): continue
+                result = [sample[k] for k in self.keys]
+                if self.transform is not None:
+                    result[0] = self.transform(result[0])
+                if self.target_transform is not None:
+                    result[1] = self.target_transform(result[1])
+                yield result
+            else:
+                yield sample
+    def __len__(self):
+        return self.fake_length
+
+
 def open_source(url, decode=True, unpack=True):
     parsed = urlparse(url)
     if parsed.scheme and len(parsed.scheme) > 0 and parsed.scheme[0] == "z":

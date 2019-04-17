@@ -161,21 +161,23 @@ def zipiterator(fname, check_sorted=False, keys=base_plus_ext, decode=True):
     return decoded
 
 
-def maybe_decode(current_sample, decode, current_count=None):
+def maybe_decode(current_sample, decode, current_count=None, info=""):
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings("error")
             decoded = decode(current_sample)
             return decoded
     except Exception as exn:
-        warnings.warn("decoding error {} at {} key {}".format(
+        fileinfo = "file {}".format(filename) if filename!="" else ""
+        warnings.warn("decoding error {} at {} key {} {}".format(
             exn,
             current_count,
-            current_sample.get("__key__")))
+            current_sample.get("__key__")),
+            info)
         return None
 
-
-def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, source=None, lcase=True, filename=None):
+def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True,
+                source=None, lcase=True, filename=None):
     """Iterate over samples from a tar archive, either locally or given by URL.
 
     Tar archives are assumed to be sorted by file name. For each basename,
@@ -213,7 +215,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True, so
                 raise ValueError("[%s] -> [%s]: tar file does not contain sorted keys (%s)" % \
                                  (current_prefix, prefix, filename))
             if valid_sample(current_sample):
-                decoded = maybe_decode(current_sample, decode, current_count)
+                decoded = maybe_decode(current_sample, decode, current_count,
+                                       info="file {}".format(filename))
                 if decoded is not None:
                     yield decoded
             current_prefix = prefix
