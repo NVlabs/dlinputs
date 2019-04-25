@@ -225,13 +225,13 @@ def pildumps(image, format="PNG"):
     """
     # BytesIO change very simple. You are creating an image, saving it as bytes to resut which you'll
     # write to disk as Bytes.
-    result = six.BytesIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
         assert np.amin(image) > -0.001 and np.amax(image) < 1.001
         image = np.clip(image, 0.0, 1.0)
         image = np.array(image * 255.0, 'uint8')
-    PIL.Image.fromarray(image).save(result, format=format)
-    return result.getvalue()
+    with six.BytesIO() as result:
+        PIL.Image.fromarray(image).save(result, format=format)
+        return result.getvalue()
 
 
 pilpng = pildumps

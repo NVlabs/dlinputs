@@ -15,9 +15,11 @@ import six
 from future import standard_library
 from numpy import clip
 from past.builtins import execfile
+import braceexpand
 
 standard_library.install_aliases()
 
+use_at_specs = True
 
 def split_sharded_path(path):
     """Split a path containing shard notation into prefix, format, suffix, and number."""
@@ -31,14 +33,28 @@ def split_sharded_path(path):
     return prefix+fmt+suffix, num
 
 
-def path_shards(path):
-    """Given a path shard spec, return an iterator over the shards."""
+def expand_at_specs(path):
+    """Given a path shard spec using "@..." syntax, return an iterator over the shards."""
     fmt, n = split_sharded_path(path)
     if n is None:
         yield fmt
     else:
         for i in range(n):
             yield (fmt % i)
+
+
+def path_shards(path):
+    if isinstance(path, list):
+        for fname in path:
+            yield fname
+        return
+    elif use_at_specs:
+        for fname in expand_at_specs(path):
+            for fname1 in braceexpand.braceexpand(fname):
+                yield fname1
+    else:
+        for fname in braceexpand.braceexpand(path):
+            yield fname
 
 
 def iterate_shards(url):
