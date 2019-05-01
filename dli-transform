@@ -6,9 +6,7 @@ import imp
 import os
 
 import dlinputs as dli
-import matplotlib
 import numpy as np
-import pylab
 from dlinputs import filters, gopen, utils, zcom
 import multiprocessing
 
@@ -16,6 +14,7 @@ parser = argparse.ArgumentParser("Display info about an input module.")
 parser.add_argument("-P", "--pipeline", default="info()")
 parser.add_argument("-C", "--precode", default=[], nargs="*")
 parser.add_argument("-c", "--code", default=None)
+parser.add_argument("-F", "--format", default="rgb")
 parser.add_argument("-l", "--load", default=None)
 parser.add_argument("-e", "--every", type=int, default=1000)
 parser.add_argument("-p", "--parallel", type=int, default=0)
@@ -27,7 +26,10 @@ args = parser.parse_args()
 for c in args.precode:
     exec(c)
 
-source = gopen.open_source(args.input)
+
+decode = utils.autodecoder(args.format)
+
+source = gopen.sharditerator(args.input, decode=decode, epochs=1)
 
 sink = None
 if args.output is not None:

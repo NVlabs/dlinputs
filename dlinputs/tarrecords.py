@@ -168,7 +168,6 @@ def maybe_decode(current_sample, decode, current_count=None, info=""):
             decoded = decode(current_sample)
             return decoded
     except Exception as exn:
-        fileinfo = "file {}".format(filename) if filename!="" else ""
         warnings.warn("decoding error {} at {} key {} {}".format(
             exn,
             current_count,
@@ -198,7 +197,11 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True,
     current_count = 0
     current_prefix = None
     current_sample = None
-    stream = tarfile.open(fileobj=fileobj, mode="r|*")
+    try:
+        stream = tarfile.open(fileobj=fileobj, mode="r|*")
+    except tarfile.ReadError:
+        info = getattr(fileobj, "pipe_cmd", getattr(fileobj, "name", "?"))
+        raise tarfile.ReadError("{}: empty file".format(info))
     for tarinfo in stream:
         if not tarinfo.isreg():
             continue

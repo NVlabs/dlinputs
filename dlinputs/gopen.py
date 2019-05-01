@@ -51,6 +51,8 @@ def gopen(url, mode="rb"):
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in ["", "file"]:
         if mode[0] == "r":
+            if not os.path.exists(parsed.path):
+                raise ValueError("{}: not readable".format(parsed.path))
             return open(parsed.path, "rb")
         elif mode[0] == "w":
             return open(parsed.path, "wb")
