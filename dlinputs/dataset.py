@@ -20,13 +20,16 @@ class StreamingSet(object):
                  fields=None,
                  repeat=1,
                  shuffle=0,
-                 shardshuffle=True,
+                 shardshuffle=None,
                  classes=None,
                  class_to_idx=None,
                  transform=None,
-                 target_transform=None):
+                 target_transform=None,
+                 epochs=999999999):
+        if shardshuffle is None:
+            shardshuffle = (shuffle > 0)
         if isinstance(source, str):
-            source = gopen.sharditerator(source, shuffle=shardshuffle)
+            source = gopen.sharditerator(source, shuffle=shardshuffle, epochs=epochs)
         if shuffle > 0:
             source = filters.shuffle(shuffle)(source)
         self.source = source
