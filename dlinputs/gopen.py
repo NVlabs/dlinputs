@@ -121,6 +121,11 @@ def sharditerator_once(url, **kw):
     return sharditerator(url, epochs=1, shuffle=False, **kw)
 
 
+def shardwriter(url, encode=True, pack=True):
+    parsed = urlparse(url)
+    stream = gopen(url, "wb")
+    return tarrecords.TarWriter(stream, encode=encode)
+
 def _take(rdict, key, default=None):
     """Look up and remove from dictionary.
 

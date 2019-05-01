@@ -19,7 +19,7 @@ rc("figure", figsize="12,6")
 rc("image", cmap="gray")
 
 parser = argparse.ArgumentParser("Display info about an input module.")
-parser.add_argument("input")
+parser.add_argument("input", nargs="+")
 parser.add_argument("-T", "--table", default="training")
 parser.add_argument("-s", "--skip", default=0, type=int)
 parser.add_argument("-b", "--bench", default=0, type=int)
@@ -36,7 +36,7 @@ if args.source is not None:
     execfile(args.source)
     source = make_source()
 else:
-    source = gopen.open_source(args.input)
+    source = gopen.open_source(args.input[0])
 
 for i in range(args.skip):
     next(source)

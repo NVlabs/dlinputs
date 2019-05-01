@@ -225,13 +225,13 @@ def pildumps(image, format="PNG"):
     """
     # BytesIO change very simple. You are creating an image, saving it as bytes to resut which you'll
     # write to disk as Bytes.
-    result = six.BytesIO()
     if image.dtype in [np.dtype('f'), np.dtype('d')]:
         assert np.amin(image) > -0.001 and np.amax(image) < 1.001
         image = np.clip(image, 0.0, 1.0)
         image = np.array(image * 255.0, 'uint8')
-    PIL.Image.fromarray(image).save(result, format=format)
-    return result.getvalue()
+    with six.BytesIO() as result:
+        PIL.Image.fromarray(image).save(result, format=format)
+        return result.getvalue()
 
 
 pilpng = pildumps
@@ -256,11 +256,12 @@ def autodecode1(data, tname, imagetype="rgb"):
             return int(data)
         except ValueError:
             return data
-    elif extension in ["png", "jpg", "jpeg", "img", "image"]:
+    elif extension in ["png", "jpg", "jpeg", "img", "image", "pbm", "pgm", "ppm"]:
         if imagetype == "PIL":
-            img = PIL.Image.open(six.BytesIO(data))
-            img.load()
-            return img
+            with six.BytesIO(data) as stream:
+                img = PIL.Image.open(stream)
+                img.load()
+                return img
         else:
             return pilreads(data, color=imagetype)
     elif extension in ["json", "jsn"]:
@@ -311,26 +312,8 @@ def autoencode1(data, tname):
     extension = re.sub(r".*\.", "", tname).lower()
     if isinstance(data, (int, float)):
         return bytestr(data)
-    elif extension in ["png", "jpg", "jpeg"]:
-        import imageio
-        if isinstance(data, np.ndarray):
-            if data.dtype in [np.dtype("f"), np.dtype("d")]:
-                assert np.amin(data) >= 0.0, (data.dtype, np.amin(data))
-                assert np.amax(data) <= 1.0, (data.dtype, np.amax(data))
-                data = np.array(255 * data, dtype='uint8')
-            elif data.dtype in [np.dtype("uint8")]:
-                pass
-            else:
-                raise ValueError(
-                    "{}: unknown image array dtype".format(data.dtype))
-        else:
-            raise ValueError("{}: unknown image type".format(type(data)))
-        # BytesIO change, very simple. You are encoding. So, if unicode string, you want to convert it to Bytes string.
-        stream = io.BytesIO()
-        imageio.imsave(stream, data, format=extension)
-        result = stream.getvalue()
-        del stream
-        return result
+    elif extension in ["png", "jpg", "jpeg", "img", "image", "pbm", "pgm", "ppm"]:
+        return pildumps(data, extension)
     if extension in ["json", "jsn"]:
         import simplejson
         return bytestr(simplejson.dumps(data))
