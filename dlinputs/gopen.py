@@ -46,6 +46,7 @@ def gopen(url, mode="rb"):
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
             if gopen_download != "":
+                os.system("rm -f '{}'".format(gopen_download))
                 cmd = "curl '%s' --output '%s'" % (url, gopen_download)
                 if os.system(cmd) != 0:
                     raise ValueError("cannot download {} to {}".format(
