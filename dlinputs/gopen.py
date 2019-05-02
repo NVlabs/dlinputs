@@ -23,6 +23,7 @@ def test_curl_write(self, location):
     check_call(["curl", "--fail", "-X", "DELETE", location])
 
 gopen_buffer = os.environ.get("GOPEN_BUFFER", "")
+gopen_download = os.environ.get("GOPEN_DOWNLOAD", "")
 
 def gopen(url, mode="rb"):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
@@ -44,10 +45,17 @@ def gopen(url, mode="rb"):
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
-            cmd = "curl --fail -s '%s' --output -" % url
-            if gopen_buffer != "":
-                cmd = cmd + " | " + gopen_buffer
-            return pipe(cmd, "r")
+            if gopen_download != "":
+                cmd = "curl '%s' --output '%s'" % (url, gopen_download)
+                if os.system(cmd) != 0:
+                    raise ValueError("cannot download {} to {}".format(
+                        url, gopen_download))
+                return open(gopen_download, "rb")
+            else:
+                cmd = "curl --fail -s '%s' --output -" % url
+                if gopen_buffer != "":
+                    cmd = cmd + " | " + gopen_buffer
+                return pipe(cmd, "r")
         elif mode[0]=="w":
             test_curl_write(url)
             return pipe("curl --fail -s -T - '%s'" % url, "w")
