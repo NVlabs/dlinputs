@@ -22,8 +22,9 @@ def test_curl_write(self, location):
         raise Exception("{}: cannot write location".format(location))
     check_call(["curl", "--fail", "-X", "DELETE", location])
 
+default_buffer = os.environ.get("GOPEN_BUFFER", "4G")
 
-def gopen(url, mode="rb"):
+def gopen(url, mode="rb", buffer=default_buffer):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
     parsed = urlparse(url)
     def pipe(cmd, mode):
@@ -43,7 +44,10 @@ def gopen(url, mode="rb"):
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
-            return pipe("curl --fail -s '%s' --output -" % url, "r")
+            cmd = "curl --fail -s '%s' --output -" % url
+            if buffer is not None and buffer != "" and buffer != "none":
+                cmd = cmd + "| mbuffer -q -m %s" % buffer
+            return pipe(cmd, "r")
         elif mode[0]=="w":
             test_curl_write(url)
             return pipe("curl --fail -s -T - '%s'" % url, "w")
