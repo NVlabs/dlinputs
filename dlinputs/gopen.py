@@ -43,7 +43,7 @@ def gopen(url, mode="rb"):
             raise ValueError("{}: unknown mode".format(mode))
     elif parsed.scheme in "http https ftp".split():
         if mode[0]=="r":
-            return pipe("curl --fail -s '%s'" % url, "r")
+            return pipe("curl --fail -s '%s' --output -" % url, "r")
         elif mode[0]=="w":
             test_curl_write(url)
             return pipe("curl --fail -s -T - '%s'" % url, "w")
