@@ -22,7 +22,7 @@ def test_curl_write(self, location):
         raise Exception("{}: cannot write location".format(location))
     check_call(["curl", "--fail", "-X", "DELETE", location])
 
-default_buffer = os.environ.get("GOPEN_BUFFER", "4G")
+default_buffer = os.environ.get("GOPEN_BUFFER", "")
 
 def gopen(url, mode="rb", buffer=default_buffer):
     """Open the given URL. Supports unusual schemes and uses subprocesses."""
