@@ -5,6 +5,7 @@ import random
 from builtins import range
 from io import open
 from subprocess import PIPE, Popen, check_call
+import logging
 
 from future import standard_library
 from future.moves.urllib.parse import urlparse
@@ -109,24 +110,21 @@ def sharditerator(url, epochs=1000000, shuffle=True, **kw):
         if shuffle:
             random.shuffle(shards)
         for shard in shards:
-            with gopen(shard) as stream:
-                for sample in tarrecords.tariterator(stream, **kw):
-                    sample["__source__"] = shard
-                    yield sample
+            try:
+                with gopen(shard) as stream:
+                    for sample in tarrecords.tariterator(stream, **kw):
+                        sample["__source__"] = shard
+                        yield sample
+            except tarfile.ReadError:
+                logging.exception("{}: tar read error".format(shard))
+            except Exception:
+                logging.exception("{}: exception during shard reading".format(shard))
 
 
 def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
     """Iterate over sharded tar records, opening multiple shards in parallel."""
     assert multi == 1, "multi>1 is unimplemented"  # FIXME
-    shards = list(paths.path_shards(url))
-    for epoch in range(epochs):
-        if shuffle:
-            random.shuffle(shards)
-        for shard in shards:
-            with gopen(shard) as stream:
-                for sample in tarrecords.tariterator(stream, **kw):
-                    sample["__source__"] = shard
-                    yield sample
+    return sharditerator(url, epochs=epochs, shuffle=shuffle, **kw)
 
 
 def sharditerator_once(url, **kw):
