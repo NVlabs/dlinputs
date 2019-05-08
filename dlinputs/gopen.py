@@ -6,6 +6,7 @@ from builtins import range
 from io import open
 from subprocess import PIPE, Popen, check_call
 import logging
+import tarfile
 
 from future import standard_library
 from future.moves.urllib.parse import urlparse
