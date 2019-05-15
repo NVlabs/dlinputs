@@ -7,6 +7,7 @@ from io import open
 from subprocess import PIPE, Popen, check_call
 import logging
 import tarfile
+import time
 
 from future import standard_library
 from future.moves.urllib.parse import urlparse
@@ -121,9 +122,11 @@ def sharditerator(url, epochs=1000000, shuffle=True, maxerrs=10, **kw):
             except tarfile.ReadError as exn:
                 logging.exception("{}: tar read error".format(shard))
                 errs += 1
+                time.sleep(1.0)
             except Exception as exn:
                 logging.exception("{}: exception during shard reading".format(shard))
                 errs += 1
+                time.sleep(1.0)
             if errs >= maxerrs:
                 raise exn
 
