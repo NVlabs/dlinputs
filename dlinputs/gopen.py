@@ -104,22 +104,28 @@ def find_shards(urls, size=17, complete=False):
             return url
 
 
-def sharditerator(url, epochs=1000000, shuffle=True, **kw):
+def sharditerator(url, epochs=1000000, shuffle=True, maxerrs=10, **kw):
     """Iterate over sharded tar records."""
     shards = list(paths.path_shards(url))
     for epoch in range(epochs):
         if shuffle:
             random.shuffle(shards)
+        errs = 0
         for shard in shards:
             try:
                 with gopen(shard) as stream:
                     for sample in tarrecords.tariterator(stream, **kw):
+                        errs = max(0, errs-1)
                         sample["__source__"] = shard
                         yield sample
-            except tarfile.ReadError:
+            except tarfile.ReadError as exn:
                 logging.exception("{}: tar read error".format(shard))
-            except Exception:
+                errs += 1
+            except Exception as exn:
                 logging.exception("{}: exception during shard reading".format(shard))
+                errs += 1
+            if errs >= maxerrs:
+                raise exn
 
 
 def sharditerator_multi(url, epochs=1000000, shuffle=True, multi=1, **kw):
