@@ -194,6 +194,8 @@ def tariterator(fileobj, check_sorted=False, keys=base_plus_ext, decode=True,
         decode = utils.autodecode
     elif decode is False:
         decode = trivial_decode
+    elif isinstance(decode, str):
+        decode = utils.autodecoder(decode)
     current_count = 0
     current_prefix = None
     current_sample = None
