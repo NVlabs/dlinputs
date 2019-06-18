@@ -1,3 +1,17 @@
+Refactoring
+============
+
+The `dlinputs` library is being refactored and will soon be available in
+separate parts:
+
+ - `webloader` -- drop in replacements for DataLoader to train against object stores
+ - `tensorcom` -- fast storage-to-GPU data transfers
+ - `kujob` -- simple tool for map-reduce jobs using Kubernetes
+
+The APIs and class names have changed slightly, but converting your code
+should be simple.  The new libraries also contain lots of bug fixes.
+
+
 Machine Learning Pipelines
 ==========================
 
